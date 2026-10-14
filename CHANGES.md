@@ -17,14 +17,14 @@
 > Reglas de gobernanza: en changes **CRITICO** solo se hace análisis y no se escribe código sin aprobación explícita del autor; en **ALTO** se propone y se espera revisión antes de escribir; en **MEDIO** se implementa por pasos con checkpoints; en **BAJO** hay autonomía si los tests pasan. El proyecto usa TDD estricto (DD-10).
 > Los changes **candidatos** (FASE 6 a 8) y los **posteriores** (FASE 9) están solo **planificados**: no se proponen ni implementan sin decisión explícita del autor. Ver "Niveles de alcance".
 > Datos: todos los datos de desarrollo y pruebas son **ficticios** (RN-PA-08, DD-13).
-> **Decisión técnica nueva de la Etapa 4 (autor, 2026-10-13):** el frontend React + Vite se escribe en **TypeScript**. No proviene de Discovery ni de la Knowledge Base aprobada: DD-10 (`knowledge-base/09_decisiones_y_supuestos.md`) elige React con Vite sin fijar el lenguaje. El backend se mantiene en FastAPI con Python y la base de datos en PostgreSQL. Su registro en la Knowledge Base queda pendiente de autorización del autor.
+> **Decisión técnica nueva de la Etapa 4 (autor, 2026-10-13):** el frontend React + Vite se escribe en **TypeScript**. Es posterior a Discovery y a la aprobación de la Knowledge Base; no proviene de ninguna de las dos y no modifica retrospectivamente sus decisiones: DD-10 (`knowledge-base/09_decisiones_y_supuestos.md`) sigue diciendo React con Vite, sin fijar el lenguaje. El backend se mantiene en FastAPI con Python y la base de datos en PostgreSQL. Su registro en la Knowledge Base queda pendiente de autorización del autor.
 
 ---
 
 ## Árbol de dependencias
 
 ```
-C-01 foundation-setup                                     ← sin historias; ALTERNATIVA condicionada (ver Niveles de alcance)
+C-01 foundation-setup                                     ← infraestructura, sin historias; NO es el Change académico (ver Niveles de alcance)
   └── C-02 modelo-base-consultorios-seed                  ← CRITICO: Consultorio, Usuario, seed ficticio, repos acotados
         └── C-03 autenticacion-sesion                     ← CRITICO (US-001)
               │
@@ -173,10 +173,24 @@ Paso │ Agente A (Backend Core)            │ Agente B (Backend Aux)          
 **Nivel 1 — Alcance total del MVP académico (v0.1)**
 Todo lo que la KB considera perímetro de la v0.1: los 8 esenciales del informe §6.3 (núcleo, US-001 a US-019) más los candidatos que el autor decida incorporar (D4, D5, D6, E8). "Núcleo" es un *perímetro funcional propuesto*, **no** obligación de construirlo todo (KB 06). Dentro de este nivel, todo lo que no esté en la línea de corte es **planificado, no comprometido**.
 
-**Nivel 2 — Primer Change que se desarrollará y entregará: C-01, nombre en OpenSpec `foundation-setup`**
-- C-01 es una base técnica pequeña, independiente, verificable y de bajo riesgo: React + Vite con TypeScript (decisión de la Etapa 4), FastAPI con Python, PostgreSQL con `btree_gist` disponible, Docker Compose, pytest + Vitest cableados, README de arranque y health check. **No contiene historias de usuario ni reglas de negocio.** Sirve para ejercitar el ciclo OpenSpec completo (propose → apply → archive).
-- **Condición pendiente de verificación:** *su elección definitiva como primer change entregado está condicionada a verificar si la consigna de la cátedra para el primer change exige funcionalidad observable por el usuario.* Hasta verificarlo, C-01 se desarrolla como cimiento sin promesa de que sea lo que se presente como "primer change".
-- **Alternativa documentada (no se elige entre ambas todavía):** *C-01 + un corte de dominio mínimo que NO dependa de autenticación ni de aislamiento por consultorio*. Ejemplo: funciones puras de dominio para **R1** (`fin = inicio + duración de la prestación`, RN-AG-01) y **R2** (detección de superposición con intervalos semiabiertos `[inicio, fin)`, RN-AG-02/04) con pruebas unitarias, expuestas solo como tests y/o documentación OpenAPI. Esa porción nace luego como parte de C-08 y C-15 (que la reutilizan), de modo que no se descarta trabajo. **No** se agregan a C-01 reglas que necesiten garantías de autenticación o aislamiento (RN-MT, RN-AU), ni la restricción de exclusión (depende de PA-07).
+**Nivel 2 — Infraestructura y Change académico (dos roles distintos)**
+
+- **C-01 `foundation-setup` = infraestructura necesaria para desarrollar el producto.** Base técnica pequeña y de bajo riesgo: React + Vite con TypeScript (decisión de la Etapa 4), FastAPI con Python, PostgreSQL con `btree_gist` disponible, Docker Compose, pytest + Vitest cableados, README de arranque y health check. **No contiene historias de usuario ni reglas de negocio**, por eso **no cumple** la consigna del Change académico y no se presenta como tal. Es el primer Change de desarrollo y el prerrequisito técnico del Change académico.
+- **Change académico = una funcionalidad del MVP.** Criterios de la consigna (PDF oficial de Metodología I, tal como lo informó el autor el 2026-10-13):
+  - una sola funcionalidad pequeña que pertenezca al MVP;
+  - una regla de negocio verificable;
+  - al menos tres escenarios verificables: exitoso, error de negocio y caso límite;
+  - puede ser una API o un módulo de dominio, sin interfaz gráfica;
+  - se completa con el ciclo Explore → Propose → Apply → Verify → Archive.
+- **Change académico (aprobado por el autor el 2026-10-13): alcance académico inicial de C-15, documentado en la entrada de C-15. Nombre propuesto en OpenSpec: `validacion-superposicion-turnos` (se confirma en Propose).**
+  - Qué es: un módulo de dominio puro en Python (sin base de datos, sin endpoints, sin interfaz) que decide si un turno candidato se superpone con los turnos que ocupan agenda **del mismo profesional**.
+  - Reglas: **solo** R2 (RN-AG-02 "Un profesional no puede tener dos turnos superpuestos"; D1; regla firme confirmada por el autor) y la convención **propuesta** de intervalos semiabiertos `[inicio, fin)` (RN-AG-04, [PROP]). Cualquier decisión abierta que afecte el comportamiento se resuelve en Propose antes de implementar (ver C-15).
+  - Escenarios mínimos: (1) **exitoso**: el profesional no tiene turnos que se crucen con el intervalo → se acepta; (2) **error de negocio**: el intervalo se cruza total o parcialmente con un turno del mismo profesional → se rechaza con un error de superposición; (3) **caso límite**: turno consecutivo (el existente termina 10:30 y el nuevo empieza 10:30) → se acepta. Prueba complementaria: turnos simultáneos de profesionales distintos → se aceptan.
+  - Dependencias reales: **C-01** (proyecto backend con pytest). No depende de C-02 a C-04 porque no persiste, no expone endpoints ni maneja datos de consultorio, así que no toca autenticación ni aislamiento. **Ninguna dependencia está resuelta hoy**: C-01 todavía no se implementó.
+  - Fuera de la porción académica (sigue en C-15): qué estados ocupan agenda (RN-AG-02b, PA-07; la función recibe los turnos que ocupan agenda ya filtrados), cálculo del fin por prestación (R1, C-08), franja y bloqueos (R3, R4), persistencia, restricción de exclusión con `btree_gist`, concurrencia (PA-20), endpoint `POST /api/turnos` y aislamiento. Por eso **demuestra la regla en el dominio, pero no garantiza por sí sola** la ausencia de superposiciones en el sistema (RT9).
+  - Encaje en el roadmap: no reemplaza a C-15 ni cambia las dependencias de los 30 Changes; C-15 la reutilizaría dentro de `crear_turno`, igual que reutiliza `calcular_fin` de C-08. Se documenta **dentro de C-15**: no es un Change nuevo del roadmap, se conservan los 30 Changes y el estado no cambia.
+  - Gobernanza propuesta: MEDIO (lógica de negocio pura, sin datos reales ni seguridad).
+  - Por qué no otros Changes: C-15 completo es grande (modelo, migración, restricción, concurrencia, endpoint) y depende de C-08, C-09, C-10 y C-12 y, a través de ellos, de C-02 a C-04 (CRITICO). C-08 tiene una regla verificable (R1) pero no demuestra el problema central (D1). C-16 y C-17 dependen de C-15.
 
 **Nivel 3 — Changes restantes: SOLO planificados**
 C-02 a C-30 (y los posteriores de la FASE 9) quedan como plan. **No se implementan automáticamente**: cada uno requiere `/opsx:propose` explícito, dependencias archivadas y las decisiones previas resueltas. Los candidatos (C-24 a C-30) además requieren decisión explícita del autor sobre su inclusión.
@@ -193,7 +207,7 @@ C-15, C-16, C-17, C-18, C-19, C-20, C-21          (turnos, disponibilidad y agen
 
 Quedan **fuera de la línea de corte**: C-05 (la demo usa usuarios del seed; US-003 puede esperar), C-22 (R5 es propuesta condicionada), C-23 (pulido de demo), todos los candidatos (C-24 a C-30, incluida la **reserva online D4**) y los posteriores. La línea de corte es un mínimo *sugerido para decisión del autor*: si el plazo aprieta (RG1), el orden de recorte recomendado es C-17 → C-14/C-11 reducidos a lo esencial, nunca C-04 ni C-15.
 
-**Próxima entrega académica:** se centra en el **primer Change** (Nivel 2). Los 20 Changes de la línea de corte son una **propuesta de corte para demostrar el MVP**; **no** son obligatorios para la próxima entrega ni fijan un plazo. Se conserva la granularidad actual (30 Changes) para que cada uno tenga alcance pequeño, verificable, dependencias claras y contexto suficiente.
+**Próxima entrega académica:** se centra en el **Change académico** (Nivel 2), con C-01 como prerrequisito técnico. Los 20 Changes de la línea de corte son una **propuesta de corte para demostrar el MVP**; **no** son obligatorios para la próxima entrega ni fijan un plazo. Se conserva la granularidad actual (30 Changes) para que cada uno tenga alcance pequeño, verificable, dependencias claras y contexto suficiente.
 
 **Alta de consultorios (PA-05):** en la v0.1 los consultorios existen **solo como seed data ficticio** (C-02: dos consultorios demo para probar aislamiento real). No hay autoservicio ni administrador de plataforma. El procedimiento definitivo de alta queda **pendiente para una etapa posterior** (US-004 bloqueada/postergada). El aislamiento (RN-MT-01 a 06) se implementa y se prueba igual.
 
@@ -207,7 +221,7 @@ Fuente: `docs/discovery/informe-discovery.md` §6.3 (sugerencia sujeta a aprobac
 | 2 | Roles por consultorio | C-02 (rol en Usuario), C-04 (autorización por rol, matriz de `03_actores_y_roles.md`), C-05 (gestión de usuarios, fuera de la línea de corte), C-06 (rutas por rol en UI) |
 | 3 | Profesionales con horarios y prestaciones con duración | C-07 (profesionales), C-08 (prestaciones y R1), C-09 (horarios R3), C-11 (UI) |
 | 4 | Bloqueos de agenda | C-10 (R4), C-11 (UI) |
-| 5 | Validación que impide superposiciones | **C-15** (servicio de dominio + restricción de exclusión), C-16 (disponibilidad solo con horarios válidos), C-17 (revalidación al reprogramar) |
+| 5 | Validación que impide superposiciones | **C-15** (servicio de dominio + restricción de exclusión; su alcance académico inicial cubre la regla R2 en el dominio), C-16 (disponibilidad solo con horarios válidos), C-17 (revalidación al reprogramar) |
 | 6 | Gestión de turnos con estados | C-15 (estado inicial), C-18 (transiciones, cancelación), C-17, C-21 (UI) |
 | 7 | Ficha básica del paciente | C-12 (ficha, búsqueda, desactivación), C-14 (UI) |
 | 8 | Aviso de privacidad o consentimiento | C-13 (registro de aceptación versionado), C-14 (UI) |
@@ -247,8 +261,10 @@ Tensiones del informe sin resolver aquí: T-01 (sin historia clínica), T-02 (re
 | RT4 | `btree_gist` no disponible en la imagen de PostgreSQL elegida | C-01, C-15 | C-01 verifica la extensión disponible; C-15 la habilita por migración |
 | RT5 | R5 (US-009) es propuesta, no decisión; PA-12 abierta | C-18, C-22, C-25 | C-22 marcado condicionada; C-18 no depende de R5; no se implementa como definitiva (RN-GL-04) |
 | RT6 | Sillones/boxes (PA-01) abierto: conflicto de sillón entre profesionales no se controla | C-15 | Ningún change lo implementa; documentado como limitación; el diseño por profesional permite agregar una segunda restricción después |
-| RT7 | C-01 podría no cumplir la consigna del primer change (funcionalidad observable) | C-01 | Verificar consigna; alternativa documentada en "Niveles de alcance" |
+| RT7 | C-01 no cumple la consigna del Change académico (no tiene regla de negocio ni escenarios funcionales) | C-01 | C-01 queda como infraestructura; el Change académico es una funcionalidad separada del MVP (Niveles de alcance, Nivel 2) |
 | RT8 | Un solo desarrollador: sin paralelismo real, sin revisión cruzada | Todos | Ejecución secuencial; TDD estricto; checkpoints por governance |
+| RT9 | La porción académica de C-15 se presenta como garantía completa contra superposiciones, cuando solo cubre la regla en el dominio | C-15 (alcance académico inicial) | Declarar en la propuesta lo que queda fuera (persistencia, restricción de exclusión, concurrencia, PA-07); C-15 conserva esas garantías y sus pruebas |
+| RT10 | La consigna exige la etapa Verify y el proyecto no tiene un comando `/opsx:verify` instalado (solo explore, propose, apply, archive, sync y update; la CLI ofrece `openspec validate`) | Change académico | Definir con el autor, antes del propose, qué evidencia constituye Verify |
 
 ### Índice historias → Changes
 
@@ -287,7 +303,7 @@ Cobertura: 26 de 26 historias, cada una en exactamente un change principal o fas
 
 | Fase | Changes | Núcleo / línea de corte | Governance máxima |
 |---|---|---|---|
-| FASE 0 — Cimientos | C-01 | Sí (condicionado a la consigna) | BAJO |
+| FASE 0 — Cimientos | C-01 | Sí (infraestructura) | BAJO |
 | FASE 1 — Acceso y aislamiento | C-02 a C-06 | Sí (salvo C-05) | CRITICO |
 | FASE 2 — Configuración de la agenda | C-07 a C-11 | Sí | MEDIO |
 | FASE 3 — Pacientes y privacidad | C-12 a C-14 | Sí | ALTO |
@@ -300,7 +316,8 @@ Cobertura: 26 de 26 historias, cada una en exactamente un change principal o fas
 
 **Total**: 30 changes en 9 fases con changes (más FASE 9 informativa) · 15 gates principales (GATE 0 a 12b) + 6 de candidatos (GATE C1 a C6) · camino crítico de 10 changes · línea de corte de 20 changes (C-01 a C-04, C-06 a C-21), propuesta para demostrar el MVP y no obligatoria para la próxima entrega.
 
-**Primer change recomendado**: C-01, nombre en OpenSpec `foundation-setup`, sujeto a la verificación de la consigna del primer change (ver "Niveles de alcance").
+**Primer Change de desarrollo**: C-01, nombre en OpenSpec `foundation-setup` (infraestructura).
+**Change académico**: alcance académico inicial de C-15 (aprobado por el autor el 2026-10-13), nombre propuesto en OpenSpec `validacion-superposicion-turnos`; ver C-15 y "Niveles de alcance".
 Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup`.
 
 ---
@@ -309,14 +326,14 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 
 ### [C-01] `foundation-setup`
 - **Estado**: `[ ]` pendiente
-- **Scope**: Base técnica mínima, sin historias de usuario ni reglas de negocio. **Su elección definitiva como primer change entregado está condicionada a verificar si la consigna de la cátedra para el primer change exige funcionalidad observable por el usuario.** Alternativa (no decidida): C-01 + funciones puras de dominio R1/R2 con tests unitarios y OpenAPI, sin auth ni aislamiento.
+- **Scope**: Base técnica mínima, sin historias de usuario ni reglas de negocio. **Es infraestructura, no el Change académico**: la consigna exige una funcionalidad del MVP con una regla de negocio y tres escenarios, que C-01 no tiene (ver "Niveles de alcance", Nivel 2). Es prerrequisito técnico del Change académico propuesto.
   - Estructura: `backend/` (`app/main.py`, `core/`, `api/`, `domain/`, `repositories/`, `models/`, `alembic/`, `tests/{unit,integration,isolation}`), `frontend/` (Vite + React + TypeScript; TypeScript es decisión del autor en la Etapa 4, 2026-10-13, no de la KB; `src/{features,shared,pages}`) según `08_arquitectura_propuesta.md`
   - Backend: FastAPI mínimo con `GET /api/health` (liveness; opcionalmente chequea la DB), configuración por variables de entorno (`DATABASE_URL`, `CORS_ALLOWED_ORIGINS`, `APP_ENV`), Alembic inicializado (sin migraciones de dominio), SQLAlchemy 2 + Pydantic instalados
   - `docker-compose.yml`: servicios `db` (PostgreSQL con extensión `btree_gist` verificada, p. ej. `CREATE EXTENSION IF NOT EXISTS btree_gist` comprobado en un test de integración), `api`, `frontend`; volumen local; `.env.example` sin valores reales
   - Pruebas cableadas: pytest (un test de health) y Vitest (un test de render mínimo); comando único para correr ambas suites
   - Documentación mínima: `README.md` de arranque (cómo levantar con Docker Compose, correr tests, estructura)
   - Fuera de C-01: modelos de dominio, migraciones de negocio, autenticación, CI en la nube, despliegue (PA-02)
-  - Decisiones previas al propose: elegir el driver de PostgreSQL (`DATABASE_URL`, KB 08 §Variables de entorno); verificar la consigna del primer change (ver arriba). Sin PA-xx bloqueantes.
+  - Decisiones previas al propose: elegir el driver de PostgreSQL (`DATABASE_URL`, KB 08 §Variables de entorno). Sin PA-xx bloqueantes.
   - Tests: health 200; conexión a DB; `btree_gist` instalable; Vitest ejecuta
 - **Dependencias**: ninguna
 - **Governance**: BAJO
@@ -446,7 +463,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 - **Scope**: US-006 y regla R1.
   - Modelo `Prestacion` (`consultorio_id`, `nombre` único por consultorio, `duracion_minutos` > 0, `activa`); migración 004
   - Endpoints admin `POST/GET/PATCH /api/prestaciones`
-  - Función pura de dominio `calcular_fin(inicio, prestacion)` (RN-AG-01) con tests unitarios (reutilizable por C-15; es la porción candidata a la alternativa de C-01)
+  - Función pura de dominio `calcular_fin(inicio, prestacion)` (RN-AG-01) con tests unitarios (reutilizable por C-15)
   - Cambiar la duración **no** altera turnos existentes (SU-05); prestación inactiva no se ofrece
   - La prestación es dato posiblemente sensible (D9): no aparece en logs
   - Decisiones previas al propose: PA-09 (duración por profesional o por turno; ¿la secretaría puede cambiar la duración?)
@@ -579,6 +596,14 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
   - Servicio de dominio `crear_turno`: valida activos y mismo consultorio (RN-MT-03), pasado (RN-TU-06), franja completa (RN-AG-06), bloqueos (RN-AG-08), superposición con mensaje claro; transacción atómica (RN-GL-02); traduce el rechazo de la restricción al mismo error de superposición; rechazos sin datos de otros pacientes (RN-GL-03)
   - `POST /api/turnos` (sin `consultorio_id` en el body); turno nace `reservado` [PROP]
   - Intervalos semiabiertos: consecutivos aceptados
+  - **Alcance académico inicial** (aprobado por el autor el 2026-10-13; es un **recorte** de C-15, **no** su implementación completa; ver "Niveles de alcance", Nivel 2):
+    - Qué: prevención de solapamientos de turnos por profesional mediante una función o servicio **puro de dominio en Python**, con pruebas automatizadas (pytest). Sin base de datos, sin endpoints, sin interfaz. Nombre propuesto en OpenSpec: `validacion-superposicion-turnos`
+    - Reglas: **únicamente** R2 (RN-AG-02) y la convención **propuesta** de intervalos semiabiertos `[inicio, fin)` (RN-AG-04, [PROP])
+    - Pruebas mínimas: (1) turno **aceptado** cuando no existe superposición; (2) turno **rechazado** cuando se superpone con otro del mismo profesional; (3) dos turnos **consecutivos aceptados** cuando uno empieza exactamente al terminar el anterior. Complementaria: turnos **simultáneos de profesionales distintos** aceptados
+    - Dependencia real del recorte: C-01 (proyecto Python con pytest), **todavía no implementado**. Las dependencias de C-15 completo (C-08, C-09, C-10, C-12) no cambian y **no** se consideran resueltas
+    - Decisiones abiertas que afecten el comportamiento se resuelven **en Propose, antes de implementar**; entre ellas: validación de entradas (por ejemplo, inicio igual o posterior al fin), forma y contenido del rechazo (RN-GL-03), cómo se indica qué turnos ocupan agenda (RN-AG-02b, PA-07), nombre definitivo del Change en OpenSpec y qué evidencia constituye Verify (RT10)
+    - Queda **pendiente** en C-15, **no implementado ni aprobado**: persistencia (modelo `Turno` y migración), concurrencia (PA-20), restricción de exclusión de PostgreSQL (`btree_gist`, condicionada a PA-07), endpoints (`POST /api/turnos`) y aislamiento multi-consultorio. Archivar el recorte académico **no** completa C-15: su checkbox sigue `[ ]` hasta implementar todo el alcance; luego `crear_turno` reutiliza esta función
+    - Trazabilidad: Discovery R2 y D1 → KB RN-AG-02, RN-AG-04 y US-011 (criterios de superposición y de turnos consecutivos) → C-15, alcance académico inicial → Change de OpenSpec del recorte
   - Decisiones previas al propose: **PA-07 ANTES de crear la restricción** (estados que ocupan agenda, estado inicial, transiciones; cambiarla luego exige migración), PA-12, PA-19 (alcance de la trazabilidad del turno), PA-20 (mecanismo turno vs bloqueo/horario), PA-15, PA-09; PA-01 sigue abierta: **no se implementan sillones/boxes**
   - Tests: unitarios de dominio (bordes, fuera de franja, bloqueo, inactivos), integración de la restricción contra PostgreSQL real, **concurrencia (dos creaciones simultáneas → exactamente una gana)**, concurrencia turno vs bloqueo según PA-20, aislamiento cruzado, migración sobre datos existentes
 - **Dependencias**: C-08, C-09, C-10, C-12
