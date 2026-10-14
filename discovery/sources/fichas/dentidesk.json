@@ -1,0 +1,171 @@
+{
+  "slug": "dentidesk",
+  "nombre": "Dentidesk",
+  "empresa": "No evidenciado (la home usa la marca DENTIDESK sin razón social)",
+  "pais_origen": "Chile (sede en Providencia, Santiago, según la home)",
+  "url_oficial": "https://www.dentidesk.com",
+  "nivel": 2,
+  "nivel_justificacion": "Sitio en español con sede en Santiago de Chile y operación declarada en Chile, República Dominicana y Cabo Verde; no menciona Argentina ni hay precio en ARS ni clientes argentinos verificables (2026-10-12).",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/dentidesk.md",
+  "items": {
+    "C1.1": {
+      "estado": "no-evidenciado",
+      "nota": "La home habla de \"agenda avanzada\" sin precisar multiprofesional ni sillones."
+    },
+    "C1.2": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C1.3": {
+      "estado": "no-evidenciado",
+      "nota": "Reconfirmado: el único \"recordatorios\" literal es \"agrega notas y recordatorios personalizados\" (notas, no recordatorios automáticos de turno)."
+    },
+    "C1.4": {
+      "estado": "no-evidenciado",
+      "nota": "No se evidencia confirmación por el paciente."
+    },
+    "C1.5": {
+      "estado": "no-evidenciado",
+      "nota": "Lista de espera no figura textualmente."
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentidesk.com",
+      "nota": "Lista \"Odontograma, Disfunción, Endodoncia, Periodoncia, Cirugía Ortognática\" entre las fichas.",
+      "cita": "odontograma, Disfunción, Endodoncia, Periodoncia, Cirugía Ortognática y Ortodoncia"
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentidesk.com",
+      "nota": "Historial médico y fichas especializadas (ortodoncia, periodoncia, endodoncia, cirugía ortognática), verificado el 2026-10-10.",
+      "cita": "historial médico detallado y organizado que permite a las clínicas llevar un registro exhaustivo"
+    },
+    "C2.3": {
+      "estado": "no-evidenciado",
+      "nota": "Presupuestos no figuran textualmente."
+    },
+    "C2.4": {
+      "estado": "no-evidenciado",
+      "nota": "Hay ficha de periodoncia pero no se nombra periodontograma; imágenes/radiografías no figuran."
+    },
+    "C2.5": {
+      "estado": "no-evidenciado",
+      "nota": "Reconfirmado: \"consentimiento informado automático es una de las próximas funcionalidades en camino\" (no disponible); recetas NOT FOUND."
+    },
+    "C3.1": {
+      "estado": "no-evidenciado",
+      "nota": "Reconfirmado: \"WhatsApp automático es una de las próximas alternativas\" (no disponible)."
+    },
+    "C3.2": {
+      "estado": "no-evidenciado",
+      "nota": "Mercado Pago no figura en la home."
+    },
+    "C3.3": {
+      "estado": "no-evidenciado",
+      "nota": "Facturación integrada con SII (Chile) y Alegra (Rep. Dominicana); ARCA no figura."
+    },
+    "C3.4": {
+      "estado": "no-evidenciado",
+      "nota": "No figuran convenios ni obras sociales argentinas."
+    },
+    "C3.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentidesk.com",
+      "nota": "Integración con SII (Chile), Alegra (Rep. Dominicana, \"integración oficial\") y mención de \"agendamiento online\" en la sección de integraciones.",
+      "cita": "integración oficial con Alegra"
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentidesk.com",
+      "nota": "\"al registrar un pago dentro de DENTIDESK\": registro de pagos.",
+      "cita": "al registrar un pago dentro de DENTIDESK"
+    },
+    "C4.2": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C4.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentidesk.com",
+      "nota": "Facturación electrónica \"completamente integrada con el SII\" y con Alegra; no es de Argentina.",
+      "cita": "sistema de facturación propio"
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentidesk.com",
+      "nota": "\"más de 20 tipos de reportes financieros y administrativos\"; informe REMASEP (Chile).",
+      "cita": "más de 20 tipos de reportes financieros y administrativos"
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentidesk.com",
+      "nota": "\"gestión multisucursal\".",
+      "cita": "gestión multisucursal"
+    },
+    "C5.1": {
+      "estado": "no-evidenciado",
+      "nota": "Solo aparece la frase \"agendamiento online\" en integraciones; no describe reserva del paciente."
+    },
+    "C5.2": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C5.3": {
+      "estado": "no-evidenciado",
+      "nota": "No hay canal móvil operativo evidenciado (WhatsApp es \"próximo\")."
+    },
+    "C5.4": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C5.5": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C6.1": {
+      "estado": "no-evidenciado",
+      "nota": "Roles/permisos no figuran textualmente en la home."
+    },
+    "C6.2": {
+      "estado": "no-evidenciado",
+      "nota": "Auditoría no figura."
+    },
+    "C6.3": {
+      "estado": "no-evidenciado",
+      "nota": "Exportación no figura."
+    },
+    "C6.4": {
+      "estado": "no-evidenciado",
+      "nota": "Cifrado y backups no figuran textualmente."
+    },
+    "C6.5": {
+      "estado": "no-evidenciado",
+      "nota": "GDPR y normativa de datos no figuran textualmente."
+    },
+    "C7.1": {
+      "estado": "no-evidenciado",
+      "nota": "Precio no publicado; /precios devolvió 404 el 2026-10-10."
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentidesk.com",
+      "nota": "\"Prueba DENTIDESK gratis por 15 días\".",
+      "cita": "Prueba DENTIDESK gratis por 15 días"
+    },
+    "C7.3": {
+      "estado": "no-evidenciado",
+      "nota": "Sin oferta explícita para Argentina."
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentidesk.com",
+      "nota": "Migración de información y \"soporte especializado con personas reales\", en español.",
+      "cita": "Nos encargamos de ayudamos a migrar la información de tu clínica de forma segura"
+    },
+    "C7.5": {
+      "estado": "no-evidenciado",
+      "nota": "Capterra devolvió 403; sin reseñas ni casos con nombre en la home."
+    }
+  }
+}

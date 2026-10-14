@@ -1,0 +1,245 @@
+{
+  "version": 4,
+  "step": "roadmap",
+  "owner": "active-orchestrator",
+  "discovery": {
+    "created_by": "discovery-research",
+    "approved_at": "2026-10-10",
+    "document": "discovery/discovery.md",
+    "sources_fetched_at": "2026-10-10",
+    "sources": [
+      "https://www.softwaredentalink.com/planes",
+      "https://pro.doctoralia.com/ar/precio",
+      "https://agendapro.com/ar/planes",
+      "https://agendapro.com/ar/dental/software-odontologico",
+      "https://turnito.app",
+      "https://www.comparasoftware.com/xiagenda",
+      "https://www.dentidesk.com",
+      "https://www.doctocliq.com/planes"
+    ],
+    "competitors": [
+      {
+        "name": "Dentalink",
+        "notes_file": "discovery/sources/dentalink.md"
+      },
+      {
+        "name": "Doctoralia Pro AR",
+        "notes_file": "discovery/sources/doctoralia-argentina.md"
+      },
+      {
+        "name": "AgendaPro",
+        "notes_file": "discovery/sources/agendapro.md"
+      },
+      {
+        "name": "Turnito",
+        "notes_file": "discovery/sources/turnito.md"
+      },
+      {
+        "name": "XIAgenda",
+        "notes_file": "discovery/sources/xiagenda.md"
+      },
+      {
+        "name": "Dentidesk",
+        "notes_file": "discovery/sources/dentidesk.md"
+      },
+      {
+        "name": "Doctocliq",
+        "notes_file": "discovery/sources/doctocliq.md"
+      }
+    ],
+    "research_notes": [
+      "discovery/sources/_auditoria.md",
+      "discovery/sources/_hipotesis-mercado.md",
+      "discovery/sources/_normativa.md",
+      "discovery/sources/_recordatorios.md",
+      "discovery/sources/_obras-sociales.md"
+    ],
+    "problema": "Errores y superposición de turnos en consultorios odontológicos; secundario: tiempo perdido coordinando citas. Planteo del autor, no cuantificado externamente para Argentina ni validado con consultorios.",
+    "usuarios": [
+      "Administrador del consultorio: configura consultorio, profesionales, prestaciones y horarios",
+      "Secretaría/recepción: gestiona turnos y datos básicos de pacientes",
+      "Odontólogo: consulta su agenda",
+      "Paciente: reserva y consulta sus turnos (inclusión en MVP sujeta a priorización)"
+    ],
+    "casos_de_uso": [
+      "CU1: administrador configura consultorio, profesionales, prestaciones con duración y horarios",
+      "CU2: secretaría gestiona turnos y el sistema impide superposiciones (núcleo)",
+      "CU3: odontólogo consulta agenda diaria y semanal",
+      "CU4: secretaría registra y edita datos básicos del paciente",
+      "CU5: paciente reserva, consulta o cancela turnos (candidato con riesgo de alcance)"
+    ],
+    "funcionalidades_necesarias": [
+      "Multi-consultorio con aislamiento de datos",
+      "Roles por consultorio",
+      "Profesionales con horarios configurables",
+      "Prestaciones con duración",
+      "Bloqueos de agenda (vacaciones, ausencias, feriados)",
+      "Validación anti-superposición",
+      "Gestión de turnos con estados",
+      "Ficha básica del paciente",
+      "Aviso de privacidad o consentimiento",
+      "Reserva online por el paciente: candidata al MVP con riesgo de alcance (D4)"
+    ],
+    "funcionalidades_opcionales": [
+      "Email como posible función de comunicación, sin promesa sobre ausentismo (D5)",
+      "Recordatorios automáticos por WhatsApp o SMS (segunda etapa, D7)",
+      "Lista de espera",
+      "Seña con Mercado Pago",
+      "Sincronización con Google Calendar"
+    ],
+    "fuera_de_alcance": [
+      "Historia clínica y odontograma (D3)",
+      "Verificación de cobertura, facturación e integraciones con obras sociales/prepagas (D8)"
+    ],
+    "reglas_de_negocio": [
+      "R1: la duración del turno depende de la prestación",
+      "R2: un profesional no puede tener turnos superpuestos",
+      "R3: horarios de atención configurables por profesional",
+      "R4: bloqueo de vacaciones, ausencias, feriados y otros períodos",
+      "R5: anticipación mínima de cancelación configurable; 24 h como valor inicial, sin evidencia de estándar",
+      "R6: registros de pacientes por consultorio, aislados (opción A)"
+    ],
+    "integraciones": [
+      "Ninguna obligatoria en el MVP núcleo",
+      "Email transaccional opcional (Resend y Amazon SES verificados; Brevo pendiente)",
+      "WhatsApp Cloud API y SMS en segunda etapa (tarifas para Argentina pendientes)",
+      "Enlaces wa.me sin API como propuesta por validar (D6)"
+    ],
+    "restricciones": [
+      "Desarrollador individual",
+      "Sin stack impuesto por la cátedra; debe justificarse en la KB",
+      "Entrega del martes sin definir (avance o trabajo completo)",
+      "MVP académico de alcance realista",
+      "Ley 25.326 (datos de salud sensibles, seguridad, art. 25 tratamiento por cuenta de terceros); Ley 26.529 solo si hay historia clínica. No es asesoramiento legal"
+    ],
+    "riesgos": [
+      "RG1: alcance frente a plazo (principal)",
+      "RG2: problema no validado en el mercado",
+      "RG3: fuga de datos entre consultorios",
+      "RG4: la prestación o motivo del turno podría ser dato de salud",
+      "RG5: responsabilidades legales entre consultorio y SaaS sin definir",
+      "RG6: el email puede no impactar en la asistencia",
+      "RG7: datos de competidores provienen de resúmenes automáticos y pueden cambiar"
+    ],
+    "preguntas_abiertas": [
+      "1. ¿Avance o trabajo completo el martes?",
+      "2. ¿Es posible entrevistar consultorios reales?",
+      "3. ¿Paciente con cuenta propia o como invitado?",
+      "4. ¿Obra social/prepaga como dato opcional o fuera del MVP? ¿Tratamiento de cobertura?",
+      "5. ¿Reserva online en el MVP o en segunda etapa?",
+      "6. ¿La prestación o motivo del turno es dato sensible?",
+      "7. ¿El SaaS es encargado, responsable o ambos?",
+      "8. ¿Quién inscribe la base ante la AAIP y si aplica \"destinada a proporcionar informes\"?",
+      "9. ¿La excepción del art. 5 inc. 2 d) alcanza datos sensibles?",
+      "10. ¿Hosting fuera de Argentina es transferencia internacional y con qué requisitos?",
+      "11. ¿Los recordatorios requieren consentimiento específico u opción de baja?",
+      "12. H1: ¿cómo coordinan hoy los turnos los consultorios?",
+      "13. H2: ¿tasa de ausentismo odontológico en Argentina?",
+      "14. ¿Los pacientes prefieren reservar solos o vía secretaría?",
+      "15. ¿Proporción de pacientes sin email o que prefieren WhatsApp?",
+      "16. ¿Disposición a pagar de un consultorio?",
+      "17. Tarifa, verificación de negocio y consentimiento de WhatsApp para Argentina",
+      "18. Tarifa de SMS en Argentina",
+      "19. ¿XIAgenda sigue operativo? ¿Dentalink, Dentidesk y Doctocliq operan en Argentina?"
+    ],
+    "decisiones": [
+      "D1: problema central superposición y errores de agenda (planteo del autor; mercado sin validar)",
+      "D2: multi-consultorio con registros de pacientes aislados (decidida por el autor)",
+      "D3: historia clínica y odontograma fuera de alcance (decidida por el autor)",
+      "D4: reserva online candidata al MVP con riesgo de alcance (propuesta; se revisa en roadmap)",
+      "D5: email como posible función de comunicación sin promesa sobre ausentismo (propuesta)",
+      "D6: lista diaria para secretaría con enlaces wa.me (propuesta por validar)",
+      "D7: WhatsApp API y SMS en segunda etapa (propuesta)",
+      "D8: facturación, cobertura e integraciones con obras sociales fuera; dato de obra social abierto (parcialmente decidida)",
+      "D9: tratar la prestación del turno como dato sensible hasta opinión legal (propuesta)"
+    ],
+    "informe": {
+      "generated_at": "2026-10-12",
+      "informe_md": "docs/discovery/informe-discovery.md",
+      "informe_pdf": "docs/discovery/informe-discovery.pdf",
+      "checklist_md": "docs/discovery/checklist-discovery.md",
+      "checklist_json": "docs/discovery/checklist-discovery.json",
+      "fuentes": "docs/discovery/fuentes.md",
+      "metodologia": "docs/discovery/metodologia/criterios-puntuacion.md",
+      "matriz": "docs/discovery/metodologia/matriz-resultado.md",
+      "fichas_dir": "discovery/sources/fichas",
+      "sistemas_evaluados": 18,
+      "verificacion_personal": "5 de 10 fuentes verificadas y confirmadas por el autor (2026-10-12; fila 2 AgendaPro ampliada el 2026-10-13); 5 pendientes",
+      "estado": "Versión final — Discovery aprobado por el autor",
+      "updated_at": "2026-10-13"
+    }
+  },
+  "kb": {
+    "created_by": "kb-creator",
+    "source": "ingest",
+    "generated_at": "2026-10-13",
+    "discovery": {
+      "problem": "Superposición y errores de agenda en consultorios odontológicos",
+      "system_type": "saas_multi_tenant",
+      "domain": "Gestión de turnos odontológicos",
+      "scale": "multi_tenant",
+      "stack": "React + Vite (frontend); FastAPI + SQLAlchemy 2 + Alembic + Pydantic (backend); PostgreSQL; pytest + Vitest; Docker Compose local",
+      "needs_infra": true
+    },
+    "alcance": "v0.1 — MVP académico",
+    "fuentes": [
+      "discovery/discovery.md",
+      "docs/discovery/informe-discovery.md",
+      "docs/discovery/checklist-discovery.md",
+      "docs/discovery/fuentes.md",
+      "docs/discovery/metodologia/",
+      ".active-orchestrator-state.json#discovery"
+    ],
+    "files": [
+      "knowledge-base/01_vision_y_objetivos.md",
+      "knowledge-base/02_descripcion_general.md",
+      "knowledge-base/03_actores_y_roles.md",
+      "knowledge-base/04_modelo_de_datos.md",
+      "knowledge-base/05_reglas_de_negocio.md",
+      "knowledge-base/06_funcionalidades.md",
+      "knowledge-base/07_flujos_principales.md",
+      "knowledge-base/08_arquitectura_propuesta.md",
+      "knowledge-base/09_decisiones_y_supuestos.md",
+      "knowledge-base/10_preguntas_abiertas.md",
+      "knowledge-base/README.md"
+    ],
+    "approved_at": "2026-10-13",
+    "estado": "Aprobada por el autor (versión corregida tras auditoría de 16 observaciones)"
+  },
+  "roadmap": {
+    "created_by": "roadmap-generator",
+    "source": "CHANGES.md",
+    "changes": [
+      "C-01",
+      "C-02",
+      "C-03",
+      "C-04",
+      "C-05",
+      "C-06",
+      "C-07",
+      "C-08",
+      "C-09",
+      "C-10",
+      "C-11",
+      "C-12",
+      "C-13",
+      "C-14",
+      "C-15",
+      "C-16",
+      "C-17",
+      "C-18",
+      "C-19",
+      "C-20",
+      "C-21",
+      "C-22",
+      "C-23",
+      "C-24",
+      "C-25",
+      "C-26",
+      "C-27",
+      "C-28",
+      "C-29",
+      "C-30"
+    ]
+  }
+}

@@ -1,0 +1,193 @@
+{
+  "slug": "bilog",
+  "nombre": "Bilog",
+  "empresa": "Bilog (razón social: No evidenciado)",
+  "pais_origen": "Argentina",
+  "url_oficial": "https://bilog.com.ar/",
+  "nivel": 1,
+  "nivel_justificacion": "Sitio .com.ar con gestión de obras sociales, liquidaciones, facturación electrónica, soporte local y clientes argentinos nombrados (Marion Odontología en Córdoba, Oroño Dent en Santa Fe); cifras del fabricante.",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/bilog.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/",
+      "cita": "Turnos, profesionales, consultorios y confirmaciones automáticas.",
+      "nota": "Agenda multiprofesional y por consultorio; /soluciones/consultorios: \"Programá, reprogramá y sincronizá los horarios de tu equipo\""
+    },
+    "C1.2": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND en home, funcionalidades ni docs/schedule (solo una etiqueta de navegación \"ausencias por profesional\" sin descripción)"
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/reminders-whatsapp/",
+      "cita": "Con este pack podés seleccionar un día de tu agenda y enviarle el recordatorio de turno a todos los pacientes"
+    },
+    "C1.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/reminders-whatsapp/",
+      "cita": "El mensaje incluye opciones para que confirmen o cancelen su turno. Si responden, la agenda se actualiza automáticamente."
+    },
+    "C1.5": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND en ninguna página consultada"
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/",
+      "cita": "Ficha, odontograma, tratamientos y evolución digital.",
+      "nota": "App Store: \"Descarga de PDF de prestaciones y odontograma\""
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/soluciones/consultorios",
+      "cita": "Historia clínica y anamnesis completa"
+    },
+    "C2.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/",
+      "cita": "Presupuestos, pagos y liquidaciones de obras sociales.",
+      "nota": "Docs: \"Cómo crear un nuevo presupuesto\" (solo navegación); plan de tratamiento aparte no descripto"
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/",
+      "cita": "Asistencia sobre estudios radiográficos",
+      "nota": "App Store: \"Análisis de imágenes radiológicas odontológicas en IAngela asistente IA\""
+    },
+    "C2.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/recipes/",
+      "cita": "Recetá medicamentos, indicá estudios o derivaciones, y enviáselos a tus pacientes por WhatsApp o mail.",
+      "nota": "Consentimiento informado: NOT FOUND"
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/reminders-whatsapp/",
+      "cita": "Con este pack podés seleccionar un día de tu agenda y enviarle el recordatorio de turno a todos los pacientes",
+      "nota": "/soluciones/consultorios: \"Enviá recordatorios por WhatsApp\""
+    },
+    "C3.2": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado",
+      "nota": "Degradado el 2026-10-12 por evidencia débil (decisión del autor). La cita describe facturación electrónica pero no menciona ARCA/AFIP (C4.3 se mantiene). Evidencia anterior: https://bilog.com.ar/electronic-invoice/"
+    },
+    "C3.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/",
+      "cita": "Prestaciones, obras sociales, liquidaciones, reportes y KPIs.",
+      "nota": "Reconfirmado; clínicas: \"Liquidá honorarios por profesional y prestaciones de obras sociales desde el mismo sistema\""
+    },
+    "C3.5": {
+      "estado": "no-evidenciado",
+      "nota": "/developers/: \"Hoy Bilog no ofrece una API pública documentada\"; SMS contradictorio (llms.txt lo menciona, la página de recordatorios y la docs solo WhatsApp/email); sin calendario externo"
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/soluciones/clinicas",
+      "cita": "Cada pago queda imputado al tratamiento del paciente",
+      "nota": "Docs/administration: \"Registra y controla los ingresos y egresos del día\""
+    },
+    "C4.2": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND (schedule-online no menciona seña ni pago online)"
+    },
+    "C4.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/electronic-invoice/",
+      "cita": "Podés emitir distintos tipos de comprobantes: facturas, recibos, notas de débito y notas de crédito"
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/soluciones/clinicas",
+      "cita": "Producción, ausentismo y evolución de la clínica en reportes claros",
+      "nota": "Home: \"liquidaciones, reportes y KPIs\""
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/soluciones/clinicas",
+      "cita": "Liquidá honorarios por profesional y prestaciones de obras sociales desde el mismo sistema",
+      "nota": "Se confirma liquidación de honorarios; el soporte multisede de la ficha previa NO se reconfirmó (clínicas y docs: NOT FOUND)"
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/schedule-online/",
+      "cita": "Con un simple QR, tus pacientes reservan turnos al instante.",
+      "nota": "/soluciones/consultorios: \"Con la agenda online tus pacientes reservan cuando quieran\""
+    },
+    "C5.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/",
+      "cita": "reservan, cancelan y consultan sus turnos online.",
+      "nota": "Reprogramación autogestionada no confirmada; el mensaje de WhatsApp permite confirmar o cancelar"
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/reminders-whatsapp/",
+      "cita": "El mensaje incluye opciones para que confirmen o cancelen su turno. Si responden, la agenda se actualiza automáticamente.",
+      "nota": "Canal WhatsApp hacia el paciente"
+    },
+    "C5.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/schedule-online/",
+      "cita": "Podrás compartirla escaneando un código QR o enviando un link por WhatsApp u otro canal digital.",
+      "nota": "Página/enlace de reserva compartible; marketplace no evidenciado"
+    },
+    "C5.5": {
+      "estado": "no-evidenciado",
+      "nota": "Docs/patient-care: encuesta de satisfacción marcada \"Muy pronto\" (próximamente); App Mobile es para profesionales, no pacientes"
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/soluciones/clinicas",
+      "cita": "Cada uno ve lo que le corresponde: Definí qué puede ver y hacer cada perfil",
+      "nota": "Funcionalidades: \"Definí roles y permisos para cada usuario\""
+    },
+    "C6.2": {
+      "estado": "no-evidenciado",
+      "nota": "Degradado el 2026-10-12 por evidencia débil (decisión del autor). La frase \"queda trazabilidad de los movimientos\" no describe un registro de auditoría. Evidencia anterior: https://bilog.com.ar/soluciones/clinicas"
+    },
+    "C6.3": {
+      "estado": "no-evidenciado",
+      "nota": "Sin oración que describa exportación; fragmentos sueltos en App Store (\"Descarga en hoja de cálculo\", \"Descarga de PDF\") insuficientes; docs/reports: exportar NOT FOUND"
+    },
+    "C6.4": {
+      "estado": "no-evidenciado",
+      "nota": "Solo la frase suelta \"Seguridad de información sensible\" en funcionalidades; no describe medidas"
+    },
+    "C6.5": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND (Ley 25.326 no aparece); \"cumple con la normativa vigente\" se refiere a recetas"
+    },
+    "C7.1": {
+      "estado": "no-evidenciado",
+      "nota": "Planes: Lite y Premium \"se cotizan por usuario\"; sin montos publicados"
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/planes/index.md",
+      "cita": "Freemium - Sin costo",
+      "nota": "Plan gratuito listado entre tres planes (Freemium, Lite, Premium); no se menciona prueba gratuita"
+    },
+    "C7.3": {
+      "estado": "no-evidenciado",
+      "nota": "Pago mensual con tarjeta, transferencia o depósito y soporte local, pero sin precio en ARS publicado"
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://bilog.com.ar/planes/index.md",
+      "cita": "Te ayudamos con la migración de tu información y la configuración inicial, sin costo",
+      "nota": "/solicitar-demo: \"Te acompañamos en la migración de tus datos\"; \"Soporte local en español\""
+    },
+    "C7.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://apps.apple.com/ar/app/bilog-gesti%C3%B3n-odontol%C3%B3gica/id1554140449",
+      "cita": "Calificación 3,5 de 5 con 15 reseñas en la App Store de Argentina",
+      "nota": "Reseñas de usuarios en tienda (fuente independiente); cifras y testimonios de /clientes/ son del fabricante"
+    }
+  }
+}

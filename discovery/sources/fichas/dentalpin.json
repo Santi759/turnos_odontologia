@@ -1,0 +1,136 @@
+{
+  "slug": "dentalpin",
+  "nombre": "DentalPin",
+  "empresa": "Dentaltix (respaldo declarado)",
+  "pais_origen": "No evidenciado",
+  "url_oficial": "https://dentalpin.com",
+  "nivel_justificacion": "Internacional; interfaz en español pero sin presencia argentina ni latinoamericana evidenciada.",
+  "nivel": 3,
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/dentalpin.md",
+  "items": {
+    "C1.1": {
+      "estado": "no-evidenciado"
+    },
+    "C1.2": {
+      "estado": "no-evidenciado"
+    },
+    "C1.3": {
+      "estado": "no-evidenciado"
+    },
+    "C1.4": {
+      "estado": "no-evidenciado"
+    },
+    "C1.5": {
+      "estado": "no-evidenciado"
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://github.com/dentalpin/dentalpin",
+      "nota": "Interactive dental chart (odontograma)"
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalpin.com",
+      "nota": "Historia clínica y registros de paciente"
+    },
+    "C2.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://github.com/dentalpin/dentalpin",
+      "nota": "Presupuestos con flujo de aprobación"
+    },
+    "C2.4": {
+      "estado": "no-evidenciado"
+    },
+    "C2.5": {
+      "estado": "no-evidenciado"
+    },
+    "C3.1": {
+      "estado": "no-evidenciado"
+    },
+    "C3.2": {
+      "estado": "no-evidenciado"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado"
+    },
+    "C3.4": {
+      "estado": "no-evidenciado"
+    },
+    "C3.5": {
+      "estado": "no-evidenciado"
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://github.com/dentalpin/dentalpin",
+      "nota": "Invoice generation y payment tracking"
+    },
+    "C4.2": {
+      "estado": "no-evidenciado"
+    },
+    "C4.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalpin.com",
+      "nota": "Soporta Verifactu (España) y GST (India)"
+    },
+    "C4.4": {
+      "estado": "no-evidenciado"
+    },
+    "C4.5": {
+      "estado": "no-evidenciado"
+    },
+    "C5.1": {
+      "estado": "no-evidenciado"
+    },
+    "C5.2": {
+      "estado": "no-evidenciado"
+    },
+    "C5.3": {
+      "estado": "no-evidenciado"
+    },
+    "C5.4": {
+      "estado": "no-evidenciado"
+    },
+    "C5.5": {
+      "estado": "no-evidenciado"
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://github.com/dentalpin/dentalpin",
+      "nota": "RBAC con cinco tipos de usuario"
+    },
+    "C6.2": {
+      "estado": "no-evidenciado"
+    },
+    "C6.3": {
+      "estado": "no-evidenciado"
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://github.com/dentalpin/dentalpin",
+      "nota": "Tokenización de identificadores antes del LLM; código público auditable"
+    },
+    "C6.5": {
+      "estado": "no-evidenciado"
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalpin.com",
+      "nota": "Núcleo gratuito permanente sin cargos por puesto"
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalpin.com",
+      "nota": "Demo en navegador sin instalación y núcleo gratuito"
+    },
+    "C7.3": {
+      "estado": "no-evidenciado"
+    },
+    "C7.4": {
+      "estado": "no-evidenciado"
+    },
+    "C7.5": {
+      "estado": "no-evidenciado"
+    }
+  }
+}

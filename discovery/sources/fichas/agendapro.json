@@ -1,0 +1,173 @@
+{
+  "slug": "agendapro",
+  "nombre": "AgendaPro",
+  "empresa": "AgendaPro SpA (razón social citada en los Términos y Condiciones oficiales)",
+  "pais_origen": "Chile (indicio: los términos aplican ley chilena a comercios fuera de México y Colombia)",
+  "url_oficial": "https://agendapro.com/ar/dental/software-odontologico",
+  "nivel": 1,
+  "nivel_justificacion": "Sitio /ar con planes en ARS (Individual 13.900, Básico 33.900, Premium 44.900, Pro 314.900 por mes, IVA incluido), página de pago online \"#1 en Argentina\" y contacto telefónico de Buenos Aires en la home /ar (2026-10-12).",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/agendapro.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/planes",
+      "nota": "Planes Básico/Premium/Pro para hasta 20 profesionales; Individual para 1."
+    },
+    "C1.2": {
+      "estado": "no-evidenciado",
+      "nota": "Solo \"Agenda online con turnos configurables\" (frase vaga); sin duración por prestación ni bloqueos descriptos."
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/dental/software-odontologico",
+      "nota": "\"Recordatorios automáticos por WhatsApp, SMS o email\"."
+    },
+    "C1.4": {
+      "estado": "no-evidenciado",
+      "nota": "No se describe que el paciente confirme/rechace respondiendo; solo recordatorios."
+    },
+    "C1.5": {
+      "estado": "no-evidenciado",
+      "nota": "Sin lista de espera ni recall descriptos en lo leído."
+    },
+    "C2.1": {
+      "estado": "no-evidenciado",
+      "nota": "Odontograma no figura en la landing odontológica."
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/dental/software-odontologico",
+      "nota": "\"Historia clínica odontológica completa, editable según tu protocolo\"; registro de tratamientos y evolución."
+    },
+    "C2.3": {
+      "estado": "no-evidenciado",
+      "nota": "Plan Premium menciona \"cotizaciones\" sin precisar uso odontológico; no se infiere presupuestos de tratamiento."
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/dental/software-odontologico",
+      "nota": "\"Adjuntá imágenes y estudios directamente en la ficha del paciente\"."
+    },
+    "C2.5": {
+      "estado": "no-evidenciado",
+      "nota": "Consentimiento informado y recetas no figuran."
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/dental/software-odontologico",
+      "nota": "Recordatorios por WhatsApp; add-on de WhatsApp desde ARS 7.900/mes en https://agendapro.com/ar/planes",
+      "cita": "Recordatorios automáticos por WhatsApp, SMS o email"
+    },
+    "C3.2": {
+      "estado": "no-evidenciado",
+      "nota": "Las páginas oficiales abiertas hablan de \"pasarela de pagos\" sin nombrar Mercado Pago."
+    },
+    "C3.3": {
+      "estado": "no-evidenciado",
+      "nota": "Planes: la facturación electrónica figura como \"Próximamente\"."
+    },
+    "C3.4": {
+      "estado": "no-evidenciado",
+      "nota": "Obras sociales no figuran."
+    },
+    "C3.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/planes",
+      "nota": "Plan Pro incluye \"Acceso a API\" e integración con Google Analytics/Meta Pixel; la home /ar menciona Google My Business.",
+      "cita": "Acceso a API"
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/pago-online",
+      "nota": "\"Cada venta y reservación se vincula al sistema y a la caja de AgendaPro\"; registro de pagos en la agenda."
+    },
+    "C4.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/pago-online",
+      "nota": "Links de pago y señas o pago total anticipado configurables por servicio."
+    },
+    "C4.3": {
+      "estado": "no-evidenciado",
+      "nota": "Marcada como \"Próximamente\" en planes."
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/planes",
+      "nota": "CRM y reportes en todos los planes; reportes de comisiones."
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/planes",
+      "nota": "Comisiones e inventario (Básico); multi-ubicación mencionada en la home /ar."
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/dental/software-odontologico",
+      "nota": "Agenda online 24/7."
+    },
+    "C5.2": {
+      "estado": "no-evidenciado",
+      "nota": "No se describe cancelación/reprogramación autogestionada en páginas oficiales abiertas."
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/dental/software-odontologico",
+      "nota": "WhatsApp, SMS y email."
+    },
+    "C5.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/planes",
+      "nota": "Plan Individual incluye presencia en marketplace de AgendaPro."
+    },
+    "C5.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/planes",
+      "nota": "Plan Premium menciona encuestas de satisfacción."
+    },
+    "C6.1": {
+      "estado": "no-evidenciado",
+      "nota": "Roles y permisos no descriptos."
+    },
+    "C6.2": {
+      "estado": "no-evidenciado",
+      "nota": "Auditoría no descripta."
+    },
+    "C6.3": {
+      "estado": "no-evidenciado",
+      "nota": "Exportación no descripta."
+    },
+    "C6.4": {
+      "estado": "no-evidenciado",
+      "nota": "Medidas de seguridad no descriptas en páginas abiertas."
+    },
+    "C6.5": {
+      "estado": "no-evidenciado",
+      "nota": "Los Términos y Condiciones no se leen como declaración de cumplimiento de Ley 25.326/GDPR."
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/planes",
+      "nota": "Precios en ARS por mes, IVA incluido según la página."
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/planes",
+      "nota": "Prueba gratis en todos los planes."
+    },
+    "C7.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar/planes",
+      "nota": "Precios en ARS en sitio /ar."
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://agendapro.com/ar",
+      "nota": "Home /ar: soporte 24/7, onboarding, academia online y centro de ayuda."
+    },
+    "C7.5": {
+      "estado": "no-evidenciado",
+      "nota": "JoinSecret: sin reseñas; App Store (spa): sin calificaciones suficientes; GetApp devolvió 403."
+    }
+  }
+}

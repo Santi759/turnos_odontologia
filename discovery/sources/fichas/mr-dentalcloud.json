@@ -1,0 +1,168 @@
+{
+  "slug": "mr-dentalcloud",
+  "nombre": "MR Dental Cloud",
+  "empresa": "MR Desarrollos Inteligentes",
+  "pais_origen": "México",
+  "url_oficial": "https://www.mrdentalcloud.com",
+  "nivel": 2,
+  "nivel_justificacion": "Software mexicano en español que declara cobertura \"México y Latinoamérica\"; precios en MXN, NOM-004 y CFDI; sin mención de Argentina en las páginas abiertas.",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/mr-dentalcloud.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Agenda multi-doctor (\"intelligent appointment system\")."
+    },
+    "C1.2": {
+      "estado": "no-evidenciado"
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Recordatorios por WhatsApp a las 24, 12, 4 y 1 hora."
+    },
+    "C1.4": {
+      "estado": "no-evidenciado",
+      "nota": "Degradado el 2026-10-12 (decisión del autor). Uniformidad con Clinicorp C1.4: \"confirmaciones automáticas\" no describe que el paciente confirme o rechace respondiendo; la ficha no tiene cita del mecanismo. Evidencia anterior: https://www.mrdentalcloud.com"
+    },
+    "C1.5": {
+      "estado": "no-evidenciado"
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Odontograma interactivo para adultos y pediátrico."
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Expediente clínico digital conforme NOM-004 con firma digital."
+    },
+    "C2.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Planes de tratamiento por fases y generación de presupuestos."
+    },
+    "C2.4": {
+      "estado": "no-evidenciado"
+    },
+    "C2.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Recetas electrónicas digitales; expediente con firma digital."
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Integración WhatsApp (confirmaciones, recordatorios, API de WhatsApp).",
+      "cita": "Recordatorios automáticos por WhatsApp, SMS y Email"
+    },
+    "C3.2": {
+      "estado": "no-evidenciado"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado"
+    },
+    "C3.4": {
+      "estado": "no-evidenciado"
+    },
+    "C3.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Sincronización con Google Calendar; pagos PayPal; API de WhatsApp."
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Sección de pagos y facturación; no describe caja ni cuenta corriente."
+    },
+    "C4.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Procesamiento de pagos en línea (PayPal)."
+    },
+    "C4.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Facturación CFDI (México)."
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Dashboards financieros y operativos."
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Inventario con reorden automático; 1-2 clínicas según plan (página de precios)."
+    },
+    "C5.1": {
+      "estado": "no-evidenciado"
+    },
+    "C5.2": {
+      "estado": "no-evidenciado"
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Comunicación con el paciente por WhatsApp."
+    },
+    "C5.4": {
+      "estado": "no-evidenciado"
+    },
+    "C5.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "App móvil dedicada para pacientes."
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Control de acceso basado en roles."
+    },
+    "C6.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Registros de auditoría inmutables.",
+      "cita": "bitácora de auditoría inmutable"
+    },
+    "C6.3": {
+      "estado": "no-evidenciado",
+      "nota": "Degradado el 2026-10-12 por evidencia débil (decisión del autor). La cita \"exportable a PDF\" se refiere a la historia clínica en PDF, no a exportación de datos. Evidencia anterior: https://www.mrdentalcloud.com"
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Cifrado AES-256 y respaldos diarios automáticos."
+    },
+    "C6.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Declara NOM-004-SSA3-2012, COFEPRIS, HIPAA/GDPR \"ready\"."
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com/precios",
+      "nota": "Básico $350 MXN/mes, Premium $750 MXN/mes."
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com/precios",
+      "nota": "Prueba gratuita de 30 días sin tarjeta."
+    },
+    "C7.3": {
+      "estado": "no-evidenciado"
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.mrdentalcloud.com/precios",
+      "nota": "Soporte de migración gratuito desde otro software; soporte por email o prioritario."
+    },
+    "C7.5": {
+      "estado": "afirmacion-comercial",
+      "url": "https://www.mrdentalcloud.com",
+      "nota": "Cifras del propio sitio: 100+ clínicas, 5.0/5 con 130+ reseñas; sin verificación independiente."
+    }
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "slug": "doctocliq",
+  "nombre": "Doctocliq",
+  "empresa": "Zolupro S.A.C. (desarrollador de la app en App Store)",
+  "pais_origen": "Perú (indicio: forma societaria S.A.C., teléfono de ventas +51 y términos para Perú)",
+  "url_oficial": "https://www.doctocliq.com",
+  "nivel": 2,
+  "nivel_justificacion": "Latinoamérica en español (precios en USD; Ecuador, México, Perú y LatAm); la página de planes indica que Argentina no figura entre los países soportados y no hay precio en ARS ni clientes argentinos verificables (2026-10-12).",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/doctocliq.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "Plan Avanzado admite múltiples doctores; los planes inferiores son de 1 usuario doctor."
+    },
+    "C1.2": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "Recordatorios por WhatsApp (50/100/150 por mes según plan); la home agrega email y SMS (verificado 2026-10-10)."
+    },
+    "C1.4": {
+      "estado": "no-evidenciado",
+      "nota": "No se describe confirmación por respuesta del paciente."
+    },
+    "C1.5": {
+      "estado": "no-evidenciado",
+      "nota": "Lista de espera no figura."
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "\"Odontograma y Periodontograma\" entre las funcionalidades."
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "Historia clínica digital (verificado 2026-10-10) y datos de pacientes en la app."
+    },
+    "C2.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "La home menciona \"Presupuestos\" y planes de tratamiento; la app de iOS menciona creación de presupuestos."
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "Periodontograma y almacenamiento de imágenes/archivos (1 GB, 5 GB, 20 GB según plan en https://www.doctocliq.com/planes)."
+    },
+    "C2.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "\"Consentimientos informados\" desde el plan Básico."
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "\"Recordatorios automáticos por WhatsApp\"."
+    },
+    "C3.2": {
+      "estado": "no-evidenciado",
+      "nota": "Mercado Pago no figura."
+    },
+    "C3.3": {
+      "estado": "no-evidenciado",
+      "nota": "Facturación electrónica solo para Ecuador, Perú, México y Colombia; Argentina no figura."
+    },
+    "C3.4": {
+      "estado": "no-evidenciado",
+      "nota": "Obras sociales no figuran."
+    },
+    "C3.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "\"API para citas\" en el módulo de marketing del plan Avanzado; email y SMS en la home."
+    },
+    "C4.1": {
+      "estado": "no-evidenciado",
+      "nota": "Caja/cuenta corriente solo figuraba en la nota previa de un agregador; no se reconfirmó en páginas oficiales."
+    },
+    "C4.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "\"Cobro a pacientes por link de pago\" en el plan Avanzado."
+    },
+    "C4.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "Facturación electrónica disponible en Perú, México, Ecuador y Colombia (no Argentina)."
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "\"Estadísticas y reportes\" en el plan Avanzado."
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "\"Sucursales o sedes adicionales\" en el plan Avanzado (adicional)."
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "\"Link de agendamiento\"."
+    },
+    "C5.2": {
+      "estado": "no-evidenciado",
+      "nota": "No se describe cancelación/reprogramación autogestionada."
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "WhatsApp (y email/SMS)."
+    },
+    "C5.4": {
+      "estado": "no-evidenciado",
+      "nota": "Sin perfil público ni marketplace descriptos."
+    },
+    "C5.5": {
+      "estado": "no-evidenciado",
+      "nota": "La app de iOS es para el profesional; sin portal del paciente ni encuestas descriptas."
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "\"Diferentes niveles de acceso y permisos según rol\"."
+    },
+    "C6.2": {
+      "estado": "no-evidenciado",
+      "nota": "No figura."
+    },
+    "C6.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com",
+      "nota": "La home dice que el usuario puede \"descargar toda tu información\" (frase sin detalle de formato; la página de planes no la lista)."
+    },
+    "C6.4": {
+      "estado": "no-evidenciado",
+      "nota": "Cifrado y copias de seguridad no descriptos; la app declara no recopilar datos, lo que no describe la seguridad del servicio."
+    },
+    "C6.5": {
+      "estado": "no-evidenciado",
+      "nota": "No se mencionan Ley 25.326, GDPR ni HIPAA."
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "Precios en USD por mes: Individual 19, Basic 29, Advanced 49; plan Free USD 0."
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "Plan gratuito y prueba de 7 días sin tarjeta (2026-10-10)."
+    },
+    "C7.3": {
+      "estado": "no-evidenciado",
+      "nota": "Precios en USD y Argentina no figura entre los países soportados."
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.doctocliq.com/planes",
+      "nota": "Soporte vía chat desde el plan Básico; migración de datos no descripta."
+    },
+    "C7.5": {
+      "estado": "no-evidenciado",
+      "nota": "La ficha de App Store no tiene calificaciones suficientes; \"+4000 doctores\" es cifra del fabricante."
+    }
+  }
+}

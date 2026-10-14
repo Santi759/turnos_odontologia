@@ -1,0 +1,553 @@
+{
+  "fecha": "2026-10-12",
+  "base": "discovery/discovery.md (aprobado 2026-10-10)",
+  "informe": "docs/discovery/informe-discovery.md",
+  "verificacion_personal": {
+    "verificadas": [
+      1,
+      2,
+      3,
+      6,
+      7
+    ],
+    "pendientes": [
+      4,
+      5,
+      8,
+      9,
+      10
+    ],
+    "verificado_por": "Santiago Chepilla",
+    "fechas": "2026-10-12; fila 2 (AgendaPro) ampliada el 2026-10-13",
+    "agendapro": "Confirmados precios (ARS 13.900 / 33.900 / 44.900 / 314.900 por mes), «IVA incluido» y facturación electrónica «Próximamente». Demás condiciones comerciales sin verificar.",
+    "capturas": "No aportadas",
+    "detalle": "docs/discovery/informe-discovery.md, sección 8.1"
+  },
+  "problema": {
+    "planteo_autor": "Errores y superposición de turnos en consultorios odontológicos; problema secundario: tiempo perdido coordinando citas.",
+    "evidencia_externa": "Ninguna; el problema no está cuantificado para Argentina.",
+    "validacion": "No se realizaron entrevistas con consultorios. Pendiente (pregunta 2).",
+    "evidencia_mercado_2026_10_12": "Órbita formula públicamente la prevención de superposición por sillón (interpretación: el problema es reconocido por al menos un fabricante). Ver informe, sección 5.2."
+  },
+  "usuarios": [
+    {
+      "rol": "Administrador del consultorio",
+      "descripcion": "Configura el consultorio, los profesionales, las prestaciones y los horarios."
+    },
+    {
+      "rol": "Secretaría o recepción",
+      "descripcion": "Crea, modifica, cancela y consulta turnos; administra datos básicos de pacientes."
+    },
+    {
+      "rol": "Odontólogo",
+      "descripcion": "Consulta su agenda y la información necesaria para atender sus turnos."
+    },
+    {
+      "rol": "Paciente",
+      "descripcion": "Reserva y consulta sus propios turnos. Su inclusión en el MVP depende del punto 5."
+    }
+  ],
+  "casos_de_uso": [
+    {
+      "id": "CU1",
+      "texto": "Como administrador, configuro el consultorio, los profesionales, las prestaciones con su duración y los horarios de atención, para que la agenda refleje la realidad del consultorio."
+    },
+    {
+      "id": "CU2",
+      "texto": "Como secretaría, creo, modifico, cancelo y consulto turnos, y el sistema impide superposiciones, para evitar errores de agenda (núcleo del problema)."
+    },
+    {
+      "id": "CU3",
+      "texto": "Como odontólogo, consulto mi agenda diaria y semanal, para organizar la atención."
+    },
+    {
+      "id": "CU4",
+      "texto": "Como secretaría, registro y edito los datos básicos de un paciente, para asociarlo a sus turnos."
+    },
+    {
+      "id": "CU5",
+      "texto": "Como paciente, reservo un turno en un horario libre y consulto o cancelo mis reservas, para no depender de llamar (con riesgo de alcance, ver punto 5)."
+    }
+  ],
+  "competidores": [
+    {
+      "orden": 1,
+      "slug": "orbita",
+      "nombre": "Órbita (Hi Órbita)",
+      "nivel": 1,
+      "total": 74,
+      "cobertura": 0.71,
+      "ficha": "discovery/sources/orbita.md",
+      "ficha_json": "discovery/sources/fichas/orbita.json"
+    },
+    {
+      "orden": 2,
+      "slug": "bilog",
+      "nombre": "Bilog",
+      "nivel": 1,
+      "total": 66,
+      "cobertura": 0.63,
+      "ficha": "discovery/sources/bilog.md",
+      "ficha_json": "discovery/sources/fichas/bilog.json"
+    },
+    {
+      "orden": 3,
+      "slug": "dentaltec",
+      "nombre": "DentalTec",
+      "nivel": 1,
+      "total": 57,
+      "cobertura": 0.57,
+      "ficha": "discovery/sources/dentaltec.md",
+      "ficha_json": "discovery/sources/fichas/dentaltec.json"
+    },
+    {
+      "orden": 4,
+      "slug": "odonto-ar",
+      "nombre": "Odonto.ar",
+      "nivel": 1,
+      "total": 56,
+      "cobertura": 0.57,
+      "ficha": "discovery/sources/odonto-ar.md",
+      "ficha_json": "discovery/sources/fichas/odonto-ar.json"
+    },
+    {
+      "orden": 5,
+      "slug": "agendapro",
+      "nombre": "AgendaPro",
+      "nivel": 1,
+      "total": 48,
+      "cobertura": 0.51,
+      "ficha": "discovery/sources/agendapro.md",
+      "ficha_json": "discovery/sources/fichas/agendapro.json"
+    },
+    {
+      "orden": 6,
+      "slug": "doctoralia-argentina",
+      "nombre": "Doctoralia Pro (Argentina)",
+      "nivel": 1,
+      "total": 41.5,
+      "cobertura": 0.49,
+      "ficha": "discovery/sources/doctoralia-argentina.md",
+      "ficha_json": "discovery/sources/fichas/doctoralia-argentina.json"
+    },
+    {
+      "orden": 7,
+      "slug": "turnito",
+      "nombre": "Turnito",
+      "nivel": 1,
+      "total": 34.5,
+      "cobertura": 0.4,
+      "ficha": "discovery/sources/turnito.md",
+      "ficha_json": "discovery/sources/fichas/turnito.json"
+    },
+    {
+      "orden": 8,
+      "slug": "odeen",
+      "nombre": "Odeen",
+      "nivel": 2,
+      "total": 70,
+      "cobertura": 0.71,
+      "ficha": "discovery/sources/odeen.md",
+      "ficha_json": "discovery/sources/fichas/odeen.json"
+    },
+    {
+      "orden": 9,
+      "slug": "dentalink",
+      "nombre": "Dentalink",
+      "nivel": 2,
+      "total": 66,
+      "cobertura": 0.6,
+      "ficha": "discovery/sources/dentalink.md",
+      "ficha_json": "discovery/sources/fichas/dentalink.json"
+    },
+    {
+      "orden": 10,
+      "slug": "mr-dentalcloud",
+      "nombre": "MR Dental Cloud",
+      "nivel": 2,
+      "total": 62,
+      "cobertura": 0.66,
+      "ficha": "discovery/sources/mr-dentalcloud.md",
+      "ficha_json": "discovery/sources/fichas/mr-dentalcloud.json"
+    },
+    {
+      "orden": 11,
+      "slug": "doctocliq",
+      "nombre": "Doctocliq",
+      "nivel": 2,
+      "total": 59,
+      "cobertura": 0.57,
+      "ficha": "discovery/sources/doctocliq.md",
+      "ficha_json": "discovery/sources/fichas/doctocliq.json"
+    },
+    {
+      "orden": 12,
+      "slug": "clinicorp",
+      "nombre": "Clinicorp",
+      "nivel": 2,
+      "total": 49,
+      "cobertura": 0.49,
+      "ficha": "discovery/sources/clinicorp.md",
+      "ficha_json": "discovery/sources/fichas/clinicorp.json"
+    },
+    {
+      "orden": 13,
+      "slug": "dentalsoft-plus",
+      "nombre": "DentalSoft+",
+      "nivel": 2,
+      "total": 42,
+      "cobertura": 0.43,
+      "ficha": "discovery/sources/dentalsoft-plus.md",
+      "ficha_json": "discovery/sources/fichas/dentalsoft-plus.json"
+    },
+    {
+      "orden": 14,
+      "slug": "dentidesk",
+      "nombre": "Dentidesk",
+      "nivel": 2,
+      "total": 25,
+      "cobertura": 0.26,
+      "ficha": "discovery/sources/dentidesk.md",
+      "ficha_json": "discovery/sources/fichas/dentidesk.json"
+    },
+    {
+      "orden": 15,
+      "slug": "xiagenda",
+      "nombre": "XIAgenda",
+      "nivel": 2,
+      "total": 21,
+      "cobertura": 0.43,
+      "ficha": "discovery/sources/xiagenda.md",
+      "ficha_json": "discovery/sources/fichas/xiagenda.json"
+    },
+    {
+      "orden": 16,
+      "slug": "dentally",
+      "nombre": "Dentally",
+      "nivel": 3,
+      "total": 72,
+      "cobertura": 0.66,
+      "ficha": "discovery/sources/dentally.md",
+      "ficha_json": "discovery/sources/fichas/dentally.json"
+    },
+    {
+      "orden": 17,
+      "slug": "nexhealth",
+      "nombre": "NexHealth",
+      "nivel": 3,
+      "total": 28,
+      "cobertura": 0.31,
+      "ficha": "discovery/sources/nexhealth.md",
+      "ficha_json": "discovery/sources/fichas/nexhealth.json"
+    },
+    {
+      "orden": 18,
+      "slug": "dentalpin",
+      "nombre": "DentalPin",
+      "nivel": 3,
+      "total": 24,
+      "cobertura": 0.26,
+      "ficha": "discovery/sources/dentalpin.md",
+      "ficha_json": "discovery/sources/fichas/dentalpin.json"
+    }
+  ],
+  "funcionalidades_necesarias": [
+    "Multi-consultorio con datos aislados",
+    "Roles por consultorio",
+    "Profesionales con horarios",
+    "Prestaciones con duración",
+    "Bloqueos de agenda",
+    "Validación que impide superposiciones",
+    "Gestión de turnos con estados",
+    "Ficha básica del paciente",
+    "Aviso de privacidad o consentimiento"
+  ],
+  "funcionalidades_opcionales": {
+    "candidato_mvp_con_riesgo": [
+      "Reserva online por el paciente (D4)"
+    ],
+    "segunda_etapa": [
+      "Recordatorios automáticos por WhatsApp o SMS (D7)",
+      "Lista de espera",
+      "Seña con Mercado Pago",
+      "Sincronización con Google Calendar"
+    ],
+    "comunicacion": [
+      "Email como posible función de comunicación, sin afirmar que reduce el ausentismo (D5)",
+      "Lista diaria para secretaría con enlaces wa.me (D6, por validar)"
+    ]
+  },
+  "fuera_de_alcance": [
+    "Historia clínica y odontograma (D3)",
+    "Verificación de cobertura, facturación e integraciones con obras sociales o prepagas (D8)"
+  ],
+  "reglas_de_negocio": [
+    {
+      "id": "R1",
+      "texto": "La duración de un turno depende de la prestación odontológica."
+    },
+    {
+      "id": "R2",
+      "texto": "Un profesional no puede tener dos turnos superpuestos."
+    },
+    {
+      "id": "R3",
+      "texto": "Cada profesional tiene horarios de atención configurables."
+    },
+    {
+      "id": "R4",
+      "texto": "Se pueden bloquear vacaciones, ausencias, feriados y otros períodos sin atención."
+    },
+    {
+      "id": "R5",
+      "texto": "La anticipación mínima para cancelar o reprogramar es configurable; 24 horas como valor inicial, sin evidencia de que sea una regla universal del mercado."
+    },
+    {
+      "id": "R6",
+      "texto": "Cada consultorio tiene sus propios registros de pacientes, aislados del resto (opción A, decisión del autor)."
+    }
+  ],
+  "integraciones": {
+    "mvp_nucleo": "No hay integraciones externas obligatorias en el MVP núcleo.",
+    "evidencia_recordatorios": [
+      "SMS: revisión Cochrane CD007458 (8 ensayos, 6.615 participantes), asistencia 67,8 % sin recordatorio frente a 78,6 % con SMS; calidad baja a moderada.",
+      "Ensayo argentino CAIS 2016: SMS y llamada mostraron efecto; el email solo no mostró diferencia significativa.",
+      "WhatsApp: sin resultados verificados (IECS sin resultados publicados)."
+    ],
+    "costos": [
+      "Resend: 3.000 emails por mes gratis, máximo 100 por día.",
+      "Amazon SES: USD 0,10 a 0,16 por cada 1.000 emails.",
+      "WhatsApp Cloud API: cobro por mensaje entregado desde el 1/7/2025; tarifa para Argentina pendiente.",
+      "SMS: tarifa en Argentina pendiente."
+    ],
+    "evidencia_mercado_2026_10_12": "Mercado Pago 1 de 18 (Turnito), ARCA 1 de 18 (DentalTec), WhatsApp 13 de 18, recordatorios automáticos 15 de 18 (fuente oficial). Ver informe, secciones 3 y 5."
+  },
+  "restricciones": {
+    "proyecto": [
+      "Trabajo individual.",
+      "La cátedra no impone stack; la elección se justificará en la Knowledge Base.",
+      "Entrega del martes sin definir (avance o trabajo completo).",
+      "Prioridades: investigación rigurosa, documentación sólida y MVP realista."
+    ],
+    "normativas": [
+      "Ley 25.326: datos de salud sensibles (art. 2); calidad de datos (art. 4); consentimiento (art. 5); nadie obligado a dar datos sensibles (art. 7); establecimientos y profesionales de salud (art. 8); seguridad y confidencialidad (arts. 9 y 10); acceso en 10 días corridos (art. 14); servicios por cuenta de terceros (art. 25); inscripción de bases (arts. 21 y 24).",
+      "Decreto 1558/2001: el tratamiento por encargo debe regularse por contrato.",
+      "Ley 26.529: copia de la historia clínica en 48 horas (art. 14) y conservación mínima de 10 años (art. 18).",
+      "Excluir la historia clínica del MVP no elimina las obligaciones de protección de datos personales ni las relativas a datos de salud."
+    ],
+    "aviso": "No es asesoramiento legal."
+  },
+  "riesgos": [
+    {
+      "id": "RG1",
+      "texto": "Alcance frente a plazo: multi-consultorio más reserva online para una sola persona con fecha incierta (riesgo principal)."
+    },
+    {
+      "id": "RG2",
+      "texto": "El problema planteado no está validado en el mercado."
+    },
+    {
+      "id": "RG3",
+      "texto": "Fuga de datos entre consultorios por consultas que no filtran por consultorio."
+    },
+    {
+      "id": "RG4",
+      "texto": "La prestación o el motivo del turno podría constituir un dato de salud (cuestión legal abierta, ver pregunta 6)."
+    },
+    {
+      "id": "RG5",
+      "texto": "Distribución de responsabilidades legales entre consultorio y proveedor SaaS sin definir (ver preguntas 7, 8 y 10)."
+    },
+    {
+      "id": "RG6",
+      "texto": "Las comunicaciones por email pueden no tener impacto en la asistencia."
+    },
+    {
+      "id": "RG7",
+      "texto": "Los datos de competidores provienen de resúmenes automáticos y pueden cambiar."
+    }
+  ],
+  "preguntas_abiertas": [
+    {
+      "n": 1,
+      "grupo": "Proyecto",
+      "texto": "¿Qué se presenta el martes: un avance o el trabajo completo?"
+    },
+    {
+      "n": 2,
+      "grupo": "Proyecto",
+      "texto": "¿Es posible entrevistar consultorios reales? Si no, las hipótesis de mercado se documentan como no validadas."
+    },
+    {
+      "n": 3,
+      "grupo": "Producto",
+      "texto": "¿El paciente reserva con cuenta propia o como invitado?"
+    },
+    {
+      "n": 4,
+      "grupo": "Producto",
+      "texto": "¿La obra social o prepaga se incluye como dato opcional o queda fuera del MVP? ¿Se necesita algún tratamiento de la cobertura?"
+    },
+    {
+      "n": 5,
+      "grupo": "Producto",
+      "texto": "¿La reserva online entra al MVP o pasa a la segunda etapa? Se decide con el roadmap."
+    },
+    {
+      "n": 6,
+      "grupo": "Legal",
+      "texto": "¿La prestación o el motivo del turno es un dato sensible?"
+    },
+    {
+      "n": 7,
+      "grupo": "Legal",
+      "texto": "¿El SaaS actúa como encargado del tratamiento, como responsable o como ambos?"
+    },
+    {
+      "n": 8,
+      "grupo": "Legal",
+      "texto": "¿Quién debe inscribir la base ante la AAIP, y una agenda de pacientes encuadra en bases \"destinadas a proporcionar informes\"?"
+    },
+    {
+      "n": 9,
+      "grupo": "Legal",
+      "texto": "¿La excepción del art. 5, inciso 2 d) de la Ley 25.326 alcanza a datos sensibles?"
+    },
+    {
+      "n": 10,
+      "grupo": "Legal",
+      "texto": "¿Alojar los datos fuera de Argentina constituye transferencia internacional, y con qué requisitos?"
+    },
+    {
+      "n": 11,
+      "grupo": "Legal",
+      "texto": "¿Los recordatorios requieren consentimiento específico u opción de baja?"
+    },
+    {
+      "n": 12,
+      "grupo": "Hipótesis de mercado",
+      "texto": "H1: ¿cómo coordinan hoy los consultorios los turnos (WhatsApp, teléfono, papel, planillas)?"
+    },
+    {
+      "n": 13,
+      "grupo": "Hipótesis de mercado",
+      "texto": "H2: ¿cuál es la tasa de ausentismo odontológico en Argentina? Sin dato local verificado."
+    },
+    {
+      "n": 14,
+      "grupo": "Hipótesis de mercado",
+      "texto": "¿Los pacientes prefieren reservar solos o a través de la secretaría?"
+    },
+    {
+      "n": 15,
+      "grupo": "Hipótesis de mercado",
+      "texto": "¿Qué proporción de pacientes no tiene email o prefiere WhatsApp?"
+    },
+    {
+      "n": 16,
+      "grupo": "Hipótesis de mercado",
+      "texto": "¿Cuánto estaría dispuesto a pagar un consultorio?"
+    },
+    {
+      "n": 17,
+      "grupo": "Datos por verificar",
+      "texto": "Tarifa de WhatsApp para Argentina, verificación de negocio y condiciones de consentimiento."
+    },
+    {
+      "n": 18,
+      "grupo": "Datos por verificar",
+      "texto": "Tarifa de SMS en Argentina."
+    },
+    {
+      "n": 19,
+      "grupo": "Datos por verificar",
+      "texto": "¿XIAgenda sigue operativo? ¿Dentalink, Dentidesk y Doctocliq operan en Argentina?"
+    }
+  ],
+  "preguntas_del_estudio_de_mercado": "Ver docs/discovery/informe-discovery.md, sección 7.",
+  "decisiones": [
+    {
+      "id": "D1",
+      "texto": "Problema central: superposición y errores de agenda.",
+      "estado": "Planteo del autor; mercado sin validar."
+    },
+    {
+      "id": "D2",
+      "texto": "SaaS multi-consultorio con registros de pacientes aislados (opción A).",
+      "estado": "Decidida por el autor."
+    },
+    {
+      "id": "D3",
+      "texto": "Historia clínica y odontograma fuera de alcance.",
+      "estado": "Decidida por el autor."
+    },
+    {
+      "id": "D4",
+      "texto": "Reserva online como candidata al MVP, con riesgo de alcance explícito.",
+      "estado": "Propuesta; se revisa en el roadmap."
+    },
+    {
+      "id": "D5",
+      "texto": "Email como posible función de comunicación, sin promesa sobre el ausentismo.",
+      "estado": "Propuesta."
+    },
+    {
+      "id": "D6",
+      "texto": "Lista diaria para secretaría con enlaces wa.me.",
+      "estado": "Propuesta por validar."
+    },
+    {
+      "id": "D7",
+      "texto": "WhatsApp API y SMS en la segunda etapa.",
+      "estado": "Propuesta."
+    },
+    {
+      "id": "D8",
+      "texto": "Facturación, cobertura e integraciones con obras sociales fuera del MVP; inclusión del dato de obra social abierta.",
+      "estado": "Parcialmente decidida."
+    },
+    {
+      "id": "D9",
+      "texto": "Tratar la prestación del turno como dato sensible hasta tener opinión legal.",
+      "estado": "Propuesta de criterio prudente, no conclusión jurídica."
+    }
+  ],
+  "tensiones_detectadas": "Con D3, D4, D7 y D8; no son decisiones. Ver docs/discovery/informe-discovery.md, sección 6.3.",
+  "fuentes": [
+    "discovery/discovery.md",
+    "docs/discovery/informe-discovery.md",
+    "docs/discovery/checklist-discovery.md",
+    "docs/discovery/fuentes.md",
+    "docs/discovery/metodologia/criterios-puntuacion.md",
+    "docs/discovery/metodologia/plantilla-ficha.md",
+    "docs/discovery/metodologia/puntuar.js",
+    "docs/discovery/metodologia/matriz-resultado.md",
+    "discovery/sources/_auditoria.md",
+    "discovery/sources/_reconfirmacion-nivel1.md",
+    "discovery/sources/_reconfirmacion-latam.md",
+    "discovery/sources/_degradaciones-evidencia-debil.md",
+    "discovery/sources/_hipotesis-mercado.md",
+    "discovery/sources/_normativa.md",
+    "discovery/sources/_recordatorios.md",
+    "discovery/sources/_obras-sociales.md",
+    "discovery/sources/orbita.md",
+    "discovery/sources/bilog.md",
+    "discovery/sources/dentaltec.md",
+    "discovery/sources/odonto-ar.md",
+    "discovery/sources/agendapro.md",
+    "discovery/sources/doctoralia-argentina.md",
+    "discovery/sources/turnito.md",
+    "discovery/sources/odeen.md",
+    "discovery/sources/dentalink.md",
+    "discovery/sources/mr-dentalcloud.md",
+    "discovery/sources/doctocliq.md",
+    "discovery/sources/clinicorp.md",
+    "discovery/sources/dentalsoft-plus.md",
+    "discovery/sources/dentidesk.md",
+    "discovery/sources/xiagenda.md",
+    "discovery/sources/dentally.md",
+    "discovery/sources/nexhealth.md",
+    "discovery/sources/dentalpin.md",
+    "discovery/sources/fichas/"
+  ]
+}

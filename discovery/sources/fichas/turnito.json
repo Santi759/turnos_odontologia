@@ -1,0 +1,169 @@
+{
+  "slug": "turnito",
+  "nombre": "Turnito",
+  "empresa": "No evidenciado",
+  "pais_origen": "Argentina (según iProUP; la home se presenta como plataforma de Argentina)",
+  "url_oficial": "https://turnito.app",
+  "nivel": 1,
+  "nivel_justificacion": "Precios en ARS en turnito.app, foco declarado en Argentina, cobro con Mercado Pago y nota de prensa que la describe como startup argentina (2026-10-12).",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/turnito.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Soporte multi-agenda (\"multi-calendar\"), de 3 agendas en el plan gratuito a ilimitadas según plan."
+    },
+    "C1.2": {
+      "estado": "no-evidenciado",
+      "nota": "La home habla de \"agendas y servicios configurables\" sin precisar duración por prestación ni bloqueos."
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Recordatorios automáticos por WhatsApp, email y Telegram."
+    },
+    "C1.4": {
+      "estado": "no-evidenciado",
+      "nota": "No se describe confirmación/rechazo del paciente respondiendo."
+    },
+    "C1.5": {
+      "estado": "no-evidenciado",
+      "nota": "Sin lista de espera ni recall descriptos."
+    },
+    "C2.1": {
+      "estado": "no-evidenciado",
+      "nota": "El propio blog de Turnito lo presenta como agenda \"sin la carga de un software clínico pesado\"; sin odontograma."
+    },
+    "C2.2": {
+      "estado": "no-evidenciado",
+      "nota": "Solo \"historial de clientes\"/gestión de archivos en plan Pro; no se describe historia clínica."
+    },
+    "C2.3": {
+      "estado": "no-evidenciado",
+      "nota": "No figura."
+    },
+    "C2.4": {
+      "estado": "no-evidenciado",
+      "nota": "No figura."
+    },
+    "C2.5": {
+      "estado": "no-evidenciado",
+      "nota": "No figura."
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Restituido el 2026-10-12 (decisión del autor): la tabla de verificación de discovery/sources/turnito.md registra como CONFIRMADO-OFICIAL \"Recordatorios por WhatsApp, email y Telegram\" en https://turnito.app, la misma evidencia que respalda C1.3. La degradación anterior se basó en una cita mal elegida (cupo de mensajes)."
+    },
+    "C3.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Cobros con MercadoPago, PayPal y Talo; transferencia manual/automática.",
+      "cita": "Cobros con MercadoPago, PayPal y transferencia bancaria"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado",
+      "nota": "Facturación ARCA no figura."
+    },
+    "C3.4": {
+      "estado": "no-evidenciado",
+      "nota": "Obras sociales no figuran en la home ni en el blog."
+    },
+    "C3.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Google Calendar sincronizado en ambos sentidos, enlaces Google Meet y Telegram.",
+      "cita": "Los turnos se sincronizan con Google Calendar en los dos sentidos"
+    },
+    "C4.1": {
+      "estado": "no-evidenciado",
+      "nota": "No se describe caja ni cuenta corriente del cliente."
+    },
+    "C4.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Cobro de señas online al reservar, con comisión de 5% a 0% según plan."
+    },
+    "C4.3": {
+      "estado": "no-evidenciado",
+      "nota": "No figura."
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Reportes mencionados en el pase del 2026-10-10 (historial de clientes, reportes)."
+    },
+    "C4.5": {
+      "estado": "no-evidenciado",
+      "nota": "No se describe multisede, inventario ni honorarios."
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Reservas online sin registro del cliente."
+    },
+    "C5.2": {
+      "estado": "no-evidenciado",
+      "nota": "No se describe cancelación/reprogramación autogestionada."
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "WhatsApp, email y Telegram."
+    },
+    "C5.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Landing de autoagendamiento/formularios de reserva personalizables; marketplace: No evidenciado."
+    },
+    "C5.5": {
+      "estado": "no-evidenciado",
+      "nota": "Sin portal ni encuestas descriptos."
+    },
+    "C6.1": {
+      "estado": "no-evidenciado",
+      "nota": "Roles y permisos no descriptos."
+    },
+    "C6.2": {
+      "estado": "no-evidenciado",
+      "nota": "No figura."
+    },
+    "C6.3": {
+      "estado": "no-evidenciado",
+      "nota": "No figura."
+    },
+    "C6.4": {
+      "estado": "no-evidenciado",
+      "nota": "Los términos indican que el contenido puede transmitirse sin cifrar; no hay medidas de seguridad declaradas."
+    },
+    "C6.5": {
+      "estado": "no-evidenciado",
+      "nota": "Ley 25.326/GDPR no mencionadas en los términos abiertos."
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Precios en ARS publicados (más IVA)."
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Plan gratuito $0 con 100 reservas/mes."
+    },
+    "C7.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://turnito.app",
+      "nota": "Precios en ARS y foco en Argentina."
+    },
+    "C7.4": {
+      "estado": "no-evidenciado",
+      "nota": "Onboarding, migración o soporte en español no descriptos en lo leído (el sitio está en español)."
+    },
+    "C7.5": {
+      "estado": "terceros",
+      "url": "https://www.iproup.com/startups/63662-argentinos-crean-app-gratuita-para-que-pymes-y-comercios-no-pierdan-clientes",
+      "nota": "Nota de iProUP que la presenta como startup argentina con más de 40.000 usuarios activos (dato leído en el extracto de búsqueda; la página abierta llegó truncada; fecha no verificada). La calificación \"4,8 · 142 reseñas en Google\" de la home es del fabricante."
+    }
+  }
+}

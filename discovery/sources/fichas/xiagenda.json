@@ -1,0 +1,168 @@
+{
+  "slug": "xiagenda",
+  "nombre": "XIAgenda",
+  "empresa": "No evidenciado (el comparador nombra a \"Xima\" como proveedor técnico; no se confirma como razón social)",
+  "pais_origen": "No evidenciado",
+  "url_oficial": "https://xiagenda.com.ar",
+  "nivel": 2,
+  "nivel_justificacion": "Dominios oficiales sin resolver (ENOTFOUND, 2026-10-10 y 2026-10-12); solo un comparador (tercero) la describe como sistema \"para consultorios y centros de salud en Argentina\", con precios en USD. Presencia comercial en Argentina no comprobada por fuente oficial, por eso nivel 2 (podría subir a 1 si se verifica el sitio oficial).",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/xiagenda.md",
+  "items": {
+    "C1.1": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "\"Soporta múltiples profesionales por consultorio\"."
+    },
+    "C1.2": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C1.3": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "\"Envía recordatorios y pide confirmación para reducir el ausentismo\"."
+    },
+    "C1.4": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "Pide confirmación al paciente; el agente \"siempre repite los datos y pide confirmación antes de tocar la agenda\"."
+    },
+    "C1.5": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "\"Ofrece automáticamente los turnos liberados a pacientes en lista de espera\"."
+    },
+    "C2.1": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C2.2": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C2.3": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C2.4": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C2.5": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C3.1": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "Agente de IA que atiende por WhatsApp (plan Profesional en adelante), web y email."
+    },
+    "C3.2": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "Cobro de señas por Mercado Pago (plan Crecimiento según el comparador)."
+    },
+    "C3.3": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C3.4": {
+      "estado": "no-evidenciado",
+      "nota": "El comparador solo dice que la IA \"interpreta obras sociales y preferencias\" al pedir turno; no describe padrones, autorizaciones ni registro. No se infiere."
+    },
+    "C3.5": {
+      "estado": "no-evidenciado",
+      "nota": "Instagram/Messenger son canales de atención, no integraciones de calendario, SMS ni API; no descriptos."
+    },
+    "C4.1": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C4.2": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "Señas por Mercado Pago."
+    },
+    "C4.3": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C4.4": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "El comparador menciona reportes avanzados en el plan Crecimiento."
+    },
+    "C4.5": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C5.1": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "El paciente agenda hablando con el agente de IA por WhatsApp, web o email."
+    },
+    "C5.2": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "El agente \"agenda, reprograma y cancela turnos en lenguaje natural\"."
+    },
+    "C5.3": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "WhatsApp, Instagram y Messenger según plan."
+    },
+    "C5.4": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C5.5": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C6.1": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C6.2": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C6.3": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C6.4": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C6.5": {
+      "estado": "no-evidenciado",
+      "nota": "No descripto."
+    },
+    "C7.1": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "Esencial USD 15/mes por profesional; Profesional y Crecimiento sin precio confirmado (un extracto de búsqueda sugirió USD 20 para Profesional, no verificado en la página abierta)."
+    },
+    "C7.2": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "Prueba gratuita sin tarjeta."
+    },
+    "C7.3": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "Descrita como sistema para consultorios de Argentina, pero con precio en USD; no hay oferta comercial verificable en sitio oficial."
+    },
+    "C7.4": {
+      "estado": "terceros",
+      "url": "https://www.comparasoftware.com/xiagenda",
+      "nota": "Interfaz en español, configuración guiada paso a paso y \"Xima se encarga de todo lo técnico\"."
+    },
+    "C7.5": {
+      "estado": "no-evidenciado",
+      "nota": "El comparador indica \"Aún sin calificación\"; sin casos con nombre."
+    }
+  }
+}

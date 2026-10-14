@@ -1,0 +1,161 @@
+{
+  "slug": "odonto-ar",
+  "nombre": "Odonto.ar",
+  "empresa": "Odonto.ar (razón social: No evidenciado)",
+  "pais_origen": "Argentina",
+  "url_oficial": "https://odonto.ar/",
+  "nivel": 1,
+  "nivel_justificacion": "Precios publicados con equivalente en ARS, sede en Córdoba, remisión a Ley 25.326 y a la AAIP; carga de planes de cobertura de salud locales.",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/odonto-ar.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Por día, semana o mes. Arrastrás un turno para moverlo y el equipo entero ve lo mismo."
+    },
+    "C1.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Cada motivo ocupa los minutos que ocupa de verdad."
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "desde la agenda armás el recordatorio de WhatsApp y lo mandás en un clic."
+    },
+    "C1.4": {
+      "estado": "no-evidenciado"
+    },
+    "C1.5": {
+      "estado": "no-evidenciado"
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Odontograma interactivo con historial completo"
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Historial clinico completo"
+    },
+    "C2.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Presupuestos y tratamientos"
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Radiografias y estudios"
+    },
+    "C2.5": {
+      "estado": "no-evidenciado"
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "nota": "Recordatorio de WhatsApp",
+      "cita": "Recordatorios de WhatsApp en un clic"
+    },
+    "C3.2": {
+      "estado": "no-evidenciado"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado"
+    },
+    "C3.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "nota": "\"Cargá los planes una vez\": cálculo automático de cobertura; no se menciona padrón ni autorización",
+      "cita": "Obras sociales sin calculadora / Cálculo automático de cobertura / Gestion de obras sociales"
+    },
+    "C3.5": {
+      "estado": "no-evidenciado"
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Total Tratamientos$ 1.638.870,00 / Total Pagado$ 1.508.950,00 / Saldo Pendiente$ 129.920,00 (Panel de finanzas, Historial Financiero)"
+    },
+    "C4.2": {
+      "estado": "no-evidenciado"
+    },
+    "C4.3": {
+      "estado": "no-evidenciado"
+    },
+    "C4.4": {
+      "estado": "no-evidenciado"
+    },
+    "C4.5": {
+      "estado": "no-evidenciado"
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Compartís un link. El paciente elige motivo, día y hora"
+    },
+    "C5.2": {
+      "estado": "no-evidenciado",
+      "nota": "Degradado el 2026-10-12 por evidencia débil (decisión del autor). La cita no indica que la cancelación o reprogramación la haga el paciente. Evidencia anterior: https://odonto.ar/"
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Funciona igual en tu computadora, tablet o celular / recordatorio de WhatsApp"
+    },
+    "C5.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Compartís un link. El paciente elige motivo, día y hora"
+    },
+    "C5.5": {
+      "estado": "no-evidenciado"
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Permisos por rol y por módulo: vos decidís"
+    },
+    "C6.2": {
+      "estado": "no-evidenciado"
+    },
+    "C6.3": {
+      "estado": "no-evidenciado"
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/privacidad",
+      "cita": "Cifrado de datos en tránsito (HTTPS/TLS) / cifrado en reposo y en tránsito / Políticas de seguridad a nivel de fila (RLS) / Validación de sesiones concurrentes"
+    },
+    "C6.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/privacidad",
+      "cita": "Supresión: Solicitar la eliminación de tus datos (derechos según Ley 25.326)"
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Individual $29 USD/mes; Profesional $49 USD/mes; Clínica $99 USD/mes"
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Empezá gratis 30 días. Después elegí el plan"
+    },
+    "C7.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "$29 USD/mes (~$44.950 ARS), $49 USD/mes (~$75.950 ARS), $99 USD/mes (~$153.450 ARS)"
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://odonto.ar/",
+      "cita": "Importá pacientes y precios desde Excel con un wizard de 3 pasos."
+    },
+    "C7.5": {
+      "estado": "no-evidenciado"
+    }
+  }
+}

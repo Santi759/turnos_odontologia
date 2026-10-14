@@ -1,0 +1,174 @@
+{
+  "slug": "dentalink",
+  "nombre": "Dentalink",
+  "empresa": "Engenis SpA (según la home oficial)",
+  "pais_origen": "Chile",
+  "url_oficial": "https://www.softwaredentalink.com",
+  "nivel": 2,
+  "nivel_justificacion": "Latinoamérica en español con oficinas declaradas en Chile, Colombia, México y España; la home y la página de planes no mencionan Argentina, no hay precio en ARS ni sitio /ar abierto ni clientes argentinos verificables (2026-10-12).",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/dentalink.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/experiencia-de-pacientes/agenda",
+      "nota": "Vista global/semanal/diaria por sillón y profesional (verificado 2026-10-10)."
+    },
+    "C1.2": {
+      "estado": "no-evidenciado",
+      "nota": "La página de agenda solo dice \"Configura los tiempos específicos de atención de cada odontólogo\" (por profesional, no por prestación); sin bloqueos/ausencias descriptos."
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/experiencia-de-pacientes/agenda",
+      "nota": "\"Envía las notificaciones de recordatorios de cita por WhatsApp y/o email\"."
+    },
+    "C1.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/experiencia-de-pacientes/confirmaciones-automaticas-de-citas",
+      "nota": "El paciente puede confirmar, reprogramar o cancelar; el sistema muestra \"quién confirmó\"."
+    },
+    "C1.5": {
+      "estado": "no-evidenciado",
+      "nota": "No se describe lista de espera ni recall en las páginas leídas."
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/planes",
+      "nota": "Odontograma incluido en el plan Esencial según la página de planes."
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/planes",
+      "nota": "\"Agenda e historia clínica digital\" en Esencial."
+    },
+    "C2.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/planes",
+      "nota": "Presupuestos en Esencial; módulo de ortodoncia en Titanium."
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com",
+      "nota": "La home menciona periodontograma y radiografía panorámica / módulo RX (resumen automático de la página)."
+    },
+    "C2.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com",
+      "nota": "La home menciona consentimientos informados con firma electrónica. Además el help center indica que el usuario clínico puede generar recetas (articles/9493280)."
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/experiencia-de-pacientes/agenda",
+      "nota": "WhatsApp como canal de recordatorios y confirmación."
+    },
+    "C3.2": {
+      "estado": "no-evidenciado",
+      "nota": "Mercado Pago no figura en las páginas leídas."
+    },
+    "C3.3": {
+      "estado": "no-evidenciado",
+      "nota": "No se evidencia facturación ARCA/AFIP; el help center lista facturación electrónica para otros países (Colombia, boletas Chile) pero sin Argentina."
+    },
+    "C3.4": {
+      "estado": "no-evidenciado",
+      "nota": "La home menciona \"Seguros\" sin detalle; no se infiere obras sociales argentinas."
+    },
+    "C3.5": {
+      "estado": "no-evidenciado",
+      "nota": "Sin API pública ni calendario externo descriptos en lo leído."
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/planes",
+      "nota": "Control de pagos en Esencial; la home menciona control de caja."
+    },
+    "C4.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com",
+      "nota": "La home menciona \"Pagos presenciales y online\" y cobros en cuotas; no se verificó seña al reservar."
+    },
+    "C4.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://intercom.help/softwaredentalink/es",
+      "nota": "El centro de ayuda oficial tiene una colección \"Facturación Electrónica\" (9 artículos); los títulos hallados refieren a Colombia y boletas electrónicas, no a Argentina."
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/planes",
+      "nota": "Reportes de gestión y analítica de pacientes en Pro."
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/planes",
+      "nota": "Multisede, comisiones e inventario en Pro; la home menciona remuneraciones automáticas."
+    },
+    "C5.1": {
+      "estado": "no-evidenciado",
+      "nota": "La página de agenda leída el 2026-10-12 no describe reserva online del paciente (dato del pase previo no reconfirmado)."
+    },
+    "C5.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/experiencia-de-pacientes/confirmaciones-automaticas-de-citas",
+      "nota": "Confirmar, reprogramar o cancelar por el paciente."
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/experiencia-de-pacientes/confirmaciones-automaticas-de-citas",
+      "nota": "WhatsApp y email."
+    },
+    "C5.4": {
+      "estado": "no-evidenciado",
+      "nota": "Sin perfil público ni marketplace descriptos."
+    },
+    "C5.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com/planes",
+      "nota": "Encuestas en Titanium."
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://intercom.help/softwaredentalink/es/articles/9493280-configura-los-permisos-de-tus-usuarios",
+      "nota": "Tipos clínico/administrativo/admin y permisos individuales editables por el Admin, con perfiles copiables."
+    },
+    "C6.2": {
+      "estado": "no-evidenciado",
+      "nota": "El artículo de permisos no menciona registros de auditoría."
+    },
+    "C6.3": {
+      "estado": "no-evidenciado",
+      "nota": "La home menciona reportes en Excel, pero no exportación de pacientes/agenda/HC."
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com",
+      "nota": "Declara backups diarios y tráfico cifrado; la página de planes indica servidores en Amazon Web Services."
+    },
+    "C6.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com",
+      "nota": "Declara \"ISO 27001, HIPAA, GDPR\"; es declaración del fabricante sin certificado revisado. Ley 25.326 no mencionada."
+    },
+    "C7.1": {
+      "estado": "no-evidenciado",
+      "nota": "Precio no publicado (\"solicita tu cotización\")."
+    },
+    "C7.2": {
+      "estado": "no-evidenciado",
+      "nota": "Duración de prueba no indicada en planes; demo vía ventas."
+    },
+    "C7.3": {
+      "estado": "no-evidenciado",
+      "nota": "Sin precio ni oferta explícita para Argentina."
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.softwaredentalink.com",
+      "nota": "La home menciona asistencia de onboarding/migración; sitio y soporte (chat y email en todos los planes) en español."
+    },
+    "C7.5": {
+      "estado": "no-evidenciado",
+      "nota": "Capterra devolvió 403; no se abrió ninguna fuente independiente."
+    }
+  }
+}

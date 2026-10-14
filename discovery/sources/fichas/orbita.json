@@ -1,0 +1,194 @@
+{
+  "slug": "orbita",
+  "nombre": "Órbita (Hi Órbita)",
+  "empresa": "Órbita Global",
+  "pais_origen": "Argentina",
+  "url_oficial": "https://hiorbita.com/",
+  "nivel": 1,
+  "nivel_justificacion": "Empresa con domicilio en La Plata, clínicas argentinas nombradas (CMO Rosario, Ríe Dental), gestión de obras sociales; cifras y clientes provistos por el fabricante.",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/orbita.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/",
+      "nota": "Agenda por sillón",
+      "cita": "Agenda por sillón. Dos pacientes no pueden caer en el mismo sillón."
+    },
+    "C1.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/llena-la-agenda",
+      "cita": "Respeta la duración de cada práctica / Vacaciones y feriados se bloquean de una vez, no turno por turno"
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/llena-la-agenda",
+      "nota": "Recordatorios automáticos por WhatsApp",
+      "cita": "Primer aviso por WhatsApp 48 horas antes"
+    },
+    "C1.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/llena-la-agenda",
+      "cita": "El paciente confirma o avisa desde el mismo chat, sin llamar"
+    },
+    "C1.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/llena-la-agenda",
+      "nota": "Recontacto de pacientes y seguimiento automático",
+      "cita": "Lista de espera, para saber a quién llamar cuando se libera un hueco"
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/",
+      "nota": "Odontograma",
+      "cita": "ficha con odontograma"
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/",
+      "nota": "Historia clínica",
+      "cita": "Historia clínica completa"
+    },
+    "C2.3": {
+      "estado": "no-evidenciado",
+      "nota": "Degradado el 2026-10-12 por evidencia débil (decisión del autor). La cita es solo la palabra \"presupuestos\", sin descripción funcional. Evidencia anterior: https://hiorbita.com/"
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/",
+      "nota": "Periodontograma",
+      "cita": "El odontograma, el periodontograma"
+    },
+    "C2.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/la-consulta",
+      "cita": "Consentimientos informados con plantillas, en un clic."
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/",
+      "nota": "Órbita Chat sobre API oficial de Meta",
+      "cita": "El WhatsApp de la clínica por la API oficial, con plantillas aprobadas."
+    },
+    "C3.2": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND en home ni en /erp/funcionalidades y subpáginas abiertas"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND en home ni en /erp/funcionalidades y subpáginas abiertas"
+    },
+    "C3.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/el-dinero",
+      "nota": "Módulo de obras sociales",
+      "cita": "Lo que la obra social te debe, sin la planilla paralela."
+    },
+    "C3.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/",
+      "nota": "Integración con Dentalink y Benty",
+      "cita": "Sí: Dentalink y Benty. Son los dos con los que ya trabajamos."
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/el-dinero",
+      "nota": "Caja y cobranzas",
+      "cita": "Apertura, movimientos y cierre por sede"
+    },
+    "C4.2": {
+      "estado": "no-evidenciado",
+      "nota": "Degradado el 2026-10-12 por evidencia débil (decisión del autor). La cita \"Link de pago\" no indica cobro online ni seña al reservar. Evidencia anterior: https://hiorbita.com/erp/funcionalidades/el-dinero"
+    },
+    "C4.3": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND en home ni en /erp/funcionalidades y subpáginas abiertas"
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/el-dinero",
+      "cita": "Diez vistas armadas sobre los datos que ya cargás."
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/el-dinero",
+      "nota": "Liquidaciones",
+      "cita": "La liquidación de honorarios de cada profesional, siempre al día."
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/",
+      "nota": "El asistente agenda turnos por WhatsApp",
+      "cita": "Atiende, agenda y deriva las urgencias al profesional / Pedí tu turno por WhatsApp"
+    },
+    "C5.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/llena-la-agenda",
+      "cita": "Reprograma turnos en el mismo chat"
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/",
+      "nota": "WhatsApp",
+      "cita": "Órbita Chat recuerda el turno y vuelve a escribirle al que no responde."
+    },
+    "C5.4": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND en home ni en /erp/funcionalidades y subpáginas abiertas"
+    },
+    "C5.5": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND (solo \"App del asistente para iPhone\", app de personal, no del paciente)"
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/la-operacion",
+      "cita": "Cinco roles: dueño, gerente, profesional, recepción y asistente"
+    },
+    "C6.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades/la-consulta",
+      "cita": "Lo firmado queda registrado, y cada cambio también."
+    },
+    "C6.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/erp/funcionalidades",
+      "cita": "La exportación completa es un botón adentro del sistema",
+      "nota": "Restituido el 2026-10-12: la ausencia en /la-operacion (otra página) no constituye contradicción según la regla adoptada por el autor."
+    },
+    "C6.4": {
+      "estado": "no-evidenciado",
+      "nota": "Solo \"Los datos de la clínica, alojados en Amazon Web Services.\" (hosting, no medida de seguridad declarada)"
+    },
+    "C6.5": {
+      "estado": "no-evidenciado",
+      "nota": "NOT FOUND en home ni en /erp/funcionalidades y subpáginas abiertas"
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "nota": "Precio publicado en USD en /precios (relectura 2026-10-12)",
+      "url": "https://hiorbita.com/precios",
+      "cita": "Consultorio: USD 25 por mes / Clínica: USD 113 por mes"
+    },
+    "C7.2": {
+      "estado": "no-evidenciado",
+      "nota": "Sin prueba gratuita en /precios (\"6 meses gratis\" corresponde a otro producto, Turnero)"
+    },
+    "C7.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/precios",
+      "cita": "Se puede abonar en dólares, pesos o USDT."
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://hiorbita.com/",
+      "nota": "Implementación de 30 días con migración gratuita; soporte directo",
+      "cita": "Implementación en 30 días · Migración de datos sin cargo"
+    },
+    "C7.5": {
+      "estado": "afirmacion-comercial",
+      "url": "https://hiorbita.com/",
+      "nota": "Cifras y 13 clínicas citadas por el propio fabricante"
+    }
+  }
+}

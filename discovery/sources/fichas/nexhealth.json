@@ -1,0 +1,140 @@
+{
+  "slug": "nexhealth",
+  "nombre": "NexHealth",
+  "empresa": "NexHealth (razón social No evidenciado)",
+  "pais_origen": "Estados Unidos",
+  "url_oficial": "https://www.nexhealth.com",
+  "nivel_justificacion": "Internacional (EE. UU.); capa de experiencia del paciente sobre PMS; sin presencia argentina evidenciada.",
+  "nivel": 3,
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/nexhealth.md",
+  "items": {
+    "C1.1": {
+      "estado": "no-evidenciado"
+    },
+    "C1.2": {
+      "estado": "no-evidenciado"
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.nexhealth.com",
+      "nota": "Automated appointment reminders"
+    },
+    "C1.4": {
+      "estado": "no-evidenciado"
+    },
+    "C1.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.nexhealth.com",
+      "nota": "Waitlist y One-Click Recalls"
+    },
+    "C2.1": {
+      "estado": "no-evidenciado"
+    },
+    "C2.2": {
+      "estado": "no-evidenciado"
+    },
+    "C2.3": {
+      "estado": "no-evidenciado"
+    },
+    "C2.4": {
+      "estado": "no-evidenciado"
+    },
+    "C2.5": {
+      "estado": "no-evidenciado"
+    },
+    "C3.1": {
+      "estado": "no-evidenciado"
+    },
+    "C3.2": {
+      "estado": "no-evidenciado"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado"
+    },
+    "C3.4": {
+      "estado": "no-evidenciado"
+    },
+    "C3.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.nexhealth.com",
+      "nota": "API de registros de salud, SDKs, 70+ integraciones EHR"
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.nexhealth.com",
+      "nota": "Cobro a pacientes y seguimiento de cuentas por cobrar"
+    },
+    "C4.2": {
+      "estado": "no-evidenciado"
+    },
+    "C4.3": {
+      "estado": "no-evidenciado"
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.nexhealth.com",
+      "nota": "Panel de analítica/insights"
+    },
+    "C4.5": {
+      "estado": "no-evidenciado"
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.nexhealth.com",
+      "nota": "Online booking sincronizado con el EHR"
+    },
+    "C5.2": {
+      "estado": "no-evidenciado"
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.nexhealth.com",
+      "nota": "SMS y email"
+    },
+    "C5.4": {
+      "estado": "no-evidenciado"
+    },
+    "C5.5": {
+      "estado": "no-evidenciado"
+    },
+    "C6.1": {
+      "estado": "no-evidenciado"
+    },
+    "C6.2": {
+      "estado": "no-evidenciado"
+    },
+    "C6.3": {
+      "estado": "no-evidenciado"
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://help.nexhealth.com/en/articles/12754290-what-is-nexhealth-s-legal-and-security-compliance-status",
+      "nota": "SOC 2 compliant"
+    },
+    "C6.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://help.nexhealth.com/en/articles/12754290-what-is-nexhealth-s-legal-and-security-compliance-status",
+      "nota": "HIPAA fully compliant"
+    },
+    "C7.1": {
+      "estado": "no-evidenciado"
+    },
+    "C7.2": {
+      "estado": "no-evidenciado"
+    },
+    "C7.3": {
+      "estado": "no-evidenciado"
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.nexhealth.com",
+      "nota": "Onboarding con gerente asignado y soporte telefónico en EE. UU. (en inglés, no en español)"
+    },
+    "C7.5": {
+      "estado": "afirmacion-comercial",
+      "url": "https://www.nexhealth.com",
+      "nota": "20,000+ practices, cifra del fabricante"
+    }
+  }
+}

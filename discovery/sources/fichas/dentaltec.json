@@ -1,0 +1,188 @@
+{
+  "slug": "dentaltec",
+  "nombre": "DentalTec",
+  "empresa": "DentalTec (razón social: No evidenciado; el dominio de contacto sugiere Tándem Digital, no confirmado)",
+  "pais_origen": "Argentina",
+  "url_oficial": "https://web.dentaltec.com.ar/",
+  "nivel": 1,
+  "nivel_justificacion": "Sitio .com.ar con integración declarada a ARCA y a más de 15 obras sociales argentinas (OSDE, Swiss Medical, Jerárquicos, Sancor); clientes institucionales argentinos (CORA, COSJ, COM, COE) citados por el fabricante.",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/dentaltec.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "nota": "Agenda por profesional",
+      "cita": "Turnos configurables por odontólogo, día, horario e intervalos"
+    },
+    "C1.2": {
+      "estado": "no-evidenciado",
+      "nota": "Solo \"intervalos\" configurables; no describe duración por prestación ni bloqueos/feriados"
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "nota": "Recordatorios automáticos",
+      "cita": "Recordatorios automáticos por WhatsApp vinculados a la agenda"
+    },
+    "C1.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "nota": "Confirmación por respuesta del paciente",
+      "cita": "Confirmación de asistencia desde WhatsApp: el paciente responde"
+    },
+    "C1.5": {
+      "estado": "no-evidenciado",
+      "nota": "Lista de espera/recall no figura en 7 páginas oficiales"
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "cita": "Odontograma interactivo con seguimiento de tratamientos"
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "cita": "Historia clínica digital con registro temporal de cada intervención"
+    },
+    "C2.3": {
+      "estado": "no-evidenciado",
+      "nota": "Presupuestos/plan de tratamiento no figuran"
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "nota": "Gestión de imágenes adjuntas",
+      "cita": "Imágenes y documentación adjunta en el historial del paciente"
+    },
+    "C2.5": {
+      "estado": "no-evidenciado",
+      "nota": "Consentimiento y recetas no figuran"
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/",
+      "nota": "Integración oficial WhatsApp",
+      "cita": "Integración Oficial WhatsApp / Los recordatorios automáticos se envían directamente desde tu agenda DentalTec."
+    },
+    "C3.2": {
+      "estado": "no-evidenciado",
+      "nota": "No figura en 3 páginas oficiales abiertas (home, /funcionalidades, /software-odontologos-argentina)"
+    },
+    "C3.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/",
+      "nota": "Planillas con integración directa a ARCA (no se describe emisión de factura)",
+      "cita": "Facturación automática y ágil integrada con ARCA"
+    },
+    "C3.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/software-odontologos-argentina",
+      "nota": "Más de 15 obras sociales; validación instantánea",
+      "cita": "Integra más de 15 obras sociales"
+    },
+    "C3.5": {
+      "estado": "no-evidenciado",
+      "nota": "No figuran Google Calendar, SMS ni API en las páginas abiertas"
+    },
+    "C4.1": {
+      "estado": "no-evidenciado",
+      "nota": "Solo \"Cuenta corriente del prestador con historial completo\" (prestador/obra social, no paciente); no se describe caja ni pagos de pacientes"
+    },
+    "C4.2": {
+      "estado": "no-evidenciado",
+      "nota": "Cobro online/seña no figura"
+    },
+    "C4.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/",
+      "nota": "Misma cita aceptada en C3.3; el sitio describe planillas/facturación a obras sociales con integración ARCA",
+      "cita": "Facturación automática y ágil integrada con ARCA"
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "nota": "Dashboards y reportes",
+      "cita": "Dashboard visual con gráficos interactivos"
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "nota": "Liquidación a prestadores; también \"Detalle por prestador con descuentos automáticos configurables\"",
+      "cita": "Liquidaciones automáticas basadas en planillas facturadas"
+    },
+    "C5.1": {
+      "estado": "no-evidenciado",
+      "nota": "Reserva online del paciente no figura"
+    },
+    "C5.2": {
+      "estado": "no-evidenciado",
+      "nota": "Cancelación/reprogramación por el paciente no figura"
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "nota": "Canal WhatsApp",
+      "cita": "Recordatorios automáticos por WhatsApp vinculados a la agenda"
+    },
+    "C5.4": {
+      "estado": "no-evidenciado"
+    },
+    "C5.5": {
+      "estado": "no-evidenciado",
+      "nota": "Sin portal/app del paciente ni encuestas"
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "cita": "10 tipos de roles diferentes: cada usuario ve solo lo que necesita"
+    },
+    "C6.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "nota": "Auditoría: quién hizo qué, cuándo y dónde",
+      "cita": "Auditoría completa: quién hizo qué, cuándo y dónde"
+    },
+    "C6.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/funcionalidades",
+      "nota": "Exportación de reportes a PDF y Excel",
+      "cita": "Exportación a PDF y Excel de todos los reportes"
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/preguntas-frecuentes",
+      "nota": "Contraseñas cifradas; además FAQ cita respaldo automático, Helmet y CORS",
+      "cita": "autenticación JWT y contraseñas encriptadas con bcrypt (la misma tecnología que usan los bancos)"
+    },
+    "C6.5": {
+      "estado": "no-evidenciado",
+      "nota": "Solo \"Protección de datos de pacientes\" (vago); Ley 25.326/GDPR no figuran"
+    },
+    "C7.1": {
+      "estado": "no-evidenciado",
+      "nota": "Solo \"costo por odontólogo\" sin monto; paquetes WhatsApp en USD (\"USD $9 por 50 mensajes\") no son el precio del software"
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/preguntas-frecuentes",
+      "nota": "Demo gratuita solicitable (no prueba autogestionada)",
+      "cita": "Solicitar Demo Gratuita"
+    },
+    "C7.3": {
+      "estado": "no-evidenciado",
+      "nota": "Sin precio en ARS"
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://web.dentaltec.com.ar/preguntas-frecuentes",
+      "nota": "Soporte en español; también \"digitalizar tu consultorio en cuestión de días\"; migración no descripta",
+      "cita": "soporte técnico real 24/7"
+    },
+    "C7.5": {
+      "estado": "afirmacion-comercial",
+      "url": "https://web.dentaltec.com.ar/",
+      "nota": "2.000+ profesionales, 5/5 (30 reseñas) y testimonios de COSJ/COSTG/CORA en /casos-de-exito: todo del propio fabricante; sin fuente independiente"
+    }
+  }
+}

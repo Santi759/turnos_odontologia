@@ -1,0 +1,176 @@
+{
+  "slug": "odeen",
+  "nombre": "Odeen",
+  "empresa": "Odeen SpA",
+  "pais_origen": "Chile",
+  "url_oficial": "https://www.odeen.cl",
+  "nivel": 2,
+  "nivel_justificacion": "Software dental chileno en español, precios en CLP con IVA; no se encontró mención de Argentina, ARS ni facturación ARCA en las páginas abiertas.",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/odeen.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl",
+      "nota": "Agenda: \"Citas, sedes y profesionales en una sola vista\"; vista día, semana y equipo."
+    },
+    "C1.2": {
+      "estado": "no-evidenciado"
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/precios",
+      "nota": "Recordatorios por WhatsApp (80/120/200 por mes según plan) y por email incluidos."
+    },
+    "C1.4": {
+      "estado": "no-evidenciado",
+      "nota": "Degradado el 2026-10-12 (decisión del autor). Uniformidad con Clinicorp C1.4: \"confirmaciones automáticas\" no describe que el paciente confirme o rechace respondiendo; la ficha no tiene cita del mecanismo. Evidencia anterior: https://www.odeen.cl/funcionalidades"
+    },
+    "C1.5": {
+      "estado": "no-evidenciado"
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/funcionalidades",
+      "nota": "Odontograma: \"Registra condiciones por pieza y superficie, distingue lo preexistente de lo diagnosticado\".",
+      "cita": "Registra condiciones por pieza y superficie, distingue lo preexistente de lo diagnosticado."
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/ficha-clinica",
+      "nota": "Ficha clínica electrónica con evoluciones, archivos, documentos y finanzas.",
+      "cita": "Odontograma, evoluciones, archivos, documentos y finanzas del paciente en un solo lugar, con los datos sensibles cifrados y cada acceso auditado."
+    },
+    "C2.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/funcionalidades",
+      "nota": "\"El plan de tratamiento es la cotización: cada tratamiento es una línea con su precio\".",
+      "cita": "El plan de tratamiento es la cotización: cada tratamiento es una línea con su precio y su pieza."
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/ficha-clinica",
+      "nota": "Periodontograma con NIC calculado; \"Radiografías, fotos y documentos clasificados y vinculados a la pieza o al tratamiento\".",
+      "cita": "Radiografías, fotos y documentos clasificados y vinculados a la pieza o al tratamiento"
+    },
+    "C2.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/ficha-clinica",
+      "nota": "\"consentimientos firmados en pantalla\"; recetas y certificados.",
+      "cita": "Recetas con tu número SIS, certificados de atención, reposo o salud bucal, consentimientos firmados en pantalla y solicitudes de examen o derivación."
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/precios",
+      "nota": "Recordatorios por WhatsApp incluidos en los planes."
+    },
+    "C3.2": {
+      "estado": "no-evidenciado"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado"
+    },
+    "C3.4": {
+      "estado": "no-evidenciado"
+    },
+    "C3.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl",
+      "nota": "Menciona capacidad de SMS además de WhatsApp; no se evidencia API pública."
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/funcionalidades",
+      "nota": "\"Caja por sede\"; finanzas del paciente en la ficha."
+    },
+    "C4.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/funcionalidades",
+      "nota": "\"Cobro en línea al paciente desde la ficha\"; no nombra pasarela."
+    },
+    "C4.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/precios",
+      "nota": "Planes incluyen facturación digital; funcionalidades: \"Documentos con folio y QR que el receptor verifica\". No nombra SII ni ARCA."
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/funcionalidades",
+      "nota": "\"Ocupación, ingresos y tendencias\"."
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/precios",
+      "nota": "Sedes (hasta 2 / ilimitadas según plan) y gestión de laboratorio."
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/funcionalidades",
+      "nota": "\"El paciente elige un horario en tu página pública y la cita entra directamente en la agenda\"."
+    },
+    "C5.2": {
+      "estado": "no-evidenciado"
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/precios",
+      "nota": "Recordatorios por WhatsApp al paciente."
+    },
+    "C5.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/funcionalidades",
+      "nota": "Página pública de reserva."
+    },
+    "C5.5": {
+      "estado": "no-evidenciado"
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl",
+      "nota": "\"Equipo con roles, tareas y notas personales\"."
+    },
+    "C6.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/ficha-clinica",
+      "nota": "\"registra los accesos a información clínica sensible\".",
+      "cita": "Odeen registra los accesos a información clínica sensible —ver una ficha, una nota o un odontograma"
+    },
+    "C6.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/funcionalidades",
+      "nota": "Cita literal obtenida en /funcionalidades; la frase \"Descarga el 100% de tus datos\" de la ficha previa no volvió como texto literal en esta pasada.",
+      "cita": "Exporta la información cuando quieras, sin trámites ni peajes para salir."
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/ficha-clinica",
+      "nota": "Datos clínicos cifrados en tránsito y reposo; cifrado a nivel de campo para documentos de identidad y notas; passkey y verificación en dos pasos (home)."
+    },
+    "C6.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/ficha-clinica",
+      "nota": "Referencia la Ley 21.719 (Chile) como marco de acceso y protección de datos de salud."
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/precios",
+      "nota": "Consulta $19.990, Clínica $29.990, Centro $49.990 CLP/mes, IVA incluido."
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/precios",
+      "nota": "Prueba gratuita de 14 días sin tarjeta."
+    },
+    "C7.3": {
+      "estado": "no-evidenciado"
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.odeen.cl/precios",
+      "nota": "Migración de pacientes y configuración de agenda acompañada (primeras 20 clínicas sin costo); soporte en la app; sitio en español."
+    },
+    "C7.5": {
+      "estado": "no-evidenciado"
+    }
+  }
+}

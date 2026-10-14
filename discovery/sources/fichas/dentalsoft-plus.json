@@ -1,0 +1,149 @@
+{
+  "slug": "dentalsoft-plus",
+  "nombre": "DentalSoft+",
+  "empresa": "SEVEN GLOBAL COMPANY SAS",
+  "pais_origen": "No evidenciado",
+  "url_oficial": "https://dentalsoftplus.com",
+  "nivel": 2,
+  "nivel_justificacion": "Software en español para Latinoamérica con precios en USD; la home muestra banderas (incluida Argentina) sin precio en ARS, integración local ni clientes argentinos nombrados, por lo que no alcanza nivel 1.",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/dentalsoft-plus.md",
+  "items": {
+    "C1.1": {
+      "estado": "no-evidenciado"
+    },
+    "C1.2": {
+      "estado": "no-evidenciado"
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Calendario virtual con recordatorios automáticos."
+    },
+    "C1.4": {
+      "estado": "no-evidenciado",
+      "nota": "Degradado el 2026-10-12 (decisión del autor). Uniformidad con Clinicorp C1.4: \"confirmaciones automáticas\" no describe que el paciente confirme o rechace respondiendo; la ficha no tiene cita del mecanismo. Evidencia anterior: https://dentalsoftplus.com/beneficios"
+    },
+    "C1.5": {
+      "estado": "no-evidenciado"
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Odontograma configurable (y por voz según la home)."
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "\"Registro de Paciente Electrónico\" con campos personalizables."
+    },
+    "C2.3": {
+      "estado": "no-evidenciado"
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Periodontograma configurable."
+    },
+    "C2.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Documentos digitales con firma electrónica y receta electrónica con código de barras."
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Integración gratuita con WhatsApp para notificaciones y seguimiento."
+    },
+    "C3.2": {
+      "estado": "no-evidenciado"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado"
+    },
+    "C3.4": {
+      "estado": "no-evidenciado"
+    },
+    "C3.5": {
+      "estado": "no-evidenciado"
+    },
+    "C4.1": {
+      "estado": "no-evidenciado"
+    },
+    "C4.2": {
+      "estado": "no-evidenciado"
+    },
+    "C4.3": {
+      "estado": "no-evidenciado"
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Análisis en tiempo real, métricas y reportes financieros."
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Gestión de inventario y lotes."
+    },
+    "C5.1": {
+      "estado": "no-evidenciado"
+    },
+    "C5.2": {
+      "estado": "no-evidenciado"
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Notificaciones por WhatsApp."
+    },
+    "C5.4": {
+      "estado": "no-evidenciado"
+    },
+    "C5.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com",
+      "nota": "La home menciona portales del paciente."
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Control de acceso por roles."
+    },
+    "C6.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Auditoría (audit trails)."
+    },
+    "C6.3": {
+      "estado": "no-evidenciado"
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com/beneficios",
+      "nota": "Sistemas de respaldo (backup)."
+    },
+    "C6.5": {
+      "estado": "no-evidenciado"
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com",
+      "nota": "Plan Gratis USD 0; Anual+2 meses USD 349 (regular 450); Vitalicio USD 799 (regular 999)."
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://dentalsoftplus.com",
+      "nota": "Plan gratuito de USD 0 y enlace a registro gratis."
+    },
+    "C7.3": {
+      "estado": "no-evidenciado"
+    },
+    "C7.4": {
+      "estado": "no-evidenciado"
+    },
+    "C7.5": {
+      "estado": "no-evidenciado"
+    }
+  }
+}

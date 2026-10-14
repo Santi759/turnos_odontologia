@@ -1,0 +1,171 @@
+{
+  "slug": "doctoralia-argentina",
+  "nombre": "Doctoralia Pro (Argentina)",
+  "empresa": "Docplanner Health (desarrollador de la app en App Store); razón social argentina No evidenciado",
+  "pais_origen": "No evidenciado",
+  "url_oficial": "https://pro.doctoralia.com/ar/precio",
+  "nivel": 1,
+  "nivel_justificacion": "Sitio pro.doctoralia.com/ar con precios en ARS (Starter 25.000, Plus 35.000, VIP 55.000 por mes) y Argentina listada entre sus mercados en la home /ar (2026-10-12).",
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/doctoralia-argentina.md",
+  "items": {
+    "C1.1": {
+      "estado": "no-evidenciado",
+      "nota": "Las páginas de precios y agenda no describen agenda multiprofesional ni por sillón."
+    },
+    "C1.2": {
+      "estado": "no-evidenciado",
+      "nota": "No se describen duraciones por prestación ni bloqueos."
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "Recordatorios: Starter por e-mail y push en la App; Plus agrega SMS; VIP e-mail, App y SMS."
+    },
+    "C1.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/agenda-doctoralia-para-especialistas",
+      "nota": "Recordatorios por WhatsApp para confirmaciones; el pase del 2026-10-10 registró que el paciente confirma, cancela o reprograma por mensaje."
+    },
+    "C1.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "VIP: \"Operaciones masivas y lista de espera\"; la página de agenda menciona mensajes automáticos a pacientes en lista de espera."
+    },
+    "C2.1": {
+      "estado": "no-evidenciado",
+      "nota": "Odontología/odontograma no se mencionan (producto multiespecialidad)."
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "Plus: \"Recopilá toda la información de tus pacientes\" (historia clínica electrónica)."
+    },
+    "C2.3": {
+      "estado": "no-evidenciado",
+      "nota": "No se describen planes de tratamiento ni presupuestos."
+    },
+    "C2.4": {
+      "estado": "no-evidenciado",
+      "nota": "Sin periodontograma ni gestión de imágenes descriptos."
+    },
+    "C2.5": {
+      "estado": "no-evidenciado",
+      "nota": "Sin consentimiento informado ni recetas descriptos."
+    },
+    "C3.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/agenda-doctoralia-para-especialistas",
+      "nota": "Recordatorios por WhatsApp (plan no especificado).",
+      "cita": "tus pacientes reciben un mensaje por WhatsApp"
+    },
+    "C3.2": {
+      "estado": "no-evidenciado",
+      "nota": "Mercado Pago no figura."
+    },
+    "C3.3": {
+      "estado": "no-evidenciado",
+      "nota": "Facturación electrónica ARCA no figura."
+    },
+    "C3.4": {
+      "estado": "no-evidenciado",
+      "nota": "Obras sociales no figuran en las páginas oficiales abiertas."
+    },
+    "C3.5": {
+      "estado": "no-evidenciado",
+      "nota": "La cita disponible (ficha de Google My Business / visibilidad en Google) no es calendario externo, SMS ni API; SMS en Plus/VIP no se pudo citar (NOT FOUND en relectura)"
+    },
+    "C4.1": {
+      "estado": "no-evidenciado",
+      "nota": "Sin caja ni cuenta corriente descriptas."
+    },
+    "C4.2": {
+      "estado": "no-evidenciado",
+      "nota": "Sin cobro online ni seña descriptos."
+    },
+    "C4.3": {
+      "estado": "no-evidenciado",
+      "nota": "Sin facturación descripta."
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "VIP: \"Accedé al rendimiento de tu consulta\" (estadísticas)."
+    },
+    "C4.5": {
+      "estado": "no-evidenciado",
+      "nota": "Sin multisede, inventario ni honorarios descriptos."
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "Reserva online del paciente en todos los planes, desde perfil Doctoralia, Google y redes (verificado 2026-10-10)."
+    },
+    "C5.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/agenda-doctoralia-para-especialistas",
+      "nota": "Reprogramación/cancelación por mensaje (pase 2026-10-10); la cifra \"reprogramación del 70% de las cancelaciones\" es afirmación comercial."
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "WhatsApp, SMS, push y app."
+    },
+    "C5.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/agenda-doctoralia-para-especialistas",
+      "nota": "\"Mejor posicionamiento en el directorio médico de Doctoralia\" al activar un plan: perfil en marketplace."
+    },
+    "C5.5": {
+      "estado": "no-evidenciado",
+      "nota": "Sin portal del paciente ni encuestas descriptos."
+    },
+    "C6.1": {
+      "estado": "no-evidenciado",
+      "nota": "Roles y permisos no descriptos."
+    },
+    "C6.2": {
+      "estado": "no-evidenciado",
+      "nota": "Auditoría no descripta."
+    },
+    "C6.3": {
+      "estado": "no-evidenciado",
+      "nota": "Exportación no descripta."
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/agenda-doctoralia-para-especialistas",
+      "nota": "Declara datos en Amazon Web Services con \"world-class security standards\" (resumen de la página)."
+    },
+    "C6.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar",
+      "nota": "Declara cumplimiento de GDPR/RGPD. Ley 25.326 no confirmada en páginas oficiales abiertas."
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "Precios publicados en ARS por mes, facturación anual."
+    },
+    "C7.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "Versión gratuita disponible (alcance no detallado)."
+    },
+    "C7.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "Precios en ARS en sitio /ar."
+    },
+    "C7.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://pro.doctoralia.com/ar/precio",
+      "nota": "\"Excelente incorporación y soporte al cliente incluidos\"."
+    },
+    "C7.5": {
+      "estado": "terceros",
+      "url": "https://apps.apple.com/es/app/doctoralia-para-especialistas/id1237598188",
+      "nota": "Ficha de App Store (España) de la app \"Doctoralia para especialistas\": 4,7/5 con 3.000 valoraciones; son de la tienda de España, no específicas de Argentina."
+    }
+  }
+}

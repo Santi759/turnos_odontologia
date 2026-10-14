@@ -1,0 +1,164 @@
+{
+  "slug": "dentally",
+  "nombre": "Dentally",
+  "empresa": "Dentally (razón social No evidenciado)",
+  "pais_origen": "Reino Unido",
+  "url_oficial": "https://www.dentally.com/en-gb",
+  "nivel_justificacion": "Internacional, precios en GBP y foco NHS; sin presencia argentina evidenciada.",
+  "nivel": 3,
+  "fecha_consulta": "2026-10-12",
+  "ficha_md": "discovery/sources/dentally.md",
+  "items": {
+    "C1.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Multi-clinician diary"
+    },
+    "C1.2": {
+      "estado": "no-evidenciado"
+    },
+    "C1.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://help.dentally.com/en/articles/3566498-how-to-set-up-automated-reminders-and-confirmations-in-patient-communications",
+      "nota": "Recordatorios SMS y email con intervalo configurable"
+    },
+    "C1.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://help.dentally.com/en/articles/3566498-how-to-set-up-automated-reminders-and-confirmations-in-patient-communications",
+      "nota": "Responder YES confirma y NO cancela el turno"
+    },
+    "C1.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Waitlists, short notice appointment filler y sistema de recall"
+    },
+    "C2.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Charting/odontogram"
+    },
+    "C2.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Clinical notes y notas con IA"
+    },
+    "C2.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Treatment plans y estimates"
+    },
+    "C2.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Periodontal charting e imágenes avanzadas con IA"
+    },
+    "C2.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Consent forms y prescriptions"
+    },
+    "C3.1": {
+      "estado": "no-evidenciado"
+    },
+    "C3.2": {
+      "estado": "no-evidenciado"
+    },
+    "C3.3": {
+      "estado": "no-evidenciado"
+    },
+    "C3.4": {
+      "estado": "no-evidenciado"
+    },
+    "C3.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Developer Hub y ecosistema de partners"
+    },
+    "C4.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Payments e invoicing"
+    },
+    "C4.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://help.dentally.com/en/collections/2414893-online-booking",
+      "nota": "Depósitos al reservar online por el Portal"
+    },
+    "C4.3": {
+      "estado": "no-evidenciado"
+    },
+    "C4.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Real-time reporting"
+    },
+    "C4.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb/pricing",
+      "nota": "Multi-sede desde plan Essentials"
+    },
+    "C5.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://help.dentally.com/en/collections/2414893-online-booking",
+      "nota": "Reserva online de pacientes nuevos y existentes por Portal"
+    },
+    "C5.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://help.dentally.com/en/collections/2414893-online-booking",
+      "nota": "Cancelar y volver a reservar online desde el Portal"
+    },
+    "C5.3": {
+      "estado": "comprobado-oficial",
+      "url": "https://help.dentally.com/en/articles/3566498-how-to-set-up-automated-reminders-and-confirmations-in-patient-communications",
+      "nota": "SMS y email"
+    },
+    "C5.4": {
+      "estado": "no-evidenciado"
+    },
+    "C5.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Patient portal"
+    },
+    "C6.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb/security-policy",
+      "nota": "Administración por roles con 5 niveles de permiso"
+    },
+    "C6.2": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb",
+      "nota": "Menciona capacidades de auditoría"
+    },
+    "C6.3": {
+      "estado": "no-evidenciado"
+    },
+    "C6.4": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb/security-policy",
+      "nota": "TLS, BCrypt, AWS UE, backups, 2FA, restricción por IP"
+    },
+    "C6.5": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb/security-policy",
+      "nota": "ICO y NHS DSP Toolkit"
+    },
+    "C7.1": {
+      "estado": "comprobado-oficial",
+      "url": "https://www.dentally.com/en-gb/pricing",
+      "nota": "Starter £125, Essentials £220, Pro £320 por mes (3 gabinetes, sin IVA)"
+    },
+    "C7.2": {
+      "estado": "no-evidenciado"
+    },
+    "C7.3": {
+      "estado": "no-evidenciado"
+    },
+    "C7.4": {
+      "estado": "no-evidenciado"
+    },
+    "C7.5": {
+      "estado": "no-evidenciado"
+    }
+  }
+}
