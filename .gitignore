@@ -30,3 +30,7 @@ temp/
 # Configuración local de herramientas
 .claude/settings.local.json
 .claude/projects/
+
+# Registro de skills: solo se versiona skill-registry.md (entregable de Metodología I)
+.atl/*
+!.atl/skill-registry.md

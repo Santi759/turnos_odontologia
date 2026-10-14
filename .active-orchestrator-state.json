@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "step": "roadmap",
+  "step": "registry",
   "owner": "active-orchestrator",
   "discovery": {
     "created_by": "discovery-research",
@@ -243,5 +243,84 @@
     ],
     "approved_at": "2026-10-13",
     "estado": "Aprobado por el autor (Etapa 4); alcance académico inicial documentado en C-15"
+  },
+  "skills": {
+    "created_by": "find-skill",
+    "recommended": [
+      {
+        "name": "python-testing-patterns",
+        "source": "wshobson/agents@python-testing-patterns",
+        "installs": "35.4K",
+        "stars": "40.6K (repo)",
+        "purpose": "Patrones pytest: fixtures, parametrize, mocks",
+        "need": "C-15 alcance académico (función de dominio anti-superposición con pytest), C-01",
+        "status": "no instalada",
+        "decision": "pospuesta",
+        "justificacion": "Útil para pytest, pero no imprescindible para el Change académico."
+      },
+      {
+        "name": "tdd",
+        "source": "mattpocock/skills@tdd",
+        "installs": "1.1M",
+        "stars": "289.7K (repo)",
+        "purpose": "Ciclo TDD red-green-refactor",
+        "need": "Strict TDD en C-15 y todos los Changes",
+        "status": "no instalada",
+        "decision": "descartada",
+        "justificacion": "Redundante con las instrucciones de TDD existentes."
+      },
+      {
+        "name": "fastapi",
+        "source": "fastapi/fastapi@fastapi",
+        "installs": "12.2K",
+        "stars": "103.1K (repo, oficial)",
+        "purpose": "Buenas prácticas oficiales FastAPI",
+        "need": "C-01 (esqueleto backend) y Changes de API posteriores",
+        "status": "no instalada",
+        "decision": "pospuesta",
+        "justificacion": "El recorte académico será un módulo puro de Python sin API."
+      },
+      {
+        "name": "postgresql-table-design",
+        "source": "wshobson/agents@postgresql-table-design",
+        "installs": "27.1K",
+        "stars": "40.6K (repo)",
+        "purpose": "Diseño de tablas PostgreSQL (tipos, índices, constraints)",
+        "need": "Modelo de datos y exclusion constraint btree_gist, aislamiento multi-consultorio",
+        "status": "no instalada",
+        "decision": "pospuesta",
+        "justificacion": "Hasta implementar persistencia."
+      },
+      {
+        "name": "sqlalchemy-alembic-expert-best-practices-code-review",
+        "source": "wispbit-ai/skills@sqlalchemy-alembic-expert-best-practices-code-review",
+        "installs": "1.9K",
+        "stars": "no verificado",
+        "purpose": "Revisión de buenas prácticas SQLAlchemy/Alembic",
+        "need": "Changes de persistencia y migraciones",
+        "status": "no instalada",
+        "decision": "pospuesta",
+        "justificacion": "Hasta necesitar migraciones."
+      },
+      {
+        "name": "docker-patterns",
+        "source": "affaan-m/ecc@docker-patterns",
+        "installs": "13.2K",
+        "stars": "278.6K (repo)",
+        "purpose": "Patrones Docker/Compose",
+        "need": "C-01 foundation-setup (Docker Compose local)",
+        "status": "no instalada",
+        "decision": "pospuesta",
+        "justificacion": "No es necesaria para el Change académico."
+      }
+    ],
+    "installed": [],
+    "decided_by": "autor",
+    "decided_at": "2026-10-13",
+    "resumen": "El autor decidió no instalar ninguna skill adicional por ahora (5 pospuestas, 1 descartada)."
+  },
+  "registry": {
+    "created_by": "skill-registry",
+    "file": ".atl/skill-registry.md"
   }
 }
