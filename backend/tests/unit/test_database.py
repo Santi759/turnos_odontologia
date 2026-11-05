@@ -78,3 +78,30 @@ def test_guardia_acepta_mismo_nombre_de_base_en_otro_host():
         "postgresql+psycopg://app:app@db-test:5432/turnos_test",
         "postgresql+psycopg://app:app@db-test:5433/turnos_test",
     )
+
+
+def test_fabrica_de_sesiones_no_expira_objetos_al_commit_y_no_conecta():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from app.core.database import crear_fabrica_de_sesiones
+
+    motor = create_engine("postgresql+psycopg://app:app@host-inexistente.invalid/x")
+    fabrica = crear_fabrica_de_sesiones(motor)
+
+    with fabrica() as sesion:
+        assert isinstance(sesion, Session)
+        assert sesion.bind is motor
+    assert fabrica.kw["expire_on_commit"] is False
+
+
+def test_fabrica_de_sesiones_crea_sesiones_independientes():
+    from sqlalchemy import create_engine
+
+    from app.core.database import crear_fabrica_de_sesiones
+
+    motor = create_engine("postgresql+psycopg://app:app@host-inexistente.invalid/x")
+    fabrica = crear_fabrica_de_sesiones(motor)
+
+    with fabrica() as una, fabrica() as otra:
+        assert una is not otra

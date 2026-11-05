@@ -109,6 +109,17 @@ Invoke-Caso 'El arranque de la API no migra' {
     Assert-Verdadero ($entrypoint -notlike '*alembic*') 'el entrypoint de api invoca alembic'
 }
 
+Invoke-Caso 'El arranque de la API no ejecuta el seed' {
+    $compose = Get-ConfiguracionCompose
+    $comando = @($compose.services.api.command) -join ' '
+    Assert-Verdadero ($comando -notlike '*app.seed*') 'el arranque de api invoca el seed'
+    $entrypoint = ''
+    if ($compose.services.api.PSObject.Properties.Name -contains 'entrypoint') {
+        $entrypoint = @($compose.services.api.entrypoint) -join ' '
+    }
+    Assert-Verdadero ($entrypoint -notlike '*app.seed*') 'el entrypoint de api invoca el seed'
+}
+
 Invoke-Caso 'Base de pruebas separada y efimera' {
     $compose = Get-ConfiguracionCompose
     $servicio = $compose.services.'db-test'

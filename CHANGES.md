@@ -350,10 +350,10 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 > Toda la fase es **CRITICA**: no se escribe código sin aprobación explícita del autor. Seguridad y aislamiento no se difieren: son prerrequisito de cualquier recurso protegido.
 
 ### [C-02] `modelo-base-consultorios-seed`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado (archivado el 2026-11-04 en `openspec/changes/archive/2026-11-04-modelo-base-consultorios-seed/`)
 - **Scope**: Modelo base multi-consultorio, migración inicial y seed ficticio. Alta de consultorios (PA-05) = **solo seed** en la v0.1.
   - Modelos SQLAlchemy 2: `Consultorio` (`nombre`, `zona_horaria` default `America/Argentina/Buenos_Aires`, `anticipacion_cancelacion_horas` default 24, `activo`, `creado_en`), `Usuario` (`consultorio_id`, `email`, `nombre`, `credencial` como hash, `rol` enum administrador|secretaria|odontologo, `activo`)
-  - Migración 001: tablas `consultorio` y `usuario`; constraint `anticipacion_cancelacion_horas >= 0`
+  - Migración 0002 (`0002_modelo_base_consultorios`; la 0001 es la de `btree_gist` de C-01): tablas `consultorio` y `usuario`; constraint `anticipacion_cancelacion_horas >= 0`
   - Repositorio base acotado al consultorio (recibe el consultorio y lo aplica en todas las consultas; RN-MT-01/02)
   - Seed ficticio: 2 consultorios ("Consultorio Demo A/B"), 1 admin + 1 secretaría + 1 odontólogo por consultorio
   - Sin endpoints de alta de consultorio; sin administrador de plataforma
@@ -388,7 +388,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 ### [C-04] `aislamiento-roles-rbac`
 - **Estado**: `[ ]` pendiente
 - **Scope**: US-002. Barreras de aislamiento y autorización por rol reutilizables por todos los changes siguientes.
-  - Barrera adicional en base de datos según PA-04 (claves foráneas compuestas incluyendo `consultorio_id` y/o RLS con variable de sesión); migración 002 correspondiente
+  - Barrera adicional en base de datos según PA-04 (claves foráneas compuestas incluyendo `consultorio_id` y/o RLS con variable de sesión); migración 0003 correspondiente
   - Dependencias `require_rol(...)` según la matriz de `03_actores_y_roles.md` (RN-AU-03), verificadas en servidor
   - Respuesta de recurso ajeno idéntica a "no encontrado" (RN-MT-05)
   - Arnés de pruebas de acceso cruzado (`tests/isolation/`): fixture con 2 consultorios, helper para ejecutar cada endpoint como usuario del otro consultorio; **regla de proceso: todo change posterior con endpoints de datos de consultorio agrega su prueba aquí**

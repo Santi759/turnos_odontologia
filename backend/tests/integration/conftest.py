@@ -1,7 +1,12 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from pathlib import Path
 
 import pytest
+from alembic import command
+from alembic.config import Config
+from alembic.runtime.migration import MigrationContext
 from sqlalchemy import Engine
+from sqlalchemy.orm import Session
 
 from app.core.config import cargar_configuracion
 from app.core.database import (
@@ -28,3 +33,48 @@ def motor() -> Iterator[Engine]:
         yield motor
     finally:
         motor.dispose()
+
+
+RAIZ_BACKEND = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture
+def config_alembic(motor: Engine) -> Config:
+    """Configuracion de Alembic apuntada al motor de PRUEBAS (URL explicita, guardada)."""
+    configuracion = Config(str(RAIZ_BACKEND / "alembic.ini"))
+    configuracion.set_main_option("script_location", str(RAIZ_BACKEND / "alembic"))
+    url = motor.url.render_as_string(hide_password=False).replace("%", "%%")
+    configuracion.set_main_option("sqlalchemy.url", url)
+    return configuracion
+
+
+@pytest.fixture
+def revision_actual(motor: Engine) -> Callable[[], str | None]:
+    def leer() -> str | None:
+        with motor.connect() as conexion:
+            return MigrationContext.configure(conexion).get_current_revision()
+
+    return leer
+
+
+@pytest.fixture
+def base_migrada(motor: Engine, config_alembic: Config) -> Engine:
+    command.upgrade(config_alembic, "head")
+    return motor
+
+
+@pytest.fixture
+def sesion(base_migrada: Engine) -> Iterator[Session]:
+    """Sesion sobre una transaccion exterior que siempre se revierte (DM-11).
+
+    Las inserciones que deben fallar se ejecutan dentro de `begin_nested()`.
+    """
+    conexion = base_migrada.connect()
+    transaccion = conexion.begin()
+    sesion = Session(bind=conexion, join_transaction_mode="create_savepoint")
+    try:
+        yield sesion
+    finally:
+        sesion.close()
+        transaccion.rollback()
+        conexion.close()

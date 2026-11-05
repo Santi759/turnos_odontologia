@@ -1,5 +1,6 @@
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.engine import make_url
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import Settings
 
@@ -18,6 +19,14 @@ def crear_engine_desde_url(url: str) -> Engine:
 
 def crear_engine(settings: Settings) -> Engine:
     return crear_engine_desde_url(settings.database_url.get_secret_value())
+
+
+def crear_fabrica_de_sesiones(engine: Engine) -> sessionmaker[Session]:
+    """Fabrica de sesiones sobre un motor dado; no crea instancias globales (DM-09).
+
+    `expire_on_commit=False` para poder leer los objetos devueltos tras el commit.
+    """
+    return sessionmaker(bind=engine, expire_on_commit=False)
 
 
 def verificar_conexion(engine: Engine) -> None:

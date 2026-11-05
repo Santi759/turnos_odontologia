@@ -3,7 +3,7 @@
 SaaS multi-consultorio de gestión de turnos odontológicos para Argentina. Es un MVP académico (v0.1) del trabajo práctico de **Metodología I**.
 
 - **Autor:** Santiago Chepilla
-- **Estado:** fundación metodológica completa y **dos Changes implementados y archivados**: el Change académico funcional (`validacion-superposicion-turnos`) y la infraestructura C-01 (`foundation-setup`). El resto del sistema está planificado, no implementado.
+- **Estado:** fundación metodológica completa y **tres Changes implementados y archivados**: el Change académico funcional (`validacion-superposicion-turnos`), la infraestructura C-01 (`foundation-setup`) y el modelo base C-02 (`modelo-base-consultorios-seed`). El resto del sistema está planificado, no implementado.
 
 > ⚠️ **Datos ficticios únicamente.** Todo el desarrollo, las pruebas, los ejemplos y la documentación de este repositorio usan datos inventados (por ejemplo, `PROF-A`, `PROF-B`). Nunca se cargan datos reales de pacientes, profesionales ni consultorios (DD-13, RN-PA-08). Tampoco se incluyen datos clínicos.
 
@@ -25,6 +25,7 @@ SaaS multi-consultorio de gestión de turnos odontológicos para Argentina. Es u
 12. [Cómo continuar el desarrollo](#cómo-continuar-el-desarrollo)
 13. [Datos ficticios](#datos-ficticios)
 14. [Entorno de desarrollo con Docker Compose (C-01)](#entorno-de-desarrollo-con-docker-compose-c-01-foundation-setup)
+15. [Modelo base y seed (C-02)](#modelo-base-y-seed-c-02-modelo-base-consultorios-seed)
 
 ---
 
@@ -80,8 +81,9 @@ Las decisiones del autor quedaron registradas con fecha en cada etapa. Las pregu
 | Instrucciones para agentes (`AGENTS.md` y `CLAUDE.md`) | ✅ Generadas (2026-10-13) |
 | Change académico `validacion-superposicion-turnos` | ✅ Implementado, verificado y archivado (2026-10-14) |
 | C-01 `foundation-setup` (infraestructura) | ✅ **Implementado, verificado y archivado** (2026-11-04) |
+| C-02 `modelo-base-consultorios-seed` (modelo base y seed) | ✅ **Implementado, verificado y archivado** (2026-11-04) |
 | C-15 `turnos-crear-sin-superposicion` (creación completa de turnos) | ⏳ **Pendiente**. El Change académico implementa solo su núcleo de dominio. |
-| Resto de los Changes (C-02 a C-30) | ⏳ Planificados, no implementados |
+| Resto de los Changes (C-03 a C-30) | ⏳ Planificados, no implementados |
 
 **Lo que existe hoy como código:** una función pura de dominio en Python y sus pruebas automatizadas.
 
@@ -332,7 +334,7 @@ Los 17 escenarios cubren cinco requisitos:
 
 El plan completo está en [`CHANGES.md`](CHANGES.md): 30 Changes en fases, con dependencias, lecturas previas y decisiones abiertas para cada uno.
 
-1. **Siguiente Change:** C-02 `modelo-base-consultorios-seed`. C-01 `foundation-setup` ya está implementado y archivado en [`openspec/changes/archive/2026-11-04-foundation-setup/`](openspec/changes/archive/2026-11-04-foundation-setup/). Todavía no está propuesto.
+1. **Siguiente Change:** C-03 `autenticacion-sesion`. C-01 `foundation-setup` está implementado y archivado en [`openspec/changes/archive/2026-11-04-foundation-setup/`](openspec/changes/archive/2026-11-04-foundation-setup/), y C-02 `modelo-base-consultorios-seed` en [`openspec/changes/archive/2026-11-04-modelo-base-consultorios-seed/`](openspec/changes/archive/2026-11-04-modelo-base-consultorios-seed/). Todavía no está propuesto.
 2. **Antes de proponer un Change:**
    - leer su ficha en `CHANGES.md` y los archivos de la Knowledge Base que indica;
    - verificar que sus dependencias estén en `openspec/changes/archive/`;
@@ -427,3 +429,48 @@ docker-compose.yml, .env.example, .gitattributes
 - **Reconstruir dependencias:** backend, `docker compose build api`; frontend, `docker compose build frontend` y luego `docker compose run --rm frontend npm ci` (los `node_modules` viven en el volumen `frontend_node_modules`, no en la carpeta del repositorio).
 - **Detener** sin perder datos: `docker compose stop` (o `docker compose stop db`, etc.). Volver a levantar: `docker compose up -d`.
 - **Borrar la base de desarrollo local (acción destructiva, solo manual del usuario):** `docker compose down -v` elimina los contenedores **y los volúmenes** `pgdata` y `frontend_node_modules`, y con ellos todos los datos locales (ficticios). Ejecutarlo únicamente si se quiere empezar de cero; no forma parte de ningún script ni de las pruebas.
+
+---
+
+## Modelo base y seed (C-02 `modelo-base-consultorios-seed`)
+
+> **Estado:** C-02 `modelo-base-consultorios-seed` está **implementado, verificado y archivado** el 2026-11-04 en [`openspec/changes/archive/2026-11-04-modelo-base-consultorios-seed/`](openspec/changes/archive/2026-11-04-modelo-base-consultorios-seed/), con su verificación en `verify.md`. Todo usa **datos ficticios** y solo servicios locales.
+
+C-02 agrega las tablas `consultorio` y `usuario` (migración `0002`), repositorios acotados por consultorio y un seed ficticio con dos consultorios y un usuario por rol en cada uno. **No hay inicio de sesión, ni control de acceso por rol (RBAC), ni políticas de seguridad por fila (RLS), ni endpoints de dominio**: llegan en C-03 y C-04. Los filtros por consultorio de los repositorios y los identificadores UUIDv7 no secuenciales son defensa en profundidad y **no reemplazan** la autenticación, la autorización ni la barrera en la base de datos (RN-MT-06).
+
+### Aplicar la migración (comando explícito)
+
+La API **nunca** migra ni carga datos al arrancar. Para crear las tablas en la base de desarrollo, con el servicio `db` en ejecución:
+
+```powershell
+docker compose run --rm api alembic upgrade head
+```
+
+Aplica la migración `0002` (tablas `consultorio` y `usuario`, vacías: la migración no inserta filas). No existe un comando de reversión para desarrollo; la reversión solo se prueba contra la base de pruebas efímera.
+
+### Cargar el seed ficticio (comando explícito)
+
+Requiere haber aplicado antes las migraciones:
+
+```powershell
+docker compose run --rm api python -m app.seed
+```
+
+- Crea "Consultorio Demo A" y "Consultorio Demo B" y, en cada uno, un usuario `administrador`, uno `secretaria` y uno `odontologo`, con emails `@example.test` (dominio reservado) y nombres que contienen `Demo`. Todos los datos son ficticios.
+- Los usuarios quedan **sin credencial** (`credencial` nula): no pueden autenticarse. C-03 definirá cómo se les asignan credenciales de demostración.
+- Es **idempotente y no destructivo**: usa identificadores fijos e `INSERT ... ON CONFLICT DO NOTHING`; ejecutarlo de nuevo no duplica filas y nunca actualiza ni borra datos existentes (una fila ya presente se omite).
+- Se niega a ejecutarse, sin abrir ninguna conexión, si `APP_ENV` no es `local`, y solo usa `DATABASE_URL`.
+- La salida informa únicamente cantidades. La primera ejecución sobre una base vacía informa 2 consultorios y 6 usuarios insertados; la siguiente, 0 insertados y 8 omitidos.
+
+### Consultar los datos (solo lectura)
+
+```powershell
+docker compose exec db psql -U app -d turnos -c "SELECT id, nombre, zona_horaria, anticipacion_cancelacion_horas, activo FROM consultorio ORDER BY nombre;"
+docker compose exec db psql -U app -d turnos -c "SELECT c.nombre AS consultorio, u.rol, u.email, u.activo, (u.credencial IS NULL) AS sin_credencial FROM usuario u JOIN consultorio c ON c.id = u.consultorio_id ORDER BY c.nombre, u.rol;"
+```
+
+Son consultas `SELECT`: no modifican datos. Tras cargar el seed deberían verse 2 consultorios y 6 usuarios (3 por consultorio) con `sin_credencial` verdadero.
+
+### Pruebas de C-02
+
+Las pruebas (incluidas las del seed y la migración) corren con el comando único `scripts/test.ps1` y siempre contra la base de pruebas efímera `db-test`; nunca ejecutan el seed ni las migraciones sobre la base de desarrollo.

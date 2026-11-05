@@ -39,7 +39,7 @@ Tras aplicar las migraciones, la base DEBE (MUST) tener instalada la extensión 
 - **Y** al revertir la transacción no queda ninguna tabla creada por la prueba
 
 ### Requirement: Migraciones aplicadas solo por comando explícito
-Las migraciones DEBEN (MUST) aplicarse únicamente mediante un comando explícito documentado; el arranque de la API NO DEBE (MUST NOT) ejecutarlas. En C-01 la única migración es de infraestructura (habilitar `btree_gist`) y NO DEBE (MUST NOT) crear tablas de dominio.
+Las migraciones DEBEN (MUST) aplicarse únicamente mediante un comando explícito documentado; el arranque de la API NO DEBE (MUST NOT) ejecutarlas. Desde C-02 las migraciones son la de infraestructura (`0001`, habilitar `btree_gist`) y la del modelo base (`0002`, tablas `consultorio` y `usuario`); NO DEBEN (MUST NOT) crear otras tablas, NO DEBEN (MUST NOT) insertar filas en las tablas del modelo y NO DEBEN (MUST NOT) ejecutar el seed, que tiene su propio comando explícito.
 
 #### Scenario: El comando explícito deja la base al día
 - **DADO** una base sin migraciones aplicadas o con migraciones parciales
@@ -51,9 +51,15 @@ Las migraciones DEBEN (MUST) aplicarse únicamente mediante un comando explícit
 - **ENTONCES** no invoca migraciones
 
 #### Scenario: Sin tablas de dominio
+Se conserva el nombre del escenario de C-01 (OpenSpec no admite renombrar escenarios en una delta) con contenido actualizado: "dominio" se refiere a las tablas de agenda, pacientes y turnos de Changes posteriores; `consultorio` y `usuario` son el modelo base aprobado en C-02.
 - **DADO** que se aplicaron las migraciones
 - **CUANDO** se listan las tablas del esquema `public`
-- **ENTONCES** la única tabla es `alembic_version`
+- **ENTONCES** las tablas son exactamente `alembic_version`, `consultorio` y `usuario`
+
+#### Scenario: Tablas del modelo base vacías tras migrar
+- **DADO** que se aplicaron las migraciones
+- **CUANDO** se cuentan las filas de `consultorio` y `usuario`
+- **ENTONCES** ambas tienen cero filas
 
 ### Requirement: Las pruebas de integración fallan sin base real
 Si la base configurada no es accesible, la preparación de las pruebas de integración DEBE (MUST) fallar con error; NO DEBE (MUST NOT) omitir las pruebas ni sustituir la base.
