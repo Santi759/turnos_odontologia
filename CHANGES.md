@@ -325,7 +325,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 ## FASE 0 — Cimientos
 
 ### [C-01] `foundation-setup`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado (archivado el 2026-11-04 en `openspec/changes/archive/2026-11-04-foundation-setup/`)
 - **Scope**: Base técnica mínima, sin historias de usuario ni reglas de negocio. **Es infraestructura, no el Change académico**: la consigna exige una funcionalidad del MVP con una regla de negocio y tres escenarios, que C-01 no tiene (ver "Niveles de alcance", Nivel 2). Es prerrequisito técnico del Change académico propuesto.
   - Estructura: `backend/` (`app/main.py`, `core/`, `api/`, `domain/`, `repositories/`, `models/`, `alembic/`, `tests/{unit,integration,isolation}`), `frontend/` (Vite + React + TypeScript; TypeScript es decisión del autor en la Etapa 4, 2026-10-13, no de la KB; `src/{features,shared,pages}`) según `08_arquitectura_propuesta.md`
   - Backend: FastAPI mínimo con `GET /api/health` (liveness; opcionalmente chequea la DB), configuración por variables de entorno (`DATABASE_URL`, `CORS_ALLOWED_ORIGINS`, `APP_ENV`), Alembic inicializado (sin migraciones de dominio), SQLAlchemy 2 + Pydantic instalados

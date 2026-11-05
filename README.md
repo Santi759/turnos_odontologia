@@ -3,7 +3,7 @@
 SaaS multi-consultorio de gestión de turnos odontológicos para Argentina. Es un MVP académico (v0.1) del trabajo práctico de **Metodología I**.
 
 - **Autor:** Santiago Chepilla
-- **Estado:** fundación metodológica completa y **un único Change académico funcional** implementado y archivado (`validacion-superposicion-turnos`). El resto del sistema está planificado, no implementado.
+- **Estado:** fundación metodológica completa y **dos Changes implementados y archivados**: el Change académico funcional (`validacion-superposicion-turnos`) y la infraestructura C-01 (`foundation-setup`). El resto del sistema está planificado, no implementado.
 
 > ⚠️ **Datos ficticios únicamente.** Todo el desarrollo, las pruebas, los ejemplos y la documentación de este repositorio usan datos inventados (por ejemplo, `PROF-A`, `PROF-B`). Nunca se cargan datos reales de pacientes, profesionales ni consultorios (DD-13, RN-PA-08). Tampoco se incluyen datos clínicos.
 
@@ -24,6 +24,7 @@ SaaS multi-consultorio de gestión de turnos odontológicos para Argentina. Es u
 11. [Resultados verificados](#resultados-verificados)
 12. [Cómo continuar el desarrollo](#cómo-continuar-el-desarrollo)
 13. [Datos ficticios](#datos-ficticios)
+14. [Entorno de desarrollo con Docker Compose (C-01)](#entorno-de-desarrollo-con-docker-compose-c-01-foundation-setup)
 
 ---
 
@@ -78,7 +79,7 @@ Las decisiones del autor quedaron registradas con fecha en cada etapa. Las pregu
 | Skills y registro de skills | ✅ Evaluadas; el autor decidió no instalar skills de dominio por ahora |
 | Instrucciones para agentes (`AGENTS.md` y `CLAUDE.md`) | ✅ Generadas (2026-10-13) |
 | Change académico `validacion-superposicion-turnos` | ✅ Implementado, verificado y archivado (2026-10-14) |
-| C-01 `foundation-setup` (infraestructura) | ⏳ **Pendiente** |
+| C-01 `foundation-setup` (infraestructura) | ✅ **Implementado, verificado y archivado** (2026-11-04) |
 | C-15 `turnos-crear-sin-superposicion` (creación completa de turnos) | ⏳ **Pendiente**. El Change académico implementa solo su núcleo de dominio. |
 | Resto de los Changes (C-02 a C-30) | ⏳ Planificados, no implementados |
 
@@ -103,13 +104,13 @@ El stack fue decidido por el autor (DD-10 en la Knowledge Base). **Casi todo est
 | Lógica de dominio | Python | ✅ **Implementado** (módulo puro del Change académico; probado con Python 3.14.5) |
 | Pruebas del backend | pytest | ✅ **Implementado** (pytest 9.1.1) |
 | Especificaciones | OpenSpec | ✅ **En uso** (CLI 1.14.1) |
-| API REST | FastAPI | ⏳ Planificado (C-01) |
-| Acceso a datos y migraciones | SQLAlchemy 2, Alembic | ⏳ Planificado |
-| Validación de entradas | Pydantic | ⏳ Planificado |
-| Base de datos | PostgreSQL (con `btree_gist` para la restricción de exclusión) | ⏳ Planificado |
-| Frontend | React con Vite, en TypeScript (decisión del autor en la Etapa 4) | ⏳ Planificado |
-| Pruebas del frontend | Vitest | ⏳ Planificado |
-| Entorno local | Docker Compose | ⏳ Planificado |
+| API REST | FastAPI | ✅ Implementado (C-01) |
+| Acceso a datos y migraciones | SQLAlchemy 2, Alembic | ✅ Implementado (C-01; sin tablas de dominio) |
+| Validación de entradas | Pydantic | ✅ Implementado (C-01; base de esquemas) |
+| Base de datos | PostgreSQL (con `btree_gist` para la restricción de exclusión) | ✅ Implementado (C-01) |
+| Frontend | React con Vite, en TypeScript (decisión del autor en la Etapa 4) | ✅ Implementado (C-01; pantalla inicial) |
+| Pruebas del frontend | Vitest | ✅ Implementado (C-01) |
+| Entorno local | Docker Compose | ✅ Implementado (C-01) |
 | Autenticación | Sin definir (pregunta abierta PA-03) | ❓ Abierta |
 
 Detalle: [`knowledge-base/02_descripcion_general.md`](knowledge-base/02_descripcion_general.md) y [`knowledge-base/08_arquitectura_propuesta.md`](knowledge-base/08_arquitectura_propuesta.md).
@@ -198,7 +199,7 @@ Este Change **demuestra la regla en el dominio, pero no garantiza por sí solo l
 - No conoce los estados del turno: recibe los turnos ya seleccionados por quien la llama. Qué estados ocupan agenda es la pregunta abierta PA-07.
 - No controla sillones ni boxes (PA-01): dos profesionales distintos en el mismo horario se aceptan.
 - No incluye endpoints, autenticación, aislamiento entre consultorios ni datos de pacientes.
-- **Archivar este Change no completa C-15 ni C-01.** Ambos siguen pendientes en `CHANGES.md`.
+- **Archivar este Change no completa C-15.** C-15 sigue pendiente en `CHANGES.md`. (C-01 se completó y archivó después, el 2026-11-04.)
 
 ---
 
@@ -331,7 +332,7 @@ Los 17 escenarios cubren cinco requisitos:
 
 El plan completo está en [`CHANGES.md`](CHANGES.md): 30 Changes en fases, con dependencias, lecturas previas y decisiones abiertas para cada uno.
 
-1. **Siguiente Change:** C-01 `foundation-setup`, la infraestructura. Incluye la estructura completa del backend, FastAPI, PostgreSQL con `btree_gist` y Docker Compose, el frontend React + Vite + TypeScript, Vitest y la documentación de arranque.
+1. **Siguiente Change:** C-02 `modelo-base-consultorios-seed`. C-01 `foundation-setup` ya está implementado y archivado en [`openspec/changes/archive/2026-11-04-foundation-setup/`](openspec/changes/archive/2026-11-04-foundation-setup/). Todavía no está propuesto.
 2. **Antes de proponer un Change:**
    - leer su ficha en `CHANGES.md` y los archivos de la Knowledge Base que indica;
    - verificar que sus dependencias estén en `openspec/changes/archive/`;
@@ -358,3 +359,71 @@ Las reglas obligatorias del proyecto están en [`AGENTS.md`](AGENTS.md). Incluye
 ## Datos ficticios
 
 > ⚠️ Este repositorio es académico. **Todos los datos de desarrollo, pruebas, ejemplos y capturas son ficticios.** Las pruebas usan los profesionales `PROF-A` y `PROF-B`, la fecha 2026-11-02 y la zona horaria UTC-03:00. Nunca se deben cargar datos reales de pacientes, profesionales ni consultorios, ni agregar datos clínicos (historia clínica u odontograma) al MVP. Una futura versión productiva deberá definir sus propios controles para datos reales.
+
+---
+
+## Entorno de desarrollo con Docker Compose (C-01 `foundation-setup`)
+
+> **Estado:** C-01 `foundation-setup` está **implementado y archivado** el 2026-11-04 en [`openspec/changes/archive/2026-11-04-foundation-setup/`](openspec/changes/archive/2026-11-04-foundation-setup/), con su verificación en `verify.md`. Esta sección documenta cómo usar el entorno. Todo usa **datos ficticios** y solo servicios locales. Archivar C-01 no completa C-15.
+
+### Requisitos
+
+| Herramienta | Para qué | Versión verificada |
+|---|---|---|
+| Windows 11 con Docker Desktop (backend WSL 2) | Ejecutar `db`, `api` y `frontend` | Docker 29.9.2, Docker Compose v5.6.1 |
+| Windows PowerShell 5.1 | Ejecutar `scripts/test.ps1` (no hace falta PowerShell 7) | 5.1 |
+
+No hace falta instalar Python, Node ni PostgreSQL en el equipo: todo corre en contenedores. El repositorio debe estar fuera de OneDrive (por ejemplo, `C:\dev\turnos_odontologia`).
+
+### Puesta en marcha
+
+```powershell
+copy .env.example .env
+docker compose up -d --build
+```
+
+`.env.example` contiene solo valores locales ficticios (por ejemplo, usuario y contraseña `app`); `.env` está ignorado por Git. `docker compose up` levanta `db`, `api` y `frontend`, no la base de pruebas.
+
+| Qué | URL |
+|---|---|
+| Frontend (React) | http://localhost:5173 |
+| Documentación de la API (Swagger) | http://localhost:8000/docs |
+| Salud de la API | http://localhost:8000/api/health (responde `{"status":"ok"}` sin consultar la base) |
+
+Los puertos se publican solo en `127.0.0.1`. La API y el frontend se recargan solos al editar archivos (con sondeo, por el bind mount de Windows).
+
+### Migraciones (comando explícito)
+
+La API **nunca** migra al arrancar. Para aplicar las migraciones a la base de desarrollo:
+
+```powershell
+docker compose run --rm api alembic upgrade head
+```
+
+La única migración de C-01 habilita la extensión `btree_gist` (infraestructura); no crea tablas de dominio.
+
+### Pruebas (comando único)
+
+```powershell
+.\scripts\test.ps1
+```
+
+Si PowerShell no permite ejecutar scripts: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1`. Requiere Docker Desktop en ejecución y el archivo `.env`. Ejecuta, en orden y deteniéndose en el primer fallo: autoprueba del runner, construcción de imágenes, pruebas unitarias del backend (incluye las 19 de superposición), migraciones sobre la base de pruebas, pruebas de integración contra PostgreSQL real, verificación de tipos y pruebas del frontend (Vitest). Termina con código 0 solo si todo pasa.
+
+- **Base de pruebas separada:** las pruebas de integración y las migraciones del comando único usan el servicio `db-test` (misma imagen de PostgreSQL, datos en memoria, sin volumen ni puertos publicados, perfil `test`) con `TEST_DATABASE_URL`. Nunca tocan la base de desarrollo; una guardia se niega a ejecutar si la URL de pruebas coincide con la de desarrollo. `scripts/test.ps1` elimina `db-test` al terminar, incluso si hay un fallo.
+- **`--no-deps`:** los comandos de prueba usan `docker compose run --rm --no-deps ...` para no arrancar la base de desarrollo. Sin `--no-deps`, `docker compose run api ...` arranca `db` porque `api` depende de ella.
+
+### Estructura de C-01
+
+```
+backend/    app/{main.py, core/, api/, schemas/, models/, repositories/, domain/}, alembic/, tests/{unit,integration,isolation}
+frontend/   src/{App.tsx, main.tsx, features/, shared/, pages/}, vite.config.ts, tsconfig.json (strict)
+scripts/    test.ps1 (comando único), lib/Pasos.ps1, tests/autoprueba.ps1
+docker-compose.yml, .env.example, .gitattributes
+```
+
+### Dependencias, detener y borrar datos
+
+- **Reconstruir dependencias:** backend, `docker compose build api`; frontend, `docker compose build frontend` y luego `docker compose run --rm frontend npm ci` (los `node_modules` viven en el volumen `frontend_node_modules`, no en la carpeta del repositorio).
+- **Detener** sin perder datos: `docker compose stop` (o `docker compose stop db`, etc.). Volver a levantar: `docker compose up -d`.
+- **Borrar la base de desarrollo local (acción destructiva, solo manual del usuario):** `docker compose down -v` elimina los contenedores **y los volúmenes** `pgdata` y `frontend_node_modules`, y con ellos todos los datos locales (ficticios). Ejecutarlo únicamente si se quiere empezar de cero; no forma parte de ningún script ni de las pruebas.
