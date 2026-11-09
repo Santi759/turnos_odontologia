@@ -1,5 +1,7 @@
+import ast
 import dataclasses
 import uuid
+from pathlib import Path
 
 import pytest
 from sqlalchemy.dialects import postgresql
@@ -130,3 +132,43 @@ def test_obtener_actual_se_acota_por_el_id_del_contexto():
     )
 
     assert f"consultorio.id = '{ID_A}'" in sql
+
+
+# --- Un unico punto de construccion en la aplicacion (C-03, tarea 5.2) ------------------
+
+RAIZ_APP = Path(__file__).resolve().parents[2] / "app"
+MODULO_DE_IDENTIDAD = "auth/dependencias.py"
+
+
+def _construyen_contexto(fuente: str) -> bool:
+    """Verdadero si el codigo contiene una llamada a `ContextoConsultorio(...)`."""
+    for nodo in ast.walk(ast.parse(fuente)):
+        if isinstance(nodo, ast.Call):
+            funcion = nodo.func
+            nombre = getattr(funcion, "id", None) or getattr(funcion, "attr", None)
+            if nombre == "ContextoConsultorio":
+                return True
+    return False
+
+
+def _archivos_de_la_app_que_construyen_contexto() -> set[str]:
+    return {
+        archivo.relative_to(RAIZ_APP).as_posix()
+        for archivo in RAIZ_APP.rglob("*.py")
+        if _construyen_contexto(archivo.read_text(encoding="utf-8"))
+    }
+
+
+def test_el_detector_encuentra_construcciones_directas_y_con_prefijo_de_modulo():
+    assert _construyen_contexto("c = ContextoConsultorio(sesion.consultorio_id)")
+    assert _construyen_contexto("c = contexto.ContextoConsultorio(uuid.uuid4())")
+    assert not _construyen_contexto("def f(c: ContextoConsultorio) -> None: ...")
+    assert not _construyen_contexto("class ContextoConsultorio: ...")
+
+
+def test_las_construcciones_de_contexto_fuera_de_pruebas_solo_estan_en_la_dependencia_de_identidad():
+    # Igualdad (tarea 5.2): la dependencia de identidad existe y es el UNICO lugar de la app
+    # que construye el contexto; ni cero construcciones ni una adicional en otro archivo.
+    construcciones = _archivos_de_la_app_que_construyen_contexto()
+
+    assert construcciones == {MODULO_DE_IDENTIDAD}

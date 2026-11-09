@@ -15,6 +15,10 @@ $usoDbTest = $false
 try {
     Assert-RequisitosPrevios -Raiz $Raiz
     Set-Location -LiteralPath $Raiz
+    # Clave efimera de autenticacion para las pruebas (no depende del .env del autor):
+    # solo vive en el entorno de este proceso y se pasa a los contenedores por NOMBRE
+    # (opcion -e con el nombre de la variable, sin valor); nunca se imprime ni se escribe en un archivo.
+    $env:AUTH_SECRET_KEY = New-ClaveAuthEfimera
 
     Invoke-Paso -Nombre '0. autoprueba del runner y de la higiene del repositorio' -Comando {
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/autoprueba.ps1
@@ -30,10 +34,10 @@ try {
         docker compose up -d --wait db-test
     }
     Invoke-Paso -Nombre '4. migraciones sobre la base de pruebas (alembic upgrade head)' -Comando {
-        docker compose run --rm --no-deps api alembic -x target=test upgrade head
+        docker compose run --rm --no-deps -e AUTH_SECRET_KEY api alembic -x target=test upgrade head
     }
     Invoke-Paso -Nombre '5. pruebas de integracion contra PostgreSQL real (db-test)' -Comando {
-        docker compose run --rm --no-deps api python -m pytest -p no:cacheprovider tests/integration -v
+        docker compose run --rm --no-deps -e AUTH_SECRET_KEY api python -m pytest -p no:cacheprovider tests/integration -v
     }
     Invoke-Paso -Nombre '6. verificacion de tipos del frontend (tsc --noEmit)' -Comando {
         docker compose run --rm --no-deps frontend npm run typecheck
@@ -46,6 +50,7 @@ try {
     Write-Host ('ERROR: ' + $_.Exception.Message)
     $codigoSalida = 1
 } finally {
+    Remove-Item Env:AUTH_SECRET_KEY -ErrorAction SilentlyContinue
     if ($usoDbTest) {
         # La base de pruebas es efimera (tmpfs): se elimina siempre, incluso tras un fallo.
         try { docker compose --profile test rm -sf db-test | Out-Null } catch { Write-Host 'Aviso: no se pudo eliminar db-test' }

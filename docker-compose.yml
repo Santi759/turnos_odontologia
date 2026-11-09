@@ -38,10 +38,15 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - ./backend:/app
+      # Solo la plantilla de variables, de solo lectura y fuera de /app, para las pruebas
+      # unitarias de la plantilla. Nunca se monta .env ni otro archivo con secretos.
+      - ./.env.example:/repo/.env.example:ro
     depends_on:
       db:
         condition: service_healthy
-    command: uvicorn --factory app.main:crear_app --host 0.0.0.0 --port 8000 --reload
+    # --no-proxy-headers: la IP del limite de intentos es la de la conexion directa (DD-19);
+    # uvicorn no debe reescribirla desde X-Forwarded-For.
+    command: uvicorn --factory app.main:crear_app --host 0.0.0.0 --port 8000 --reload --no-proxy-headers
 
   frontend:
     build: ./frontend

@@ -78,3 +78,18 @@ def sesion(base_migrada: Engine) -> Iterator[Session]:
         sesion.close()
         transaccion.rollback()
         conexion.close()
+
+
+@pytest.fixture
+def base_en_0002(motor: Engine, config_alembic: Config) -> Iterator[Engine]:
+    """Base de PRUEBAS vacia en la revision 0002 (para probar la migracion 0003).
+
+    Al terminar descarta todo lo que el test haya insertado y deja la base en `head`.
+    """
+    command.downgrade(config_alembic, "base")
+    command.upgrade(config_alembic, "0002")
+    try:
+        yield motor
+    finally:
+        command.downgrade(config_alembic, "base")
+        command.upgrade(config_alembic, "head")

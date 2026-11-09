@@ -1,0 +1,46 @@
+# Lista de términos genéricos del contexto (tarea 3.4, DD-16, PC-06).
+# Fuente: elaboración propia del proyecto (turnos_odontologia). Licencia: la del repositorio.
+# Fecha: 2026-11-06. Version: 1.
+# Criterios de inclusión: dominios y etiquetas reservados o de documentación (example, test,
+# invalid, localhost, local); proveedores de correo comunes; etiquetas DNS genéricas (com, net,
+# org, edu, gob, mail, ...); palabras genéricas de nombres de consultorios (clinica, centro,
+# dental, consultorio, ...). 'consultorio' sigue rechazándose por ser término fijo del sistema.
+# Formato: un término por línea, en forma compacta, ordenado y sin duplicados. Algunas entradas
+# tienen menos de 4 caracteres: no afectan porque solo se aplican a etiquetas y tokens de 4 o más.
+# El SHA-256 cubre las líneas que no empiezan con '#', cada una terminada en LF, en UTF-8.
+# SHA-256: 2452aca578e1431d53e476f8aad0841d775ea0f0857a2632c1827c1eb9573234
+ar
+centro
+clinica
+com
+consultorio
+consultorios
+correo
+dental
+dentista
+dentistas
+edu
+email
+example
+gmail
+gob
+gov
+hotmail
+icloud
+invalid
+live
+local
+localhost
+mail
+medica
+medico
+net
+odontologica
+odontologico
+org
+outlook
+salud
+test
+web
+www
+yahoo

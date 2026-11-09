@@ -1,5 +1,6 @@
 import argparse
 import io
+import secrets
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,7 @@ def _settings(test_database_url: str | None = URL_PRUEBAS) -> Settings:
         "DATABASE_URL": URL_DESARROLLO,
         "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
         "APP_ENV": "local",
+        "AUTH_SECRET_KEY": secrets.token_urlsafe(48),
         # Siempre explicita (aunque sea None): el entorno del contenedor ya define
         # TEST_DATABASE_URL y no debe filtrarse a la prueba.
         "TEST_DATABASE_URL": test_database_url,
@@ -166,6 +168,8 @@ def _ejecutar_upgrade_sql(
     monkeypatch.setenv("DATABASE_URL", database_url)
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
     monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("AUTH_SECRET_KEY", secrets.token_urlsafe(48))
+    monkeypatch.setenv("AUTH_COOKIE_SECURE", "true")
     if test_database_url is None:
         monkeypatch.delenv("TEST_DATABASE_URL", raising=False)
     else:

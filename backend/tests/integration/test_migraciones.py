@@ -125,32 +125,42 @@ def _tablas_publicas(motor: Engine) -> list[str]:
         )
 
 
+TABLAS_TRAS_MIGRAR = [
+    "alembic_version",
+    "consultorio",
+    "intento_login",
+    "sesion",
+    "usuario",
+]
+TABLAS_CON_DATOS_DEL_MODELO = ("consultorio", "usuario", "sesion", "intento_login")
+
+
 def _filas(motor: Engine, tabla: str) -> int:
     with motor.connect() as conexion:
         return conexion.execute(text(f"SELECT count(*) FROM {tabla}")).scalar_one()
 
 
 def test_sin_tablas_de_dominio(base_migrada: Engine):
-    # C-02 (delta MODIFIED de base-de-datos-local): antes exigia solo alembic_version.
-    assert _tablas_publicas(base_migrada) == [
-        "alembic_version",
-        "consultorio",
-        "usuario",
-    ]
+    # C-02 y C-03 (deltas MODIFIED de base-de-datos-local): antes exigia solo
+    # alembic_version; C-03 suma sesion e intento_login.
+    assert _tablas_publicas(base_migrada) == TABLAS_TRAS_MIGRAR
 
 
 def test_tablas_del_modelo_base_vacias_tras_migrar(base_migrada: Engine):
-    assert _filas(base_migrada, "consultorio") == 0
-    assert _filas(base_migrada, "usuario") == 0
+    for tabla in TABLAS_CON_DATOS_DEL_MODELO:
+        assert _filas(base_migrada, tabla) == 0, tabla
 
 
-def test_cadena_de_revisiones_head_0002_sobre_0001(config_alembic: Config):
+def test_cadena_de_revisiones_0001_0002_0003(config_alembic: Config):
     scripts = ScriptDirectory.from_config(config_alembic)
 
     head = scripts.get_revision(scripts.get_current_head())
+    modelo_base = scripts.get_revision("0002")
 
-    assert head.revision == "0002"
-    assert head.down_revision == "0001"
+    assert head.revision == "0003"
+    assert head.down_revision == "0002"
+    assert modelo_base.down_revision == "0001"
+    assert set(modelo_base.nextrev) == {"0003"}
 
 
 def test_subida_desde_0001_crea_las_tablas_vacias(
@@ -162,9 +172,9 @@ def test_subida_desde_0001_crea_las_tablas_vacias(
 
     command.upgrade(config_alembic, "head")
 
-    assert _tablas_publicas(motor) == ["alembic_version", "consultorio", "usuario"]
-    assert _filas(motor, "consultorio") == 0
-    assert _filas(motor, "usuario") == 0
+    assert _tablas_publicas(motor) == TABLAS_TRAS_MIGRAR
+    for tabla in TABLAS_CON_DATOS_DEL_MODELO:
+        assert _filas(motor, tabla) == 0, tabla
 
 
 def test_bajada_a_0001_elimina_las_tablas_y_conserva_btree_gist(
@@ -183,7 +193,7 @@ def test_bajada_a_0001_elimina_las_tablas_y_conserva_btree_gist(
     assert "btree_gist" in extensiones
 
     command.upgrade(config_alembic, "head")
-    assert _tablas_publicas(motor) == ["alembic_version", "consultorio", "usuario"]
+    assert _tablas_publicas(motor) == TABLAS_TRAS_MIGRAR
 
 
 def test_migrar_desde_base_no_carga_datos(motor: Engine, config_alembic: Config):
@@ -191,8 +201,8 @@ def test_migrar_desde_base_no_carga_datos(motor: Engine, config_alembic: Config)
 
     command.upgrade(config_alembic, "head")
 
-    assert _filas(motor, "consultorio") == 0
-    assert _filas(motor, "usuario") == 0
+    for tabla in TABLAS_CON_DATOS_DEL_MODELO:
+        assert _filas(motor, tabla) == 0, tabla
 
 
 def test_los_modelos_coinciden_con_la_base_migrada(base_migrada: Engine):
@@ -210,7 +220,8 @@ def test_nombres_de_restricciones_segun_la_convencion(base_migrada: Engine):
                 "SELECT conrelid::regclass::text AS tabla, conname, contype "
                 "FROM pg_constraint WHERE connamespace = 'public'::regnamespace "
                 "AND contype IN ('p', 'f', 'u', 'c') "  # PG 18 lista tambien los NOT NULL (n)
-                "AND conrelid IN ('consultorio'::regclass, 'usuario'::regclass)"
+                "AND conrelid IN ('consultorio'::regclass, 'usuario'::regclass, "
+                "'sesion'::regclass, 'intento_login'::regclass)"
             )
         ).all()
 
@@ -218,6 +229,16 @@ def test_nombres_de_restricciones_segun_la_convencion(base_migrada: Engine):
     assert por_tabla == {
         ("consultorio", "pk_consultorio"),
         ("consultorio", "ck_consultorio_anticipacion_no_negativa"),
+        ("consultorio", "uq_consultorio_codigo"),
+        ("consultorio", "ck_consultorio_codigo_formato"),
+        ("sesion", "pk_sesion"),
+        ("sesion", "uq_sesion_token_hmac"),
+        ("sesion", "fk_sesion_consultorio_id_usuario"),
+        ("sesion", "ck_sesion_token_hmac_longitud"),
+        ("sesion", "ck_sesion_vencimientos_coherentes"),
+        ("sesion", "ck_sesion_revocacion_posterior"),
+        ("intento_login", "pk_intento_login"),
+        ("intento_login", "ck_intento_login_claves_longitud"),
         ("usuario", "pk_usuario"),
         ("usuario", "fk_usuario_consultorio_id_consultorio"),
         ("usuario", "uq_usuario_consultorio_id_id"),

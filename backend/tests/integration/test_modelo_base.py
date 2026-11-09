@@ -15,9 +15,14 @@ EMAIL = "persona.ficticia@example.test"
 
 
 def _consultorio(sesion: Session, nombre: str = "Consultorio Ficticio A") -> uuid.UUID:
+    # C-03: `codigo` es obligatorio y sin valor por defecto; se deriva del nombre ficticio.
+    codigo = nombre.lower().replace(" ", "-")
     return sesion.execute(
-        text("INSERT INTO consultorio (nombre) VALUES (:nombre) RETURNING id"),
-        {"nombre": nombre},
+        text(
+            "INSERT INTO consultorio (nombre, codigo) VALUES (:nombre, :codigo) "
+            "RETURNING id"
+        ),
+        {"nombre": nombre, "codigo": codigo},
     ).scalar_one()
 
 
@@ -43,6 +48,19 @@ def _sqlstate_de_la_falla(sesion: Session, sentencia: str, parametros: dict) -> 
     return getattr(excinfo.value.orig, "sqlstate", None)
 
 
+def _diagnostico_de_la_falla(sesion: Session, sentencia: str, parametros: dict):
+    """Devuelve (sqlstate, columna, restriccion) de la violacion de integridad."""
+    with pytest.raises(IntegrityError) as excinfo:
+        with sesion.begin_nested():
+            sesion.execute(text(sentencia), parametros)
+    origen = excinfo.value.orig
+    return (
+        getattr(origen, "sqlstate", None),
+        origen.diag.column_name,
+        origen.diag.constraint_name,
+    )
+
+
 def _tipo_de_columna(sesion: Session, tabla: str, columna: str) -> str:
     return sesion.execute(
         text(
@@ -60,7 +78,8 @@ def _tipo_de_columna(sesion: Session, tabla: str, columna: str) -> str:
 def test_valores_por_defecto_al_insertar_solo_el_nombre(sesion: Session):
     fila = sesion.execute(
         text(
-            "INSERT INTO consultorio (nombre) VALUES ('Consultorio Ficticio A') "
+            "INSERT INTO consultorio (nombre, codigo) "
+            "VALUES ('Consultorio Ficticio A', 'ficticio-a') "
             "RETURNING zona_horaria, anticipacion_cancelacion_horas, activo, creado_en"
         )
     ).one()
@@ -79,7 +98,8 @@ def test_la_zona_horaria_por_defecto_existe_una_vez_en_pg_timezone_names(
 ):
     zona = sesion.execute(
         text(
-            "INSERT INTO consultorio (nombre) VALUES ('Consultorio Ficticio A') "
+            "INSERT INTO consultorio (nombre, codigo) "
+            "VALUES ('Consultorio Ficticio A', 'ficticio-a') "
             "RETURNING zona_horaria"
         )
     ).scalar_one()
@@ -93,11 +113,82 @@ def test_la_zona_horaria_por_defecto_existe_una_vez_en_pg_timezone_names(
 
 
 def test_nombre_de_consultorio_obligatorio(sesion: Session):
-    sqlstate = _sqlstate_de_la_falla(
-        sesion, "INSERT INTO consultorio (activo) VALUES (true)", {}
+    sqlstate, columna, _ = _diagnostico_de_la_falla(
+        sesion,
+        "INSERT INTO consultorio (codigo, activo) VALUES ('ficticio-a', true)",
+        {},
     )
 
-    assert sqlstate == NOT_NULL
+    assert (sqlstate, columna) == (NOT_NULL, "nombre")
+
+
+def test_codigo_de_consultorio_obligatorio(sesion: Session):
+    sqlstate, columna, _ = _diagnostico_de_la_falla(
+        sesion,
+        "INSERT INTO consultorio (nombre) VALUES ('Consultorio Ficticio A')",
+        {},
+    )
+
+    assert (sqlstate, columna) == (NOT_NULL, "codigo")
+
+
+# --- Codigo de consultorio unico y normalizado ------------------------------------
+
+_INSERTAR_CON_CODIGO = (
+    "INSERT INTO consultorio (nombre, codigo) VALUES ('Consultorio Ficticio', :codigo)"
+)
+
+
+def test_codigo_repetido_rechazado_por_la_restriccion_de_unicidad(sesion: Session):
+    sesion.execute(text(_INSERTAR_CON_CODIGO), {"codigo": "ficticio-a"})
+
+    sqlstate, _, restriccion = _diagnostico_de_la_falla(
+        sesion, _INSERTAR_CON_CODIGO, {"codigo": "ficticio-a"}
+    )
+
+    assert (sqlstate, restriccion) == (UNIQUE, "uq_consultorio_codigo")
+
+
+def test_codigos_distintos_aceptados(sesion: Session):
+    sesion.execute(text(_INSERTAR_CON_CODIGO), {"codigo": "ficticio-a"})
+
+    sesion.execute(text(_INSERTAR_CON_CODIGO), {"codigo": "ficticio-b"})
+
+    cantidad = sesion.execute(text("SELECT count(*) FROM consultorio")).scalar_one()
+    assert cantidad == 2
+
+
+CODIGOS_VALIDOS = ["ficticio-a", "c01", "abc", "a" + "b-" * 19 + "c"]  # 3 y 40 caracteres
+
+
+@pytest.mark.parametrize("codigo", CODIGOS_VALIDOS)
+def test_codigo_con_formato_valido_aceptado_y_respetado(sesion: Session, codigo: str):
+    guardado = sesion.execute(
+        text(_INSERTAR_CON_CODIGO + " RETURNING codigo"), {"codigo": codigo}
+    ).scalar_one()
+
+    assert guardado == codigo
+
+
+CODIGOS_INVALIDOS = [
+    "Ficticio-A",
+    " ficticio-a",
+    "-ficticio",
+    "ficticio-",
+    "fi",
+    "ficticio_a",
+    "ficticio.a",
+    "a" * 41,
+]
+
+
+@pytest.mark.parametrize("codigo", CODIGOS_INVALIDOS)
+def test_codigo_con_formato_invalido_rechazado(sesion: Session, codigo: str):
+    sqlstate, _, restriccion = _diagnostico_de_la_falla(
+        sesion, _INSERTAR_CON_CODIGO, {"codigo": codigo}
+    )
+
+    assert (sqlstate, restriccion) == (CHECK, "ck_consultorio_codigo_formato")
 
 
 # --- Anticipacion de cancelacion no negativa ---------------------------------
@@ -106,8 +197,8 @@ def test_nombre_de_consultorio_obligatorio(sesion: Session):
 def test_anticipacion_negativa_rechazada(sesion: Session):
     sqlstate = _sqlstate_de_la_falla(
         sesion,
-        "INSERT INTO consultorio (nombre, anticipacion_cancelacion_horas) "
-        "VALUES ('Consultorio Ficticio A', -1)",
+        "INSERT INTO consultorio (nombre, codigo, anticipacion_cancelacion_horas) "
+        "VALUES ('Consultorio Ficticio A', 'ficticio-a', -1)",
         {},
     )
 
@@ -117,8 +208,8 @@ def test_anticipacion_negativa_rechazada(sesion: Session):
 def test_anticipacion_cero_aceptada(sesion: Session):
     horas = sesion.execute(
         text(
-            "INSERT INTO consultorio (nombre, anticipacion_cancelacion_horas) "
-            "VALUES ('Consultorio Ficticio A', 0) "
+            "INSERT INTO consultorio (nombre, codigo, anticipacion_cancelacion_horas) "
+            "VALUES ('Consultorio Ficticio A', 'ficticio-a', 0) "
             "RETURNING anticipacion_cancelacion_horas"
         )
     ).scalar_one()

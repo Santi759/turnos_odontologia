@@ -2,7 +2,9 @@
 
 Los identificadores son UUIDv7 literales, generados una sola vez con `uuid.uuid7()`
 (DP-04): el seed es determinista y todos los `id` del sistema siguen siendo version 7.
-No hay credenciales: los usuarios del seed quedan sin credencial (DC-08).
+El codigo de cada consultorio es un literal explicito (los ultimos 12 digitos
+hexadecimales del `id`, con prefijo `c-`; una prueba comprueba la igualdad con la regla
+de derivacion). No hay credenciales: los usuarios del seed quedan sin credencial (DC-08).
 """
 import uuid
 from dataclasses import dataclass
@@ -14,6 +16,7 @@ from app.models.usuario import Rol
 class ConsultorioSeed:
     id: uuid.UUID
     nombre: str
+    codigo: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,8 +32,8 @@ _ID_CONSULTORIO_A = uuid.UUID("01a1a95a-dd90-73e7-9496-c7d08d776d19")
 _ID_CONSULTORIO_B = uuid.UUID("01a1a95a-dd90-73e7-9496-c7d1647cab52")
 
 CONSULTORIOS: tuple[ConsultorioSeed, ...] = (
-    ConsultorioSeed(_ID_CONSULTORIO_A, "Consultorio Demo A"),
-    ConsultorioSeed(_ID_CONSULTORIO_B, "Consultorio Demo B"),
+    ConsultorioSeed(_ID_CONSULTORIO_A, "Consultorio Demo A", "c-c7d08d776d19"),
+    ConsultorioSeed(_ID_CONSULTORIO_B, "Consultorio Demo B", "c-c7d1647cab52"),
 )
 
 USUARIOS: tuple[UsuarioSeed, ...] = (

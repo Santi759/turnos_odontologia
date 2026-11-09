@@ -1,4 +1,5 @@
 import dataclasses
+import secrets
 import uuid
 
 import pytest
@@ -20,6 +21,8 @@ def _configurar_entorno(monkeypatch: pytest.MonkeyPatch, app_env: str) -> None:
     monkeypatch.setenv("APP_ENV", app_env)
     monkeypatch.setenv("DATABASE_URL", URL_INEXISTENTE)
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
+    monkeypatch.setenv("AUTH_SECRET_KEY", secrets.token_urlsafe(48))
+    monkeypatch.setenv("AUTH_COOKIE_SECURE", "true")
 
 
 def _settings(app_env: str) -> Settings:
@@ -27,6 +30,7 @@ def _settings(app_env: str) -> Settings:
         DATABASE_URL=URL_INEXISTENTE,
         CORS_ALLOWED_ORIGINS="http://localhost:5173",
         APP_ENV=app_env,
+        AUTH_SECRET_KEY=secrets.token_urlsafe(48),
     )
 
 

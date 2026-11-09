@@ -37,7 +37,9 @@ def aplicar_seed(sesion: Session) -> ResumenSeed:
     for consultorio in CONSULTORIOS:
         filas = sesion.execute(
             insert(Consultorio)
-            .values(id=consultorio.id, nombre=consultorio.nombre)
+            .values(
+                id=consultorio.id, nombre=consultorio.nombre, codigo=consultorio.codigo
+            )
             .on_conflict_do_nothing()
             .returning(Consultorio.id)
         ).all()

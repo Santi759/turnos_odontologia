@@ -368,8 +368,9 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
   - `knowledge-base/10_preguntas_abiertas.md` PA-04, PA-05, PA-06
 
 ### [C-03] `autenticacion-sesion`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado (archivado el 2026-11-09 en `openspec/changes/archive/2026-11-09-autenticacion-sesion/`)
 - **Scope**: US-001. Autenticación y contexto de consultorio derivado de la identidad (RN-MT-02).
+  - Migración 0003 (`0003_autenticacion_sesion`): columna `consultorio.codigo` (con backfill) y tablas `sesion` e `intento_login`
   - Endpoints: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` (usuario, rol, consultorio)
   - Dependencia FastAPI `contexto_consultorio` (usuario → consultorio + rol) inyectada a servicios; el cliente nunca envía `consultorio_id`
   - Hash robusto de contraseñas (RN-AU-02), vencimiento y cierre de sesión/token (RN-AU-04), límite de intentos fallidos (RN-AU-05), rechazo genérico de credenciales inválidas o usuario inactivo (US-001), `AUTH_SECRET_KEY`/`AUTH_SESSION_MINUTES` por entorno (RN-AU-07)
@@ -388,7 +389,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 ### [C-04] `aislamiento-roles-rbac`
 - **Estado**: `[ ]` pendiente
 - **Scope**: US-002. Barreras de aislamiento y autorización por rol reutilizables por todos los changes siguientes.
-  - Barrera adicional en base de datos según PA-04 (claves foráneas compuestas incluyendo `consultorio_id` y/o RLS con variable de sesión); migración 0003 correspondiente
+  - Barrera adicional en base de datos según PA-04 (claves foráneas compuestas incluyendo `consultorio_id` y/o RLS con variable de sesión); migración 0004 correspondiente (la 0003 es la de C-03)
   - Dependencias `require_rol(...)` según la matriz de `03_actores_y_roles.md` (RN-AU-03), verificadas en servidor
   - Respuesta de recurso ajeno idéntica a "no encontrado" (RN-MT-05)
   - Arnés de pruebas de acceso cruzado (`tests/isolation/`): fixture con 2 consultorios, helper para ejecutar cada endpoint como usuario del otro consultorio; **regla de proceso: todo change posterior con endpoints de datos de consultorio agrega su prueba aquí**

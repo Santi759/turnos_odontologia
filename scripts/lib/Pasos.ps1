@@ -22,3 +22,28 @@ function Assert-RequisitosPrevios {
         throw 'Falta el archivo .env en la raiz del repositorio: hay que copiar .env.example a .env antes de ejecutar las pruebas.'
     }
 }
+
+function New-ClaveAuthEfimera {
+    # Clave efimera de pruebas: 48 bytes de un CSPRNG en base64url sin relleno (64 caracteres,
+    # mismo formato que secrets.token_urlsafe(48)). Se regenera si la configuracion de la
+    # aplicacion la rechazaria (menos de 20 caracteres distintos o un marcador de ejemplo).
+    $marcadores = @('cambiar', 'reemplazar', 'ficticio', 'ficticia', 'example', 'ejemplo',
+                    'changeme', 'secret', 'password', 'contrasena')
+    $generador = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        while ($true) {
+            $bytes = New-Object byte[] 48
+            $generador.GetBytes($bytes)
+            $clave = [Convert]::ToBase64String($bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=')
+            $minusculas = $clave.ToLowerInvariant()
+            $contieneMarcador = $false
+            foreach ($marcador in $marcadores) {
+                if ($minusculas.Contains($marcador)) { $contieneMarcador = $true }
+            }
+            $distintos = @($clave.ToCharArray() | Select-Object -Unique).Count
+            if ($distintos -ge 20 -and -not $contieneMarcador) { return $clave }
+        }
+    } finally {
+        $generador.Dispose()
+    }
+}

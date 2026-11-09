@@ -1,0 +1,58 @@
+# Lista inicial de contrasenas comunes (tarea 3.3, DD-16, PD-09).
+# Fuente: elaboración propia del proyecto (turnos_odontologia). No deriva de listas externas.
+# Licencia: la del repositorio.
+# Fecha: 2026-11-06. Version: 1.
+# Criterios de selección: secuencias numéricas y de teclado; palabras de contraseña con sufijos
+# numéricos en español; repeticiones de un carácter o de una palabra corta; frases comunes de
+# bienvenida o de acceso. Solo entradas de 15 o más puntos de código tras NFKC.
+# Formato: una entrada por línea; se comparan en forma compacta (sin importar mayúsculas,
+# diacríticos ni separadores). El SHA-256 cubre las líneas que no empiezan con '#',
+# cada una terminada en LF, codificadas en UTF-8.
+# SHA-256: d737d2cdbc1459c744a71d4d5e95925f65166fa1e56a12a427473a0130fa9613
+123456789012345
+1234567890123456
+12345678901234567890
+qwertyuiopasdfgh
+qwertyuiopasdfghjkl
+asdfghjklzxcvbnm
+asdfghjklñzxcvbnm
+1q2w3e4r5t6y7u8i
+abcdefghijklmnop
+abcdefghijklmnopqrstuvwxyz
+contraseña123456
+contraseña1234567
+contraseña12345678
+contrasenia123456
+password12345678
+password123456789
+passwordpassword
+contraseñacontraseña
+aaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaa
+0000000000000000
+1111111111111111
+11111111111111111111
+bienvenido123456
+bienvenidobienvenido
+bienvenidoalsistema
+bienvenidaalsistema
+welcomewelcome123
+iloveyouiloveyou
+ingresaralsistema
+accesoalsistema123
+accesoalsistema1234
+letmeinletmein123
+adminadminadmin
+administrador1234
+administrador123456
+usuariousuario123
+claveclaveclave123
+clavedeacceso1234
+123456789abcdefg
+abcdefghijk123456
+1234512345123451
+abcabcabcabcabcabc
+holaholaholahola
+holamundo12345678
+mypasswordispassword
+thequickbrownfoxjumps

@@ -31,8 +31,11 @@ class Escenario:
 
 
 def _consultorio(sesion: Session, nombre: str) -> uuid.UUID:
+    # C-03: `codigo` es obligatorio y sin valor por defecto; se deriva del nombre ficticio.
+    codigo = nombre.lower().replace(" ", "-")
     return sesion.execute(
-        text("INSERT INTO consultorio (nombre) VALUES (:n) RETURNING id"), {"n": nombre}
+        text("INSERT INTO consultorio (nombre, codigo) VALUES (:n, :c) RETURNING id"),
+        {"n": nombre, "c": codigo},
     ).scalar_one()
 
 

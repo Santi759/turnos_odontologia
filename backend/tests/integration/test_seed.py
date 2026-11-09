@@ -1,5 +1,8 @@
 import pytest
-from sqlalchemy import text
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import Engine, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.usuario import Rol
@@ -155,3 +158,89 @@ def test_el_comando_principal_informa_solo_cantidades_y_carga_el_seed(
     assert "@" not in texto and "postgresql" not in texto
     assert not any(u.nombre in texto for u in USUARIOS)
     assert len(_usuarios(sesion)) == 6
+
+
+# --- Codigo de consultorio en el seed (C-03) -------------------------------------------
+
+CODIGOS_DEL_SEED = {
+    "Consultorio Demo A": "c-c7d08d776d19",
+    "Consultorio Demo B": "c-c7d1647cab52",
+}
+
+
+def _codigos_por_nombre(ejecutor) -> dict[str, str]:
+    filas = ejecutor.execute(text("SELECT nombre, codigo FROM consultorio")).all()
+    return {fila.nombre: fila.codigo for fila in filas}
+
+
+def test_codigos_del_seed_tras_aplicarlo(sesion: Session):
+    aplicar_seed(sesion)
+
+    assert _codigos_por_nombre(sesion) == CODIGOS_DEL_SEED
+
+
+def test_mismo_codigo_con_seed_y_luego_0003_que_con_0003_y_luego_seed(
+    base_en_0002: Engine, config_alembic: Config
+):
+    # Camino 1: la base en 0002 ya tenia el seed (como el seed de C-02, sin codigo) y
+    # se sube a 0003 (backfill).
+    with base_en_0002.begin() as conexion:
+        for consultorio in CONSULTORIOS:
+            conexion.execute(
+                text("INSERT INTO consultorio (id, nombre) VALUES (:id, :nombre)"),
+                {"id": consultorio.id, "nombre": consultorio.nombre},
+            )
+        for usuario in USUARIOS:
+            conexion.execute(
+                text(
+                    "INSERT INTO usuario (id, consultorio_id, email, nombre, rol) "
+                    "VALUES (:id, :c, :email, :nombre, :rol)"
+                ),
+                {
+                    "id": usuario.id,
+                    "c": usuario.consultorio_id,
+                    "email": usuario.email,
+                    "nombre": usuario.nombre,
+                    "rol": usuario.rol.value,
+                },
+            )
+    command.upgrade(config_alembic, "0003")
+    with base_en_0002.connect() as conexion:
+        camino_1 = _codigos_por_nombre(conexion)
+
+    # Camino 2: base nueva migrada a 0003 y seed aplicado despues.
+    command.downgrade(config_alembic, "base")
+    command.upgrade(config_alembic, "0003")
+    with Session(base_en_0002) as sesion_nueva:
+        aplicar_seed(sesion_nueva)
+        sesion_nueva.commit()
+        camino_2 = _codigos_por_nombre(sesion_nueva)
+
+    assert camino_1 == camino_2 == CODIGOS_DEL_SEED
+
+
+def test_codigo_del_seed_ocupado_por_un_consultorio_ajeno_hace_fallar_el_seed(
+    sesion: Session,
+):
+    ajeno = sesion.execute(
+        text(
+            "INSERT INTO consultorio (nombre, codigo) "
+            "VALUES ('Consultorio Ficticio Ajeno', 'c-c7d08d776d19') RETURNING id"
+        )
+    ).scalar_one()
+    antes = sesion.execute(
+        text("SELECT * FROM consultorio WHERE id = :id"), {"id": ajeno}
+    ).one()
+
+    with pytest.raises(IntegrityError) as excinfo:
+        with sesion.begin_nested():  # el llamador revierte ante el error
+            aplicar_seed(sesion)
+
+    # El consultorio ocupado se omite (ON CONFLICT DO NOTHING) y sus usuarios fallan por FK.
+    assert getattr(excinfo.value.orig, "sqlstate", None) == "23503"
+    despues = sesion.execute(
+        text("SELECT * FROM consultorio WHERE id = :id"), {"id": ajeno}
+    ).one()
+    assert despues == antes
+    assert sesion.execute(text("SELECT count(*) FROM consultorio")).scalar_one() == 1
+    assert sesion.execute(text("SELECT count(*) FROM usuario")).scalar_one() == 0

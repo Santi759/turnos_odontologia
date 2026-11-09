@@ -78,13 +78,18 @@ Invoke-Caso 'Plantilla completa con valores ficticios' {
         if ($linea -match '^\s*([A-Z_]+)=(.*)$') { $valores[$Matches[1]] = $Matches[2] }
     }
     $requeridas = @('DATABASE_URL', 'TEST_DATABASE_URL', 'CORS_ALLOWED_ORIGINS', 'APP_ENV',
+                    'AUTH_SECRET_KEY', 'AUTH_SESSION_MINUTES', 'AUTH_SESSION_MAX_HOURS', 'AUTH_COOKIE_SECURE',
                     'POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_DB', 'VITE_API_BASE_URL')
     foreach ($nombre in $requeridas) {
         Assert-Verdadero ($valores.ContainsKey($nombre)) ('falta la variable ' + $nombre)
     }
     Assert-Verdadero ($valores['POSTGRES_PASSWORD'] -eq 'app') 'POSTGRES_PASSWORD no es el valor ficticio app'
     Assert-Verdadero ($valores['TEST_DATABASE_URL'] -like '*@db-test:*/*_test') 'TEST_DATABASE_URL no apunta a db-test / base *_test'
-    $prohibidas = @($valores.Keys | Where-Object { $_ -like 'AUTH_*' -or $_ -like 'EMAIL_*' })
+    Assert-Verdadero ($valores['AUTH_SECRET_KEY'] -eq 'REEMPLAZAR_generar_con_secrets_token_urlsafe_48') 'AUTH_SECRET_KEY no es el marcador rechazado de la plantilla'
+    Assert-Verdadero ($valores['AUTH_COOKIE_SECURE'] -eq 'true') 'AUTH_COOKIE_SECURE de la plantilla no es true'
+    $textoPlantilla = Get-Content -LiteralPath $ruta -Raw
+    Assert-Verdadero ($textoPlantilla.Contains('secrets.token_urlsafe(48)')) 'falta el comentario con secrets.token_urlsafe(48)'
+    $prohibidas = @($valores.Keys | Where-Object { $_ -like 'EMAIL_*' })
     Assert-Verdadero ($prohibidas.Count -eq 0) ('variables no permitidas: ' + ($prohibidas -join ', '))
 }
 
@@ -118,6 +123,17 @@ Invoke-Caso 'El arranque de la API no ejecuta el seed' {
         $entrypoint = @($compose.services.api.entrypoint) -join ' '
     }
     Assert-Verdadero ($entrypoint -notlike '*app.seed*') 'el entrypoint de api invoca el seed'
+}
+
+Invoke-Caso 'El arranque de la API no procesa cabeceras de proxy' {
+    # DD-19: la IP del limite es la de la conexion directa; uvicorn no debe reescribirla desde
+    # X-Forwarded-For (por defecto confia en 127.0.0.1). Se inspecciona el comando EFECTIVO de compose.
+    $compose = Get-ConfiguracionCompose
+    $comando = @($compose.services.api.command) -join ' '
+    Assert-Verdadero ($comando -like '*uvicorn*') 'el comando de api no es uvicorn'
+    Assert-Verdadero ($comando -like '*--no-proxy-headers*') 'el comando de api no incluye --no-proxy-headers'
+    Assert-Verdadero ($comando -notlike '*--proxy-headers*') 'el comando de api habilita --proxy-headers'
+    Assert-Verdadero ($comando -notlike '*--forwarded-allow-ips*') 'el comando de api configura --forwarded-allow-ips'
 }
 
 Invoke-Caso 'Base de pruebas separada y efimera' {
@@ -181,6 +197,43 @@ Invoke-Caso 'test.ps1 sin .env termina con error antes de cualquier suite' {
     }
 }
 
+Invoke-Caso 'Clave efimera de autenticacion: formato, diversidad y unicidad' {
+    $primera = New-ClaveAuthEfimera
+    $segunda = New-ClaveAuthEfimera
+    Assert-Verdadero ($primera -cmatch '^[A-Za-z0-9_-]{64}$') 'la clave no tiene 64 caracteres base64url sin relleno'
+    Assert-Verdadero (@($primera.ToCharArray() | Select-Object -Unique).Count -ge 20) 'la clave tiene menos de 20 caracteres distintos'
+    Assert-Verdadero ($primera -ne $segunda) 'dos claves generadas son iguales'
+    foreach ($marcador in @('cambiar', 'reemplazar', 'example', 'secret', 'password')) {
+        Assert-Verdadero (-not $primera.ToLowerInvariant().Contains($marcador)) 'la clave contiene un marcador rechazado'
+    }
+}
+
+Invoke-Caso 'test.ps1: clave por nombre, sin literal y retirada del entorno' {
+    $texto = Get-Content -LiteralPath (Join-Path $Raiz 'scripts/test.ps1') -Raw
+    Assert-Verdadero (-not ($texto -match 'AUTH_SECRET_KEY\s*=\s*[''"]')) 'test.ps1 asigna AUTH_SECRET_KEY con un literal'
+    Assert-Verdadero ($texto -match '\$env:AUTH_SECRET_KEY\s*=\s*New-ClaveAuthEfimera') 'la clave no proviene de New-ClaveAuthEfimera'
+    Assert-Verdadero (-not ($texto -match '-e\s+AUTH_SECRET_KEY=')) 'test.ps1 pasa la clave con valor en -e'
+    $porNombre = @([regex]::Matches($texto, '-e AUTH_SECRET_KEY(?![=\w])'))
+    Assert-Verdadero ($porNombre.Count -eq 2) ('se esperaban 2 usos de -e AUTH_SECRET_KEY por nombre (alembic e integracion) y hay ' + $porNombre.Count)
+    Assert-Verdadero ($texto.Contains('$env:AUTH_SECRET_KEY')) 'test.ps1 no deja la clave en el entorno del proceso'
+    Assert-Verdadero ($texto -match 'Remove-Item Env:AUTH_SECRET_KEY') 'test.ps1 no retira la clave del entorno'
+    Assert-Verdadero (-not ($texto -match 'Write-Host[^\r\n]*AUTH_SECRET_KEY')) 'test.ps1 muestra la clave'
+}
+
+Invoke-Caso 'Compose monta solo .env.example de solo lectura en api' {
+    $compose = Get-ConfiguracionCompose
+    $montajes = @($compose.services.api.volumes | Where-Object { $_.target -eq '/repo/.env.example' })
+    Assert-Verdadero ($montajes.Count -eq 1) 'api no monta /repo/.env.example'
+    Assert-Verdadero ($montajes[0].read_only -eq $true) 'el montaje de .env.example no es de solo lectura'
+    Assert-Verdadero ($montajes[0].source -like '*.env.example') 'el origen del montaje no es .env.example'
+    foreach ($servicio in $compose.services.PSObject.Properties) {
+        $volumenes = @()
+        if ($servicio.Value.PSObject.Properties.Name -contains 'volumes') { $volumenes = @($servicio.Value.volumes) }
+        $envMontado = @($volumenes | Where-Object { $_.PSObject.Properties.Name -contains 'source' -and ($_.source -like '*.env' -or $_.target -like '*/.env') })
+        Assert-Verdadero ($envMontado.Count -eq 0) ('el servicio ' + $servicio.Name + ' monta .env')
+    }
+}
+
 Invoke-Caso 'Scripts en ASCII y sin redireccion de stderr de comandos nativos' {
     $redireccion = '2>' + '&1'
     foreach ($archivo in @(Get-ChildItem -Path (Join-Path $Raiz 'scripts') -Recurse -Filter *.ps1)) {
@@ -189,6 +242,75 @@ Invoke-Caso 'Scripts en ASCII y sin redireccion de stderr de comandos nativos' {
         Assert-Verdadero ($noAscii.Count -eq 0) ($archivo.Name + ' contiene caracteres no ASCII')
         $texto = [System.Text.Encoding]::ASCII.GetString($bytes)
         Assert-Verdadero (-not $texto.Contains($redireccion)) ($archivo.Name + ' redirige stderr')
+    }
+}
+
+Invoke-Caso 'Funciona sin clave en .env (entorno aislado, db-test propia, sin tocar .env ni desarrollo)' {
+    # Escenario: DADO un .env sin AUTH_SECRET_KEY, las migraciones sobre db-test y las pruebas de
+    # integracion reciben la clave efimera y no fallan por su ausencia. Se prueba en un proyecto de
+    # Compose AISLADO (nombre propio, archivo env ficticio sin la clave, su propia db-test en tmpfs):
+    # no se lee ni modifica el .env real, no se toca el Compose de desarrollo ni sus servicios o datos.
+    $nombreProyecto = 'autoprueba-sinclave'
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ($nombreProyecto + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+    New-Item -ItemType Directory -Path $tmp -Force | Out-Null
+    $backend = (Join-Path $Raiz 'backend').Replace('\', '/')
+    $archivoEnv = Join-Path $tmp 'entorno-sin-clave.env'
+    $archivoCompose = Join-Path $tmp 'docker-compose.yml'
+    $envFicticio = @(
+        'DATABASE_URL=postgresql+psycopg://dev_ficticio:dev_ficticio@host-dev-ficticio.invalid:5432/turnos_dev_ficticio',
+        'TEST_DATABASE_URL=postgresql+psycopg://app:app@db-test:5432/turnos_test',
+        'CORS_ALLOWED_ORIGINS=http://localhost:5173',
+        'APP_ENV=test'
+    )
+    [System.IO.File]::WriteAllText($archivoEnv, (($envFicticio -join "`n") + "`n"), (New-Object System.Text.ASCIIEncoding))
+    Assert-Verdadero (-not (Get-Content -LiteralPath $archivoEnv -Raw).Contains('AUTH_SECRET_KEY')) 'el env aislado contiene AUTH_SECRET_KEY'
+    $compose = @(
+        'services:',
+        '  db-test:',
+        '    image: postgres:18.6-trixie',
+        '    profiles: ["test"]',
+        '    environment:',
+        '      POSTGRES_USER: app',
+        '      POSTGRES_PASSWORD: app',
+        '      POSTGRES_DB: turnos_test',
+        '    tmpfs:',
+        '      - /var/lib/postgresql',
+        '    healthcheck:',
+        '      test: ["CMD-SHELL", "pg_isready -U app -d turnos_test"]',
+        '      interval: 2s',
+        '      timeout: 5s',
+        '      retries: 30',
+        '  api:',
+        '    build:',
+        ('      context: "' + $backend + '"'),
+        '    env_file: ./entorno-sin-clave.env',
+        '    volumes:',
+        '      - type: bind',
+        ('        source: "' + $backend + '"'),
+        '        target: /app'
+    )
+    [System.IO.File]::WriteAllText($archivoCompose, (($compose -join "`n") + "`n"), (New-Object System.Text.ASCIIEncoding))
+    $valorPrevio = $env:AUTH_SECRET_KEY
+    try {
+        Remove-Item Env:AUTH_SECRET_KEY -ErrorAction SilentlyContinue
+        docker compose -p $nombreProyecto -f $archivoCompose --profile test up -d --wait db-test | Out-Null
+        Assert-Verdadero ($LASTEXITCODE -eq 0) 'no se pudo levantar la db-test aislada'
+
+        # Precondicion: sin la clave efimera (solo con el env aislado) la migracion SI falla por su ausencia.
+        cmd /c ('docker compose -p ' + $nombreProyecto + ' -f "' + $archivoCompose + '" run --rm --no-deps api alembic -x target=test upgrade head >nul 2>nul')
+        Assert-Verdadero ($LASTEXITCODE -ne 0) 'la migracion no fallo sin la clave: el env aislado no representa un .env sin AUTH_SECRET_KEY'
+
+        # Como test.ps1: clave efimera solo en el entorno del proceso, pasada por NOMBRE.
+        $env:AUTH_SECRET_KEY = New-ClaveAuthEfimera
+        docker compose -p $nombreProyecto -f $archivoCompose run --rm --no-deps -e AUTH_SECRET_KEY api alembic -x target=test upgrade head | Out-Null
+        Assert-Verdadero ($LASTEXITCODE -eq 0) 'las migraciones sobre db-test fallaron con la clave efimera y un env sin clave'
+        docker compose -p $nombreProyecto -f $archivoCompose run --rm --no-deps -e AUTH_SECRET_KEY api python -m pytest -p no:cacheprovider -q tests/integration/test_api_auth.py::test_login_exitoso_responde_200_emite_la_cookie_y_crea_una_sesion tests/integration/test_servicio_auth.py | Out-Null
+        Assert-Verdadero ($LASTEXITCODE -eq 0) 'las pruebas de integracion fallaron con la clave efimera y un env sin clave'
+    } finally {
+        if ($null -ne $valorPrevio) { $env:AUTH_SECRET_KEY = $valorPrevio } else { Remove-Item Env:AUTH_SECRET_KEY -ErrorAction SilentlyContinue }
+        # Solo el proyecto aislado (nombre propio, sin volumenes con nombre): nunca el de desarrollo.
+        docker compose -p $nombreProyecto -f $archivoCompose --profile test down --remove-orphans | Out-Null
+        Remove-Item -Recurse -Force $tmp
     }
 }
 

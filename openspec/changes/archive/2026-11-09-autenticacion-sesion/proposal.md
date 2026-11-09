@@ -1,0 +1,47 @@
+# Propuesta: autenticacion-sesion (C-03)
+
+> Governance: **CRITICO**. Este Change solo planifica. La implementación (Apply) requiere la aprobación explícita del autor. Las decisiones DA-01 a DA-14 fueron aprobadas por el autor el 2026-11-05 (Engram `opsx/autenticacion-sesion/decisions`), y las decisiones PD-01 a PD-06 y PD-08 de la revisión de arquitectura, el mismo día (Engram `opsx/autenticacion-sesion/decisions-pd`). El 2026-11-06 el autor aprobó las decisiones del punto de control PC-01 a PC-06 y cerró PD-09 (lista propia de contraseñas comunes). Lo que sigue abierto (PD-07 y PD-10, esta última no bloqueante) figura en "Decisiones pendientes para el autor" de `design.md` (D6).
+
+## Why
+
+El sistema todavía no sabe quién hace cada petición: no hay inicio de sesión, la API no protege ninguna ruta y `ContextoConsultorio` solo lo construyen las pruebas. Sin una identidad autenticada no se puede derivar el consultorio del servidor (RN-MT-02) y ningún Change posterior con datos de consultorio (C-04 en adelante) puede empezar. C-03 resuelve PA-03 (mecanismo de sesión y algoritmo de contraseñas) y PA-11 (sin recuperación por email en la v0.1) según las decisiones aprobadas, y cumple US-001.
+
+## What Changes
+
+- **Sesiones del servidor en PostgreSQL** (DA-01): token opaco aleatorio en la cookie `turnos_session` (HttpOnly, SameSite=Lax, Secure por defecto; DA-12); la base guarda solo el HMAC-SHA256 del token. Vencimiento por inactividad (30 min, `AUTH_SESSION_MINUTES`) y absoluto (12 h, `AUTH_SESSION_MAX_HOURS`) (DA-06). El logout revoca la sesión al instante.
+- **Endpoints**: `POST /api/auth/login` (código de consultorio + email + contraseña; DA-02), `POST /api/auth/logout` y `GET /api/auth/me`. Las respuestas solo devuelven nombre, email, rol y nombre del consultorio (DA-13) y llevan `Cache-Control: no-store`. El login exige `Content-Type: application/json` (415 en otro caso). Rechazos genéricos e idénticos (US-001, DA-09).
+- **Dependencia de identidad**: resuelve la cookie a una sesión válida de un usuario y un consultorio activos y construye `ContextoConsultorio` exclusivamente desde la sesión (RN-MT-02). Toda ruta no pública responde 401 sin sesión (RN-AU-01), con una lista blanca explícita de rutas públicas; la documentación de la API (`/docs`, `/redoc`, `/openapi.json`) solo se publica con `APP_ENV=local`.
+- **Contraseñas con Argon2id** (`argon2-cffi`, DA-08): parámetros fijados y documentados, rehash al iniciar sesión si cambian, verificación ficticia para igualar tiempos; como máximo 4 verificaciones simultáneas por proceso (503 con `Retry-After` ante saturación); `credencial` nula nunca autentica; formatos admitidos validados en la aplicación, sin `CHECK` de prefijo en la base. NFKC al establecer y al verificar.
+- **Control de intentos** (DA-05, PD-03): 5 fallos por par (código, email) en 15 min bloquean ese par 15 min; 30 fallos por dirección IP directa en 15 min bloquean los logins nuevos de esa dirección 15 min (IPv6 por /64, IPv4 mapeada normalizada, sin `X-Forwarded-For`); un éxito reinicia solo el contador de la cuenta; si la dirección de la conexión directa no puede determinarse, el login se rechaza con 400 antes de evaluar credenciales (sin balde compartido); las sesiones abiertas no se ven afectadas; 429 con `Retry-After`; mismo comportamiento para cuentas existentes e inexistentes.
+- **Protección CSRF** (DA-11, PD-02): validación estricta de `Origin` en toda petición que cambia estado, `Content-Type: application/json` obligatorio en el login y token `X-CSRF-Token` ligado a la sesión, entregado en cabecera, para las peticiones autenticadas; sin excepciones para pruebas ni `curl`.
+- **CORS con credenciales** (DA-04): orígenes explícitos, métodos `GET` y `POST`, cabeceras `Content-Type` y `X-CSRF-Token`, expone `X-CSRF-Token` y `Retry-After`.
+- **Migración 0003** (DA-03, DA-14, PD-01): columna `consultorio.codigo` (obligatoria, sin valor por defecto, única y normalizada, con backfill genérico y determinista derivado del `id`), tablas `sesion` e `intento_login`, sin funciones ni disparadores. Las altas posteriores obtienen el código de una función pura compartida de la aplicación (`id` generado por PostgreSQL, savepoint y reintento con el código largo solo ante la violación de `uq_consultorio_codigo`). Solo se ejecuta en `db-test` durante Apply; en desarrollo, solo con autorización del autor. **BREAKING** para cualquier base existente: requiere aplicar 0003 antes de usar la API. C-04 pasará a usar la migración 0004 (la corrección de `CHANGES.md` se hace en el Archive de C-03, no ahora).
+- **Comando local de credenciales** (DA-07, DA-10, PD-04): interactivo con `getpass`, solo con `APP_ENV=local`; por defecto solo completa credenciales nulas; `--reemplazar` como acción administrativa explícita; política de contraseñas nuevas de 15 a 128 puntos de código tras NFKC, sin reglas de composición, con lista local propia de contraseñas comunes y términos del contexto comprobados de forma determinista, excluyendo términos genéricos versionados. Sin endpoints de recuperación ni de cambio de contraseña (C-05).
+- **Configuración** (PD-05): nuevas variables `AUTH_SECRET_KEY` (obligatoria, secreta, base64url de ≥ 32 bytes generada con `secrets.token_urlsafe(48)`; se rechazan valores triviales, repetitivos, mal codificados, con marcadores o iguales a la plantilla), `AUTH_SESSION_MINUTES`, `AUTH_SESSION_MAX_HOURS`, `AUTH_COOKIE_SECURE`; `.env.example` con valores evidentemente ficticios y un marcador de clave que la configuración rechaza. **BREAKING** para los `.env` locales: el autor debe generar y agregar `AUTH_SECRET_KEY`.
+- **Limpieza acotada** de sesiones vencidas e intentos viejos (DA-14, PD-08): oportunista en el login y comando local explícito `python -m app.mantenimiento limpiar` por lotes de ≤ 1000 filas, solo con `APP_ENV=local`. Sin límite de sesiones por usuario (riesgo aceptado).
+
+Fuera de alcance: RBAC (`require_rol`) y RLS (C-04), gestión de usuarios y cambio de la propia contraseña (C-05), interfaz de login (C-06), recuperación de contraseña por email (PA-11: fuera de la v0.1), endpoints públicos de reserva (D4), mantenimiento periódico o servicios de producción.
+
+## Capabilities
+
+### New Capabilities
+- `autenticacion-sesion`: inicio y cierre de sesión, sesión del servidor con cookie, vencimientos, identidad autenticada y contexto de consultorio derivado de la sesión, rutas públicas y protegidas, verificación de contraseñas.
+- `control-intentos-login`: límite de intentos fallidos por cuenta y por dirección IP, bloqueo temporal, respuesta 429 y limpieza de intentos.
+- `proteccion-csrf`: validación de `Origin` y token CSRF ligado a la sesión para peticiones que cambian estado.
+- `credenciales-locales`: comando administrativo local para establecer o reemplazar credenciales, con la política de contraseñas nuevas.
+- `mantenimiento-local`: comando local explícito de limpieza por lotes de sesiones vencidas e intentos fuera de la retención.
+
+### Modified Capabilities
+- `configuracion-backend`: nuevas variables de autenticación y validación estricta de `AUTH_SECRET_KEY`; CORS con credenciales, métodos y cabeceras explícitos; la plantilla `.env.example` ahora declara variables `AUTH_*` con valores ficticios y un marcador de clave rechazado.
+- `base-de-datos-local`: las migraciones incluyen 0003 (tablas `sesion` e `intento_login`, columna `consultorio.codigo`) y su único backfill controlado.
+- `modelo-consultorios-usuarios`: `consultorio.codigo` obligatorio, sin valor por defecto, único y normalizado, derivado del `id` por una función de la aplicación con reintento ante colisión; `credencial` pasa a guardar hashes Argon2id; la cadena de revisiones sigue con 0003; los modelos coherentes incluyen las tablas nuevas.
+- `seed-ficticio`: el seed indica el código de cada consultorio como literal igual al derivado de su `id`, con `INSERT ... ON CONFLICT DO NOTHING`, sin `UPDATE`, `DELETE` ni escritura de credenciales (condición literal de DA-10).
+- `repositorios-acotados`: en tiempo de ejecución, `ContextoConsultorio` solo se construye desde la sesión validada.
+
+## Impact
+
+- Código (en Apply): `backend/app/main.py` (CORS, routers, documentación solo en local), `app/core/config.py`, `app/core/database.py` (sesión de base por petición), `app/models/` (`codigo`, función `app/models/codigo.py`, `Sesion`, `IntentoLogin`), nuevo paquete `app/auth/` (con la lista local de contraseñas comunes), `app/api/auth.py`, `app/schemas/auth.py`, comandos `python -m app.credenciales` y `python -m app.mantenimiento`, `app/seed/datos.py` y `app/seed/aplicar.py` (solo el campo `codigo`), `alembic/versions/0003_*.py`, `docker-compose.yml` (`--no-proxy-headers`), `.env.example`, `requirements.txt`.
+- Dependencias nuevas: `argon2-cffi==25.1.0` y `argon2-cffi-bindings==26.1.0` (más sus transitivas fijadas en Apply).
+- Pruebas: nuevas unitarias y de integración (solo `db-test`); se ajustan, con justificación, pruebas de C-01 y C-02 afectadas (configuración, CORS, migraciones, seed y 7 puntos de inserción de consultorios en 2 archivos); las 19 de superposición no cambian.
+- Base de desarrollo: queda en 0002 hasta que el autor autorice aplicar 0003 y ejecutar los comandos de credenciales y de mantenimiento.
+- Downstream: C-04 (RLS sobre el módulo de consultas previas al contexto, migración 0004), C-05 (gestión y cambio de contraseña, revocación de sesiones), C-06 (cliente HTTP con `credentials: 'include'` y cabecera CSRF).
