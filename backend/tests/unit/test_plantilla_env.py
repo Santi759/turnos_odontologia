@@ -10,6 +10,7 @@ import re
 import secrets
 import unicodedata
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 from pydantic import ValidationError
@@ -30,6 +31,30 @@ VARIABLES_DE_CONFIGURACION = (
     "AUTH_SESSION_MAX_HOURS",
     "AUTH_COOKIE_SECURE",
 )
+# Contrato de la plantilla de C-04 (escenario "Plantilla completa con valores ficticios"): 14 variables.
+VARIABLES_DE_LA_PLANTILLA = frozenset(
+    {
+        "DATABASE_URL",
+        "DATABASE_LOGIN_URL",
+        "DATABASE_MIGRATION_URL",
+        "TEST_DATABASE_URL",
+        "CORS_ALLOWED_ORIGINS",
+        "APP_ENV",
+        "AUTH_SECRET_KEY",
+        "AUTH_SESSION_MINUTES",
+        "AUTH_SESSION_MAX_HOURS",
+        "AUTH_COOKIE_SECURE",
+        "POSTGRES_USER",
+        "POSTGRES_PASSWORD",
+        "POSTGRES_DB",
+        "VITE_API_BASE_URL",
+    }
+)
+USUARIOS_DE_LAS_URL = {
+    "DATABASE_URL": "turnos_app",
+    "DATABASE_LOGIN_URL": "turnos_login",
+    "DATABASE_MIGRATION_URL": "app",
+}
 _LINEA_VARIABLE = re.compile(r"^\s*([A-Z][A-Z0-9_]*)=(.*)$")
 _COOKIE_INSEGURA = re.compile(r"AUTH_COOKIE_SECURE\s*=\s*false", re.IGNORECASE)
 _PALABRA_HTTP = re.compile(r"\bhttp\b")
@@ -120,6 +145,38 @@ def test_la_plantilla_documenta_la_generacion_de_la_clave_y_el_uso_local_de_cook
     assert cookie_insegura_bien_documentada(texto)
     # El valor activo es el seguro; la variante insegura nunca es un valor activo.
     assert valores_de_plantilla(texto)["AUTH_COOKIE_SECURE"] == "true"
+
+
+def test_la_plantilla_declara_exactamente_las_14_variables():
+    nombres = set(valores_de_plantilla(leer_plantilla()))
+
+    # Solo nombres de variables: nunca se muestran valores de la plantilla.
+    assert sorted(VARIABLES_DE_LA_PLANTILLA - nombres) == []
+    assert sorted(nombres - VARIABLES_DE_LA_PLANTILLA) == []
+
+
+def test_las_tres_urls_de_base_usan_el_usuario_de_su_rol():
+    valores = valores_de_plantilla(leer_plantilla())
+
+    # Se compara solo el nombre de usuario; la salida nunca muestra URLs ni contrasenas.
+    obtenidos = {
+        nombre: urlsplit(valores.get(nombre, "")).username for nombre in USUARIOS_DE_LAS_URL
+    }
+    assert obtenidos == USUARIOS_DE_LAS_URL
+
+
+def test_la_plantilla_usa_valores_ficticios_para_las_contrasenas_de_los_roles():
+    valores = valores_de_plantilla(leer_plantilla())
+    contrasena_app = urlsplit(valores.get("DATABASE_URL", "")).password or ""
+    contrasena_login = urlsplit(valores.get("DATABASE_LOGIN_URL", "")).password or ""
+    contrasena_migracion = urlsplit(valores.get("DATABASE_MIGRATION_URL", "")).password or ""
+
+    # Booleanos: al fallar no se imprime ninguna contrasena.
+    assert valores.get("POSTGRES_PASSWORD") == "app"
+    assert contrasena_migracion == "app"
+    assert contrasena_app.startswith("REEMPLAZAR_"), "turnos_app sin marcador ficticio"
+    assert contrasena_login.startswith("REEMPLAZAR_"), "turnos_login sin marcador ficticio"
+    assert contrasena_app != contrasena_login, "turnos_app y turnos_login comparten contrasena"
 
 
 _BASE_SINTETICA = "AUTH_SESSION_MINUTES=30\n"

@@ -1,4 +1,5 @@
 import ast
+import re
 import dataclasses
 import uuid
 from pathlib import Path
@@ -172,3 +173,49 @@ def test_las_construcciones_de_contexto_fuera_de_pruebas_solo_estan_en_la_depend
     construcciones = _archivos_de_la_app_que_construyen_contexto()
 
     assert construcciones == {MODULO_DE_IDENTIDAD}
+
+
+# --- Contexto transaccional: usos permitidos (C-04, 4.6, DD-04) ----------------------------------------
+
+
+def _fuentes_de_app() -> dict[str, str]:
+    raiz = Path(__file__).resolve().parents[2] / "app"
+    return {
+        ruta.relative_to(raiz).as_posix(): ruta.read_text(encoding="utf-8")
+        for ruta in raiz.rglob("*.py")
+    }
+
+
+def _llamadas(nombre: str) -> set[str]:
+    """Archivos de `app/` que LLAMAN a `nombre` (la definicion no cuenta)."""
+    encontrados = set()
+    for ruta, fuente in _fuentes_de_app().items():
+        for nodo in ast.walk(ast.parse(fuente)):
+            if isinstance(nodo, ast.Call):
+                funcion = nodo.func
+                llamado = funcion.id if isinstance(funcion, ast.Name) else getattr(funcion, "attr", None)
+                if llamado == nombre:
+                    encontrados.add(ruta)
+    return encontrados
+
+
+def test_la_unica_aparicion_del_parametro_de_contexto_esta_en_contexto_bd():
+    con_parametro = {
+        ruta for ruta, fuente in _fuentes_de_app().items() if "app.consultorio_id" in fuente
+    }
+
+    assert con_parametro == {"core/contexto_bd.py"}
+
+
+def test_aplicar_contexto_solo_se_llama_desde_dependencias():
+    assert _llamadas("aplicar_contexto") == {"auth/dependencias.py"}
+
+
+def test_fijar_consultorio_de_login_solo_se_llama_desde_el_servicio():
+    assert _llamadas("fijar_consultorio_de_login") == {"auth/servicio.py"}
+
+
+def test_nunca_se_fija_el_contexto_con_set_de_sesion():
+    for ruta, fuente in _fuentes_de_app().items():
+        assert "set_config('app.consultorio_id', :valor, false)" not in fuente, ruta
+        assert not re.search(r"SET\s+(SESSION\s+)?app\.consultorio_id", fuente, re.IGNORECASE), ruta

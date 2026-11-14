@@ -139,6 +139,52 @@ def test_necesita_rehash_es_falso_para_formatos_no_admitidos(verificador, almace
 
 
 # ===========================================================================
+# 6.4 Clasificacion de hashes almacenados (DD-32, R2-04)
+# ===========================================================================
+
+from app.auth.contrasenas import EstadoHash, clasificar_hash  # noqa: E402
+
+
+def _hash_con(**parametros) -> str:
+    base = dict(time_cost=3, memory_cost=65536, parallelism=4, hash_len=32, salt_len=16, type=Type.ID)
+    base.update(parametros)
+    return PasswordHasher(**base).hash(CONTRASENA)
+
+
+PHC_TRUNCADO = "$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ"
+CASOS_DE_CLASIFICACION = {
+    "vigente": (_hash_con(), EstadoHash.VIGENTE),
+    "t2": (_hash_con(time_cost=2), EstadoHash.PARAMETROS_ANTERIORES),
+    "m19456": (_hash_con(memory_cost=19456), EstadoHash.PARAMETROS_ANTERIORES),
+    "otra_sal": (_hash_con(salt_len=8), EstadoHash.PARAMETROS_ANTERIORES),
+    "otro_paralelismo": (_hash_con(parallelism=2), EstadoHash.PARAMETROS_ANTERIORES),
+    "argon2i": (_hash_con(type=Type.I), EstadoHash.FORMATO_NO_ADMITIDO),
+    "argon2d": (_hash_con(type=Type.D), EstadoHash.FORMATO_NO_ADMITIDO),
+    "texto": ("esto no es un hash", EstadoHash.FORMATO_NO_ADMITIDO),
+    "vacio": ("", EstadoHash.FORMATO_NO_ADMITIDO),
+    "phc_truncado": (PHC_TRUNCADO, EstadoHash.FORMATO_NO_ADMITIDO),
+    "nulo": (None, EstadoHash.SIN_CREDENCIAL),
+}
+
+
+@pytest.mark.parametrize("nombre", list(CASOS_DE_CLASIFICACION))
+def test_clasificar_hash(nombre):
+    almacenado, esperado = CASOS_DE_CLASIFICACION[nombre]
+
+    assert clasificar_hash(almacenado) is esperado
+
+
+@pytest.mark.parametrize("nombre", list(CASOS_DE_CLASIFICACION))
+def test_la_clasificacion_coincide_con_verificar_y_necesita_rehash(verificador, nombre):
+    almacenado, estado = CASOS_DE_CLASIFICACION[nombre]
+
+    autentica = verificador.verificar(CONTRASENA, almacenado)
+
+    assert autentica is (estado in (EstadoHash.VIGENTE, EstadoHash.PARAMETROS_ANTERIORES))
+    assert verificador.necesita_rehash(almacenado) is (estado is EstadoHash.PARAMETROS_ANTERIORES)
+
+
+# ===========================================================================
 # 3.3 Politica de contrasenas nuevas (DD-16, PD-09)
 # ===========================================================================
 

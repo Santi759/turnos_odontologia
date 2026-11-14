@@ -77,13 +77,19 @@ Invoke-Caso 'Plantilla completa con valores ficticios' {
     foreach ($linea in (Get-Content -LiteralPath $ruta)) {
         if ($linea -match '^\s*([A-Z_]+)=(.*)$') { $valores[$Matches[1]] = $Matches[2] }
     }
-    $requeridas = @('DATABASE_URL', 'TEST_DATABASE_URL', 'CORS_ALLOWED_ORIGINS', 'APP_ENV',
+    $requeridas = @('DATABASE_URL', 'DATABASE_LOGIN_URL', 'DATABASE_MIGRATION_URL', 'TEST_DATABASE_URL', 'CORS_ALLOWED_ORIGINS', 'APP_ENV',
                     'AUTH_SECRET_KEY', 'AUTH_SESSION_MINUTES', 'AUTH_SESSION_MAX_HOURS', 'AUTH_COOKIE_SECURE',
                     'POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_DB', 'VITE_API_BASE_URL')
     foreach ($nombre in $requeridas) {
         Assert-Verdadero ($valores.ContainsKey($nombre)) ('falta la variable ' + $nombre)
     }
     Assert-Verdadero ($valores['POSTGRES_PASSWORD'] -eq 'app') 'POSTGRES_PASSWORD no es el valor ficticio app'
+    $usuariosEsperados = [ordered]@{ DATABASE_URL = 'turnos_app'; DATABASE_LOGIN_URL = 'turnos_login'; DATABASE_MIGRATION_URL = 'app' }
+    foreach ($nombre in $usuariosEsperados.Keys) {
+        $esperado = $usuariosEsperados[$nombre]
+        $coincide = $valores.ContainsKey($nombre) -and ($valores[$nombre] -like ('*://' + $esperado + ':*@*'))
+        Assert-Verdadero $coincide ('el usuario de ' + $nombre + ' no es ' + $esperado)
+    }
     Assert-Verdadero ($valores['TEST_DATABASE_URL'] -like '*@db-test:*/*_test') 'TEST_DATABASE_URL no apunta a db-test / base *_test'
     Assert-Verdadero ($valores['AUTH_SECRET_KEY'] -eq 'REEMPLAZAR_generar_con_secrets_token_urlsafe_48') 'AUTH_SECRET_KEY no es el marcador rechazado de la plantilla'
     Assert-Verdadero ($valores['AUTH_COOKIE_SECURE'] -eq 'true') 'AUTH_COOKIE_SECURE de la plantilla no es true'
@@ -149,7 +155,19 @@ Invoke-Caso 'Base de pruebas separada y efimera' {
     Assert-Verdadero ($tmpfs -contains '/var/lib/postgresql') 'db-test no usa tmpfs en /var/lib/postgresql'
     $volumenes = @()
     if ($nombres -contains 'volumes') { $volumenes = @($servicio.volumes) }
-    Assert-Verdadero ($volumenes.Count -eq 0) 'db-test declara volumenes (debe usar solo tmpfs)'
+    # Unico montaje admitido: el script de roles de prueba, bind de solo lectura (DD-14).
+    Assert-Verdadero ($volumenes.Count -eq 1) 'db-test debe declarar exactamente un montaje (el script de roles)'
+    Assert-Verdadero ($volumenes[0].type -eq 'bind') 'el montaje de db-test no es de tipo bind (volumen con nombre)'
+    Assert-Verdadero ($volumenes[0].read_only -eq $true) 'el montaje del script de roles no es de solo lectura'
+    Assert-Verdadero ($volumenes[0].target -eq '/docker-entrypoint-initdb.d/10_roles_prueba.sh') 'el destino del montaje no es el script de roles'
+    Assert-Verdadero ($volumenes[0].source -like '*10_roles_prueba.sh') 'el origen del montaje no es 10_roles_prueba.sh'
+    # Las contrasenas se declaran por nombre, sin valor (se leen del archivo, no de config).
+    $textoCompose = Get-Content -LiteralPath (Join-Path $Raiz 'docker-compose.yml') -Raw
+    $bloque = [regex]::Match($textoCompose, '(?ms)^  db-test:.*?(?=^  api:)').Value
+    foreach ($variable in @('TURNOS_APP_TEST_PASSWORD', 'TURNOS_LOGIN_TEST_PASSWORD')) {
+        Assert-Verdadero ($bloque -match ('(?m)^      - ' + $variable + '\s*$')) ('db-test no declara ' + $variable + ' por nombre')
+        Assert-Verdadero (-not ($bloque -match ($variable + '\s*[:=]'))) ('db-test da valor a ' + $variable)
+    }
     Assert-Verdadero ($servicio.image -eq 'postgres:18.6-trixie') 'db-test no usa postgres:18.6-trixie'
     $dev = $compose.services.db
     $montajes = @($dev.volumes | Where-Object { $_.source -eq 'pgdata' })
@@ -214,10 +232,88 @@ Invoke-Caso 'test.ps1: clave por nombre, sin literal y retirada del entorno' {
     Assert-Verdadero ($texto -match '\$env:AUTH_SECRET_KEY\s*=\s*New-ClaveAuthEfimera') 'la clave no proviene de New-ClaveAuthEfimera'
     Assert-Verdadero (-not ($texto -match '-e\s+AUTH_SECRET_KEY=')) 'test.ps1 pasa la clave con valor en -e'
     $porNombre = @([regex]::Matches($texto, '-e AUTH_SECRET_KEY(?![=\w])'))
-    Assert-Verdadero ($porNombre.Count -eq 2) ('se esperaban 2 usos de -e AUTH_SECRET_KEY por nombre (alembic e integracion) y hay ' + $porNombre.Count)
+    Assert-Verdadero ($porNombre.Count -eq 3) ('se esperaban 3 usos de -e AUTH_SECRET_KEY por nombre (alembic, integracion y aislamiento) y hay ' + $porNombre.Count)
     Assert-Verdadero ($texto.Contains('$env:AUTH_SECRET_KEY')) 'test.ps1 no deja la clave en el entorno del proceso'
     Assert-Verdadero ($texto -match 'Remove-Item Env:AUTH_SECRET_KEY') 'test.ps1 no retira la clave del entorno'
     Assert-Verdadero (-not ($texto -match 'Write-Host[^\r\n]*AUTH_SECRET_KEY')) 'test.ps1 muestra la clave'
+}
+
+Invoke-Caso 'Contrasena efimera de rol de prueba: formato y unicidad' {
+    $primera = New-ContrasenaRolPruebaEfimera
+    $segunda = New-ContrasenaRolPruebaEfimera
+    Assert-Verdadero ($primera -cmatch '^[A-Za-z0-9_-]{43}$') 'la contrasena no tiene 43 caracteres base64url sin relleno'
+    Assert-Verdadero ($segunda -cmatch '^[A-Za-z0-9_-]{43}$') 'la segunda contrasena no tiene 43 caracteres base64url sin relleno'
+    Assert-Verdadero ($primera -ne $segunda) 'dos contrasenas generadas son iguales'
+}
+
+Invoke-Caso 'test.ps1: contrasenas de los roles por nombre, sin literal y retiradas' {
+    $texto = Get-Content -LiteralPath (Join-Path $Raiz 'scripts/test.ps1') -Raw
+    foreach ($variable in @('TURNOS_APP_TEST_PASSWORD', 'TURNOS_LOGIN_TEST_PASSWORD')) {
+        Assert-Verdadero (-not ($texto -match ($variable + '\s*=\s*[''"]'))) ('test.ps1 asigna ' + $variable + ' con un literal')
+        Assert-Verdadero ($texto -match ('\$env:' + $variable + '\s*=\s*New-ContrasenaRolPruebaEfimera')) ($variable + ' no proviene de New-ContrasenaRolPruebaEfimera')
+        Assert-Verdadero (-not ($texto -match ('-e\s+' + $variable + '='))) ('test.ps1 pasa ' + $variable + ' con valor en -e')
+        $porNombre = @([regex]::Matches($texto, ('-e ' + $variable + '(?![=\w])')))
+        Assert-Verdadero ($porNombre.Count -eq 1) ('se esperaba 1 uso de -e ' + $variable + ' por nombre y hay ' + $porNombre.Count)
+        Assert-Verdadero ($texto -match ('Remove-Item Env:' + $variable)) ('test.ps1 no retira ' + $variable + ' del entorno')
+        Assert-Verdadero (-not ($texto -match ('Write-Host[^\r\n]*' + $variable))) ('test.ps1 muestra ' + $variable)
+    }
+}
+
+Invoke-Caso 'Paso de aislamiento despues de integracion' {
+    $texto = Get-Content -LiteralPath (Join-Path $Raiz 'scripts/test.ps1') -Raw
+    $integracion = $texto.IndexOf('pytest -p no:cacheprovider tests/integration')
+    $aislamiento = $texto.IndexOf('pytest -p no:cacheprovider tests/isolation')
+    $frontend = $texto.IndexOf('npm run typecheck')
+    Assert-Verdadero ($integracion -ge 0) 'falta el paso de integracion'
+    Assert-Verdadero ($aislamiento -gt $integracion) 'el paso de aislamiento no sigue al de integracion'
+    Assert-Verdadero ($frontend -gt $aislamiento) 'el paso de aislamiento no precede al del frontend'
+    Assert-Verdadero ($texto -match '6\. pruebas de aislamiento con los roles turnos_app y turnos_login \(db-test\)') 'el paso 6 no tiene el nombre esperado'
+    Assert-Verdadero ($texto -match '7\. verificacion de tipos del frontend') 'el paso de tipos no es el 7'
+    Assert-Verdadero ($texto -match '8\. pruebas del frontend') 'el paso de Vitest no es el 8'
+}
+
+Invoke-Caso 'db-test sin contrasenas no arranca (proyecto aislado)' {
+    # Proyecto de Compose propio, con el mismo script de roles y SIN las contrasenas: el script
+    # falla en la inicializacion y `up --wait` termina con error. No toca el Compose de desarrollo.
+    $nombreProyecto = 'autoprueba-sinroles'
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ($nombreProyecto + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+    New-Item -ItemType Directory -Path $tmp -Force | Out-Null
+    $script = (Join-Path $Raiz 'db/test-init/10_roles_prueba.sh').Replace('\', '/')
+    $archivoCompose = Join-Path $tmp 'docker-compose.yml'
+    $compose = @(
+        'services:',
+        '  db-test:',
+        '    image: postgres:18.6-trixie',
+        '    profiles: ["test"]',
+        '    environment:',
+        '      POSTGRES_USER: app',
+        '      POSTGRES_PASSWORD: app',
+        '      POSTGRES_DB: turnos_test',
+        '      TURNOS_APP_TEST_PASSWORD: ""',
+        '      TURNOS_LOGIN_TEST_PASSWORD: ""',
+        '    tmpfs:',
+        '      - /var/lib/postgresql',
+        '    volumes:',
+        '      - type: bind',
+        ('        source: "' + $script + '"'),
+        '        target: /docker-entrypoint-initdb.d/10_roles_prueba.sh',
+        '        read_only: true',
+        '    healthcheck:',
+        '      test: ["CMD-SHELL", "pg_isready -U app -d turnos_test"]',
+        '      interval: 2s',
+        '      timeout: 5s',
+        '      retries: 15'
+    )
+    [System.IO.File]::WriteAllText($archivoCompose, (($compose -join "`n") + "`n"), (New-Object System.Text.ASCIIEncoding))
+    try {
+        docker compose -p $nombreProyecto -f $archivoCompose --profile test up -d --wait db-test | Out-Null
+        Assert-Verdadero ($LASTEXITCODE -ne 0) 'db-test arranco sin las contrasenas de los roles'
+        $enEjecucion = @(docker compose -p $nombreProyecto -f $archivoCompose --profile test ps --status running -q)
+        Assert-Verdadero ($enEjecucion.Count -eq 0) 'db-test quedo en ejecucion sin las contrasenas de los roles'
+    } finally {
+        docker compose -p $nombreProyecto -f $archivoCompose --profile test down --remove-orphans | Out-Null
+        Remove-Item -Recurse -Force $tmp
+    }
 }
 
 Invoke-Caso 'Compose monta solo .env.example de solo lectura en api' {
@@ -254,6 +350,7 @@ Invoke-Caso 'Funciona sin clave en .env (entorno aislado, db-test propia, sin to
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ($nombreProyecto + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
     New-Item -ItemType Directory -Path $tmp -Force | Out-Null
     $backend = (Join-Path $Raiz 'backend').Replace('\', '/')
+    $scriptRoles = (Join-Path $Raiz 'db/test-init/10_roles_prueba.sh').Replace('\', '/')
     $archivoEnv = Join-Path $tmp 'entorno-sin-clave.env'
     $archivoCompose = Join-Path $tmp 'docker-compose.yml'
     $envFicticio = @(
@@ -273,8 +370,15 @@ Invoke-Caso 'Funciona sin clave en .env (entorno aislado, db-test propia, sin to
         '      POSTGRES_USER: app',
         '      POSTGRES_PASSWORD: app',
         '      POSTGRES_DB: turnos_test',
+        '      TURNOS_APP_TEST_PASSWORD: ${TURNOS_APP_TEST_PASSWORD}',
+        '      TURNOS_LOGIN_TEST_PASSWORD: ${TURNOS_LOGIN_TEST_PASSWORD}',
         '    tmpfs:',
         '      - /var/lib/postgresql',
+        '    volumes:',
+        '      - type: bind',
+        ('        source: "' + $scriptRoles + '"'),
+        '        target: /docker-entrypoint-initdb.d/10_roles_prueba.sh',
+        '        read_only: true',
         '    healthcheck:',
         '      test: ["CMD-SHELL", "pg_isready -U app -d turnos_test"]',
         '      interval: 2s',
@@ -291,8 +395,12 @@ Invoke-Caso 'Funciona sin clave en .env (entorno aislado, db-test propia, sin to
     )
     [System.IO.File]::WriteAllText($archivoCompose, (($compose -join "`n") + "`n"), (New-Object System.Text.ASCIIEncoding))
     $valorPrevio = $env:AUTH_SECRET_KEY
+    $previoApp = $env:TURNOS_APP_TEST_PASSWORD
+    $previoLogin = $env:TURNOS_LOGIN_TEST_PASSWORD
     try {
         Remove-Item Env:AUTH_SECRET_KEY -ErrorAction SilentlyContinue
+        $env:TURNOS_APP_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
+        $env:TURNOS_LOGIN_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
         docker compose -p $nombreProyecto -f $archivoCompose --profile test up -d --wait db-test | Out-Null
         Assert-Verdadero ($LASTEXITCODE -eq 0) 'no se pudo levantar la db-test aislada'
 
@@ -308,6 +416,8 @@ Invoke-Caso 'Funciona sin clave en .env (entorno aislado, db-test propia, sin to
         Assert-Verdadero ($LASTEXITCODE -eq 0) 'las pruebas de integracion fallaron con la clave efimera y un env sin clave'
     } finally {
         if ($null -ne $valorPrevio) { $env:AUTH_SECRET_KEY = $valorPrevio } else { Remove-Item Env:AUTH_SECRET_KEY -ErrorAction SilentlyContinue }
+        if ($null -ne $previoApp) { $env:TURNOS_APP_TEST_PASSWORD = $previoApp } else { Remove-Item Env:TURNOS_APP_TEST_PASSWORD -ErrorAction SilentlyContinue }
+        if ($null -ne $previoLogin) { $env:TURNOS_LOGIN_TEST_PASSWORD = $previoLogin } else { Remove-Item Env:TURNOS_LOGIN_TEST_PASSWORD -ErrorAction SilentlyContinue }
         # Solo el proyecto aislado (nombre propio, sin volumenes con nombre): nunca el de desarrollo.
         docker compose -p $nombreProyecto -f $archivoCompose --profile test down --remove-orphans | Out-Null
         Remove-Item -Recurse -Force $tmp

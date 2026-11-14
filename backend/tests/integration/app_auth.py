@@ -6,11 +6,14 @@ de la prueba y todo se revierte al terminar.
 """
 
 import secrets
+import uuid
 from dataclasses import dataclass
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Response
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.api.errores import no_encontrado
+from app.auth.autorizacion import require_rol
 from app.auth.claves import token_csrf
 from app.auth.dependencias import (
     IdentidadAutenticada,
@@ -21,10 +24,14 @@ from app.auth.dependencias import (
     identidad_actual,
     obtener_servicio,
     obtener_sesion_db,
+    obtener_sesion_login,
+    rechazar_consultorio_del_cliente,
     verificar_origen,
 )
 from app.auth.servicio import LoginRechazado, ServicioAuth
 from app.core.config import Settings
+from app.core.contexto_bd import crear_fabrica_de_sesiones
+from app.models.usuario import Rol
 from app.repositories.contexto import ContextoConsultorio
 from app.repositories.usuarios import UsuarioRepositorio
 from tests.integration.datos_auth import Entorno
@@ -36,6 +43,7 @@ ORIGEN_AJENO = "http://otro-origen.invalid"
 def settings_de_prueba(**cambios: object) -> Settings:
     datos = {
         "DATABASE_URL": "postgresql+psycopg://app:app@db:5432/turnos",
+        "DATABASE_LOGIN_URL": "postgresql+psycopg://turnos_login:login@db:5432/turnos",
         "CORS_ALLOWED_ORIGINS": ORIGEN,
         "APP_ENV": "test",
         "AUTH_SECRET_KEY": secrets.token_urlsafe(48),
@@ -61,9 +69,12 @@ class AppDePrueba:
 
 def crear_app_de_prueba(entorno: Entorno, settings: Settings | None = None) -> AppDePrueba:
     conexion = entorno.db.get_bind()
-    app = FastAPI()
+    app = FastAPI(dependencies=[Depends(rechazar_consultorio_del_cliente)])
     app.state.settings = settings or settings_de_prueba()
-    app.state.fabrica_sesiones = sessionmaker(
+    app.state.fabrica_sesiones = crear_fabrica_de_sesiones(
+        conexion, join_transaction_mode="create_savepoint"
+    )
+    app.state.fabrica_sesiones_login = sessionmaker(
         bind=conexion, expire_on_commit=False, join_transaction_mode="create_savepoint"
     )
     app.state.servicio_auth = entorno.servicio
@@ -77,6 +88,59 @@ def crear_app_de_prueba(entorno: Entorno, settings: Settings | None = None) -> A
             "consultorio_id": str(actual.contexto.consultorio_id),
             "es_contexto": isinstance(actual.contexto, ContextoConsultorio),
         }
+
+    @app.get("/prueba/rol")
+    def rol(actual: IdentidadAutenticada = Depends(identidad_actual)) -> dict:
+        return {
+            "rol": str(actual.rol),
+            "es_rol": isinstance(actual.rol, Rol),
+            "es_secretaria": actual.rol is Rol.SECRETARIA,
+        }
+
+    @app.get("/prueba/solo-admin", dependencies=[Depends(require_rol(Rol.ADMINISTRADOR))])
+    def solo_admin() -> dict:
+        return {"ok": True}
+
+    @app.get(
+        "/prueba/admin-o-secretaria",
+        dependencies=[Depends(require_rol(Rol.ADMINISTRADOR, Rol.SECRETARIA))],
+    )
+    def admin_o_secretaria() -> dict:
+        return {"ok": True}
+
+    @app.post(
+        "/prueba/cambia-admin",
+        dependencies=[
+            Depends(verificar_origen),
+            Depends(exigir_csrf),
+            Depends(require_rol(Rol.ADMINISTRADOR)),
+        ],
+    )
+    def cambia_admin() -> dict:
+        cambios.append("cambio-admin")
+        return {"ok": True}
+
+    def _usuario_por_id(usuario_id: uuid.UUID, contexto: ContextoConsultorio, db: Session) -> dict:
+        usuario = UsuarioRepositorio(db, contexto).obtener_por_id(usuario_id)
+        if usuario is None:
+            raise no_encontrado()
+        return {"id": str(usuario.id), "email": usuario.email}
+
+    @app.get("/prueba/admin/usuarios/{usuario_id}", dependencies=[Depends(require_rol(Rol.ADMINISTRADOR))])
+    def usuario_solo_admin(
+        usuario_id: uuid.UUID,
+        contexto: ContextoConsultorio = Depends(contexto_consultorio),
+        db: Session = Depends(obtener_sesion_db),
+    ) -> dict:
+        return _usuario_por_id(usuario_id, contexto, db)
+
+    @app.get("/prueba/usuarios/{usuario_id}")
+    def usuario_por_id(
+        usuario_id: uuid.UUID,
+        contexto: ContextoConsultorio = Depends(contexto_consultorio),
+        db: Session = Depends(obtener_sesion_db),
+    ) -> dict:
+        return _usuario_por_id(usuario_id, contexto, db)
 
     @app.get("/prueba/usuarios")
     def usuarios(
@@ -106,10 +170,12 @@ def crear_app_de_prueba(entorno: Entorno, settings: Settings | None = None) -> A
         _json: None = Depends(exigir_json),
         datos: dict = Body(...),
         servicio: ServicioAuth = Depends(obtener_servicio),
+        db_login: Session = Depends(obtener_sesion_login),
         db: Session = Depends(obtener_sesion_db),
     ) -> dict:
         try:
             servicio.iniciar_sesion(
+                db_login,
                 db,
                 codigo=datos["codigo_consultorio"],
                 email=datos["email"],
@@ -134,8 +200,12 @@ def crear_app_real(
     from app.main import crear_app
 
     app = crear_app(settings or settings_de_prueba())
-    app.state.fabrica_sesiones = sessionmaker(
-        bind=entorno.db.get_bind(), expire_on_commit=False, join_transaction_mode="create_savepoint"
+    conexion = entorno.db.get_bind()
+    app.state.fabrica_sesiones = crear_fabrica_de_sesiones(
+        conexion, join_transaction_mode="create_savepoint"
+    )
+    app.state.fabrica_sesiones_login = sessionmaker(
+        bind=conexion, expire_on_commit=False, join_transaction_mode="create_savepoint"
     )
     app.state.servicio_auth = servicio or entorno.servicio
     return app

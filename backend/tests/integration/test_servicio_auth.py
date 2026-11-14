@@ -203,14 +203,16 @@ def test_un_rechazo_no_modifica_ningun_usuario(entorno: Entorno):
     assert entorno.db.execute(consulta).scalar_one() == antes
 
 
-# --- rehash --------------------------------------------------------------------------------
+# --- sin rehash en el login (R2-01, C-04) ----------------------------------------------------
 
 
 def _credencial(e: Entorno) -> str:
     return e.db.execute(text("SELECT credencial FROM usuario WHERE id = :u"), {"u": e.ua}).scalar_one()
 
 
-def test_rehash_al_iniciar_sesion_con_parametros_desactualizados(entorno: Entorno):
+def test_sin_rehash_al_iniciar_sesion_con_parametros_desactualizados(entorno: Entorno):
+    # Adaptada (R2-01, REMOVED "Contrasenas con Argon2id y rehash"): antes la credencial pasaba a
+    # los parametros vigentes; ahora el login autentica con el hash anterior y lo deja IDENTICO.
     viejo = hash_rapido(CONTRASENA_A, time_cost=1)
     entorno.db.execute(
         text("UPDATE usuario SET credencial = :c WHERE id = :u"), {"c": viejo, "u": entorno.ua}
@@ -218,12 +220,9 @@ def test_rehash_al_iniciar_sesion_con_parametros_desactualizados(entorno: Entorn
     entorno.db.commit()
 
     entorno.login()
-
-    nuevo = _credencial(entorno)
-    assert nuevo != viejo
-    assert not hasher_rapido(2).check_needs_rehash(nuevo)
-    assert hasher_rapido(2).verify(nuevo, CONTRASENA_A)
     entorno.login()  # la contrasena sigue autenticando
+
+    assert _credencial(entorno) == viejo
 
 
 def test_sin_rehash_si_los_parametros_son_vigentes_o_si_el_login_falla(entorno: Entorno):

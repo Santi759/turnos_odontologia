@@ -13,7 +13,7 @@ from collections.abc import Sequence
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.credenciales.__main__ import main
 from tests.integration.app_auth import ORIGEN, crear_app_real
@@ -357,3 +357,238 @@ def test_ninguna_salida_contiene_contrasena_hash_email_codigo_ni_url(
             "postgresql",
         ):
             assert prohibido not in salida
+
+
+# --- 6.5 Revision local de hashes sin modificar credenciales (DD-32) ---------------------------------
+
+from argon2 import PasswordHasher, Type  # noqa: E402
+from sqlalchemy import Engine, event  # noqa: E402
+from sqlalchemy.exc import InternalError, OperationalError  # noqa: E402
+
+from app.auth import acceso_admin  # noqa: E402
+from tests.integration.datos_auth import crear_consultorio  # noqa: E402
+
+SALIDA_PROHIBIDA = ("$argon2", "@", "ficticio-a", "postgresql")
+
+
+def _hash_de(contrasena: str = "clave-ficticia-de-revision", **cambios) -> str:
+    parametros = dict(time_cost=3, memory_cost=65536, parallelism=4, hash_len=32, salt_len=16, type=Type.ID)
+    parametros.update(cambios)
+    return PasswordHasher(**parametros).hash(contrasena)
+
+
+def _siete_usuarios(sesion: Session) -> dict[str, tuple]:
+    """Siete usuarios ficticios en dos consultorios: devuelve (consultorio, usuario) por clase."""
+    assert sesion.execute(text("SELECT count(*) FROM usuario")).scalar_one() == 0
+    consultorio_a = crear_consultorio(sesion, "ficticio-a", "Consultorio Ficticio A")
+    consultorio_b = crear_consultorio(sesion, "ficticio-b", "Consultorio Ficticio B")
+    casos = {
+        "vigente": (consultorio_a, _hash_de()),
+        "t2": (consultorio_a, _hash_de(time_cost=2)),
+        "m19456": (consultorio_b, _hash_de(memory_cost=19456)),
+        "argon2i": (consultorio_b, _hash_de(type=Type.I)),
+        "argon2d": (consultorio_a, _hash_de(type=Type.D)),
+        "texto": (consultorio_b, "esto no es un hash"),
+        "nulo": (consultorio_a, None),
+    }
+    usuarios = {}
+    for indice, (clase, (consultorio, credencial)) in enumerate(casos.items()):
+        usuario = crear_usuario(
+            sesion,
+            consultorio,
+            email=f"usuario{indice}@example.test",
+            credencial=credencial,
+            activo=clase != "texto",  # tambien se revisan los usuarios inactivos
+        )
+        usuarios[clase] = (consultorio, usuario)
+    return usuarios
+
+
+def _revisar(sesion: Session) -> int:
+    nueva = Session(bind=sesion.get_bind(), expire_on_commit=False, join_transaction_mode="create_savepoint")
+    return main(["--revisar-hashes"], abrir_sesion=lambda s: nueva, es_interactivo=lambda: True)
+
+
+def test_la_revision_clasifica_los_siete_usuarios_y_lista_las_cinco_cuentas(
+    sesion: Session, capsys: pytest.CaptureFixture[str]
+):
+    usuarios = _siete_usuarios(sesion)
+
+    codigo = _revisar(sesion)
+
+    salida = _salida(capsys)
+    lineas = salida.splitlines()
+    assert codigo == 0, salida
+    assert lineas[:4] == [
+        "hashes vigentes: 1",
+        "hashes con parámetros anteriores: 2",
+        "hashes con formato no admitido: 3",
+        "usuarios sin credencial: 1",
+    ]
+    esperadas = {
+        f"restablecer: consultorio {usuarios[c][0]} usuario {usuarios[c][1]}"
+        for c in ("t2", "m19456", "argon2i", "argon2d", "texto")
+    }
+    assert set(lineas[4:]) == esperadas and len(lineas) == 9
+    for clase in ("vigente", "nulo"):
+        assert str(usuarios[clase][1]) not in salida
+
+
+def test_la_salida_de_la_revision_no_contiene_datos_sensibles(
+    sesion: Session, capsys: pytest.CaptureFixture[str]
+):
+    _siete_usuarios(sesion)
+
+    _revisar(sesion)
+
+    salida = _salida(capsys)
+    for prohibido in SALIDA_PROHIBIDA:
+        assert prohibido not in salida
+
+
+def test_la_revision_no_envia_escrituras_corre_en_solo_lectura_y_no_cambia_nada(
+    sesion: Session, capsys: pytest.CaptureFixture[str]
+):
+    usuarios = _siete_usuarios(sesion)
+    consultorio, usuario = usuarios["t2"]
+    insertar_sesion(sesion, consultorio, usuario)
+    instantanea = "SELECT id, credencial FROM usuario ORDER BY id"
+    antes = sesion.execute(text(instantanea)).all()
+    sesiones_antes = sesion.execute(text("SELECT id, revocada_en FROM sesion ORDER BY id")).all()
+    capturadas: list[str] = []
+    estado: dict[str, object] = {}
+    original = acceso_admin.listar_credenciales_para_revision
+
+    def espiar(s: Session):
+        resultado = original(s)
+        estado["solo_lectura"] = s.execute(text("SHOW transaction_read_only")).scalar_one()
+        try:
+            with s.begin_nested():
+                s.execute(text("UPDATE usuario SET credencial = NULL"))
+        except (InternalError, OperationalError) as error:
+            estado["error_de_escritura"] = getattr(error.orig, "sqlstate", None)
+        return resultado
+
+    def capturar(conexion, cursor, sentencia, parametros, contexto, many):
+        capturadas.append(sentencia)
+
+    conexion = sesion.get_bind()
+    event.listen(conexion, "before_cursor_execute", capturar)
+    acceso_admin.listar_credenciales_para_revision = espiar  # type: ignore[assignment]
+    try:
+        codigo = _revisar(sesion)
+    finally:
+        acceso_admin.listar_credenciales_para_revision = original  # type: ignore[assignment]
+        event.remove(conexion, "before_cursor_execute", capturar)
+
+    assert codigo == 0, _salida(capsys)
+    assert estado == {"solo_lectura": "on", "error_de_escritura": "25006"}
+    # La unica sentencia de modificacion es la de la prueba misma (el intento rechazado).
+    propias = [s for s in capturadas if s.lstrip().upper().startswith(("INSERT", "UPDATE", "DELETE"))]
+    assert propias == ["UPDATE usuario SET credencial = NULL"]
+    assert sesion.execute(text(instantanea)).all() == antes
+    assert sesion.execute(text("SELECT id, revocada_en FROM sesion ORDER BY id")).all() == sesiones_antes
+    # La transaccion de solo lectura se revirtio: la sesion de la prueba vuelve a poder escribir.
+    assert sesion.execute(text("SHOW transaction_read_only")).scalar_one() == "off"
+
+
+# --- 6.6 Escritura condicionada a la credencial leida (DD-32) -------------------------------------------
+
+
+@pytest.fixture
+def base_confirmada(base_migrada: Engine):
+    """Datos CONFIRMADOS (varias conexiones reales); se borran al terminar (solo en db-test)."""
+    assert (base_migrada.url.database or "").endswith("_test")
+    fabrica = sessionmaker(bind=base_migrada, expire_on_commit=False)
+    with fabrica() as sesion:
+        consultorio = crear_consultorio(sesion, "ficticio-a", "Consultorio Ficticio A")
+        usuario = crear_usuario(sesion, consultorio, credencial=hash_rapido("contrasena-ficticia-vieja-1"))
+        insertar_sesion(sesion, consultorio, usuario)
+        sesion.commit()
+    try:
+        yield fabrica, consultorio, usuario
+    finally:
+        with fabrica() as sesion:
+            for tabla in ("sesion", "intento_login", "usuario", "consultorio"):
+                sesion.execute(text(f"DELETE FROM {tabla}"))
+            sesion.commit()
+
+
+def _correr_real(fabrica, argv, terminal: Terminal):
+    return main(
+        list(argv),
+        abrir_sesion=lambda settings: fabrica(),
+        leer_visible=terminal.leer_visible,
+        leer_oculto=terminal.leer_oculto,
+        es_interactivo=lambda: True,
+    )
+
+
+def test_una_transaccion_confirmada_entre_la_lectura_y_la_escritura_hace_fallar_el_comando(
+    base_confirmada, capsys: pytest.CaptureFixture[str]
+):
+    fabrica, consultorio, usuario = base_confirmada
+    ajena = hash_rapido("contrasena-ficticia-ajena-9")
+
+    def otra_transaccion_confirmada() -> None:
+        with fabrica() as otra:  # conexion y transaccion propias, confirmada antes de seguir
+            otra.execute(
+                text("UPDATE usuario SET credencial = :c WHERE id = :id"), {"c": ajena, "id": usuario}
+            )
+            otra.commit()
+
+    terminal = Terminal(
+        [CODIGO_A, EMAIL, "REEMPLAZAR"],
+        [CONTRASENA, CONTRASENA],
+        al_leer_oculto=otra_transaccion_confirmada,
+    )
+
+    codigo = _correr_real(fabrica, ["--reemplazar"], terminal)
+
+    salida = _salida(capsys)
+    assert codigo == 1
+    assert "la credencial cambió desde que se leyó; reintente" in salida
+    with fabrica() as lectora:
+        actual = lectora.execute(
+            text("SELECT credencial FROM usuario WHERE id = :id"), {"id": usuario}
+        ).scalar_one()
+        validas = lectora.execute(
+            text("SELECT count(*) FROM sesion WHERE usuario_id = :u AND revocada_en IS NULL"),
+            {"u": usuario},
+        ).scalar_one()
+    assert actual == ajena
+    assert validas == 1
+    assert CONTRASENA not in salida and ajena not in salida
+
+
+def test_restablecer_un_hash_de_t2_deja_el_hash_vigente_revoca_sesiones_y_sale_de_la_revision(
+    base_confirmada, capsys: pytest.CaptureFixture[str]
+):
+    fabrica, consultorio, usuario = base_confirmada
+
+    antes = _correr_real(fabrica, ["--revisar-hashes"], Terminal([], []))
+    informe_previo = _salida(capsys)
+    assert antes == 0
+    assert f"restablecer: consultorio {consultorio} usuario {usuario}" in informe_previo
+
+    codigo = _correr_real(
+        fabrica,
+        ["--reemplazar"],
+        Terminal([CODIGO_A, EMAIL, "REEMPLAZAR"], [CONTRASENA, CONTRASENA]),
+    )
+
+    assert codigo == 0, _salida(capsys)
+    with fabrica() as lectora:
+        credencial = lectora.execute(
+            text("SELECT credencial FROM usuario WHERE id = :id"), {"id": usuario}
+        ).scalar_one()
+        revocadas = lectora.execute(
+            text("SELECT count(*) FROM sesion WHERE usuario_id = :u AND revocada_en IS NOT NULL"),
+            {"u": usuario},
+        ).scalar_one()
+    assert credencial.startswith("$argon2id$v=19$m=65536,t=3,p=4$")
+    assert revocadas == 1
+    despues = _correr_real(fabrica, ["--revisar-hashes"], Terminal([], []))
+    informe = _salida(capsys)
+    assert despues == 0
+    assert "hashes vigentes: 1" in informe and "restablecer:" not in informe

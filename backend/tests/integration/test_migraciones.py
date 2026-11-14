@@ -151,16 +151,20 @@ def test_tablas_del_modelo_base_vacias_tras_migrar(base_migrada: Engine):
         assert _filas(base_migrada, tabla) == 0, tabla
 
 
-def test_cadena_de_revisiones_0001_0002_0003(config_alembic: Config):
+def test_cadena_de_revisiones_0001_0002_0003_0004(config_alembic: Config):
+    # Ajuste C-04: la cadena crece con 0004 (head) y 0003 deja de ser head.
     scripts = ScriptDirectory.from_config(config_alembic)
 
     head = scripts.get_revision(scripts.get_current_head())
+    autenticacion = scripts.get_revision("0003")
     modelo_base = scripts.get_revision("0002")
 
-    assert head.revision == "0003"
-    assert head.down_revision == "0002"
+    assert head.revision == "0004"
+    assert head.down_revision == "0003"
+    assert autenticacion.down_revision == "0002"
     assert modelo_base.down_revision == "0001"
     assert set(modelo_base.nextrev) == {"0003"}
+    assert set(autenticacion.nextrev) == {"0004"}
 
 
 def test_subida_desde_0001_crea_las_tablas_vacias(
@@ -233,6 +237,7 @@ def test_nombres_de_restricciones_segun_la_convencion(base_migrada: Engine):
         ("consultorio", "ck_consultorio_codigo_formato"),
         ("sesion", "pk_sesion"),
         ("sesion", "uq_sesion_token_hmac"),
+        ("sesion", "uq_sesion_consultorio_id_id"),  # C-04 (0004, DD-08)
         ("sesion", "fk_sesion_consultorio_id_usuario"),
         ("sesion", "ck_sesion_token_hmac_longitud"),
         ("sesion", "ck_sesion_vencimientos_coherentes"),

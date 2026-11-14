@@ -15,11 +15,15 @@ from app.seed.datos import CONSULTORIOS, USUARIOS, UsuarioSeed
 from app.seed.entorno import validar_entorno_de_seed
 
 URL_INEXISTENTE = "postgresql+psycopg://app:secreto@host-inexistente.invalid:5432/turnos"
+# C-04: los comandos locales usan DATABASE_MIGRATION_URL (rol `app`); la de la API es otro rol.
+URL_API_INEXISTENTE = "postgresql+psycopg://turnos_app:secreto@host-api-inexistente.invalid:5432/turnos"
 
 
 def _configurar_entorno(monkeypatch: pytest.MonkeyPatch, app_env: str) -> None:
     monkeypatch.setenv("APP_ENV", app_env)
-    monkeypatch.setenv("DATABASE_URL", URL_INEXISTENTE)
+    monkeypatch.setenv("DATABASE_URL", URL_API_INEXISTENTE)
+    monkeypatch.setenv("DATABASE_MIGRATION_URL", URL_INEXISTENTE)
+    monkeypatch.delenv("DATABASE_LOGIN_URL", raising=False)
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
     monkeypatch.setenv("AUTH_SECRET_KEY", secrets.token_urlsafe(48))
     monkeypatch.setenv("AUTH_COOKIE_SECURE", "true")

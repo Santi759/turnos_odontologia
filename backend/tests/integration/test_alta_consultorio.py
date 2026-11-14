@@ -13,7 +13,7 @@ from sqlalchemy import Engine, event, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.auth.acceso_previo import CodigoConsultorioNoDisponible, insertar_consultorio
+from app.auth.acceso_admin import CodigoConsultorioNoDisponible, insertar_consultorio
 from app.models.codigo import codigo_corto, codigo_largo
 
 ID_EXISTENTE = uuid.UUID("01a1a95a-dd90-73e7-9496-c7d08d776d19")

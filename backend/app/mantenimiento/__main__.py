@@ -8,7 +8,7 @@ Uso (solo desarrollo local):
 
 - `--max-lotes N`: entero entre 1 y 1000 (por defecto 100). Cada lote borra hasta 1000 filas en su
   propia transaccion; por ejecucion se borran como maximo `1000 x N` filas por tabla.
-- Solo corre con `APP_ENV=local` y solo sobre `DATABASE_URL`; con otro entorno, o con argumentos
+- Solo corre con `APP_ENV=local` y solo sobre `DATABASE_MIGRATION_URL`; con otro entorno, o con argumentos
   invalidos, falla antes de abrir ninguna conexion.
 - Nunca borra sesiones validas ni intentos dentro de la retencion de 24 horas, ni toca otras tablas.
 - La salida solo contiene cantidades (`sesiones eliminadas: N; intentos eliminados: M`).
@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.reloj import Reloj, RelojSistema
 from app.core.config import Settings, cargar_configuracion
-from app.core.database import crear_engine, crear_fabrica_de_sesiones
+from app.core.database import AdministracionNoConfigurada, abrir_sesion_de_administracion
 from app.core.linea_de_comandos import AnalizadorSinEco, ArgumentosInvalidos
 from app.mantenimiento.limpieza import limpiar
 
@@ -60,7 +60,7 @@ def analizar(argv: Sequence[str]) -> ArgumentosLimpieza:
 
 
 def _abrir_sesion_por_defecto(settings: Settings) -> Session:
-    return crear_fabrica_de_sesiones(crear_engine(settings))()
+    return abrir_sesion_de_administracion(settings)
 
 
 def _fallar(mensaje: str) -> int:
@@ -86,7 +86,10 @@ def main(
     if settings.app_env != "local":
         return _fallar("el comando de mantenimiento solo se ejecuta con APP_ENV=local")
 
-    sesion = abrir_sesion(settings)
+    try:
+        sesion = abrir_sesion(settings)
+    except AdministracionNoConfigurada as exc:
+        return _fallar(str(exc))
     try:
         resumen = limpiar(
             sesion,

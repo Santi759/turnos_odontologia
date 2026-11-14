@@ -175,6 +175,7 @@ class Entorno:
     def login(self, codigo="ficticio-a", email=EMAIL, contrasena=CONTRASENA_A, ip=IP, token=None):
         return self.servicio.iniciar_sesion(
             self.db,
+            self.db,
             codigo=codigo,
             email=email,
             contrasena=contrasena,

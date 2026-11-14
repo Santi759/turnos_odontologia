@@ -2,7 +2,7 @@
 
 La politica no hace I/O ni usa reloj propio: recibe los instantes de los fallos y `ahora`.
 La orquestacion (locks consultivos y lectura de fallos) esta al final y solo llama a
-`acceso_previo`. Los bloqueos no se guardan; se calculan desde los fallos. Los contadores de cuenta y de IP son
+`acceso_login`. Los bloqueos no se guardan; se calculan desde los fallos. Los contadores de cuenta y de IP son
 independientes: el de cuenta ignora los fallos descartados (`descartado_para_cuenta`)
 y el de IP los cuenta todos.
 """
@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.auth import acceso_previo
+from app.auth import acceso_login
 
 HORIZONTE_DE_CONSULTA = timedelta(minutes=30)
 
@@ -88,12 +88,12 @@ def bloqueo_vigente(db: Session, clave_cuenta: bytes, clave_ip: bytes, ahora: da
     """Mayor `Retry-After` entre el bloqueo de la cuenta y el de la IP; `None` si no hay ninguno."""
     desde = ahora - HORIZONTE_DE_CONSULTA
     de_cuenta = evaluar_bloqueo(
-        acceso_previo.fallos_de_cuenta(db, clave_cuenta, desde, POLITICA_CUENTA.umbral),
+        acceso_login.fallos_de_cuenta(db, clave_cuenta, desde),
         ahora,
         POLITICA_CUENTA,
     )
     de_ip = evaluar_bloqueo(
-        acceso_previo.fallos_de_ip(db, clave_ip, desde, POLITICA_IP.umbral), ahora, POLITICA_IP
+        acceso_login.fallos_de_ip(db, clave_ip, desde), ahora, POLITICA_IP
     )
     vigentes = [segundos for segundos in (de_cuenta, de_ip) if segundos is not None]
     return max(vigentes) if vigentes else None

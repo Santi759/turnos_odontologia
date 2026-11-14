@@ -19,6 +19,10 @@ try {
     # solo vive en el entorno de este proceso y se pasa a los contenedores por NOMBRE
     # (opcion -e con el nombre de la variable, sin valor); nunca se imprime ni se escribe en un archivo.
     $env:AUTH_SECRET_KEY = New-ClaveAuthEfimera
+    # Contrasenas efimeras de los roles turnos_app y turnos_login (distintas entre si, DD-21):
+    # mismo tratamiento. db-test las recibe por nombre (`environment`) y el paso de aislamiento por -e.
+    $env:TURNOS_APP_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
+    $env:TURNOS_LOGIN_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
 
     Invoke-Paso -Nombre '0. autoprueba del runner y de la higiene del repositorio' -Comando {
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/autoprueba.ps1
@@ -39,10 +43,13 @@ try {
     Invoke-Paso -Nombre '5. pruebas de integracion contra PostgreSQL real (db-test)' -Comando {
         docker compose run --rm --no-deps -e AUTH_SECRET_KEY api python -m pytest -p no:cacheprovider tests/integration -v
     }
-    Invoke-Paso -Nombre '6. verificacion de tipos del frontend (tsc --noEmit)' -Comando {
+    Invoke-Paso -Nombre '6. pruebas de aislamiento con los roles turnos_app y turnos_login (db-test)' -Comando {
+        docker compose run --rm --no-deps -e AUTH_SECRET_KEY -e TURNOS_APP_TEST_PASSWORD -e TURNOS_LOGIN_TEST_PASSWORD api python -m pytest -p no:cacheprovider tests/isolation -v
+    }
+    Invoke-Paso -Nombre '7. verificacion de tipos del frontend (tsc --noEmit)' -Comando {
         docker compose run --rm --no-deps frontend npm run typecheck
     }
-    Invoke-Paso -Nombre '7. pruebas del frontend (Vitest)' -Comando {
+    Invoke-Paso -Nombre '8. pruebas del frontend (Vitest)' -Comando {
         docker compose run --rm --no-deps frontend npm test
     }
     Write-Host 'Todas las suites pasaron.'
@@ -51,6 +58,8 @@ try {
     $codigoSalida = 1
 } finally {
     Remove-Item Env:AUTH_SECRET_KEY -ErrorAction SilentlyContinue
+    Remove-Item Env:TURNOS_APP_TEST_PASSWORD -ErrorAction SilentlyContinue
+    Remove-Item Env:TURNOS_LOGIN_TEST_PASSWORD -ErrorAction SilentlyContinue
     if ($usoDbTest) {
         # La base de pruebas es efimera (tmpfs): se elimina siempre, incluso tras un fallo.
         try { docker compose --profile test rm -sf db-test | Out-Null } catch { Write-Host 'Aviso: no se pudo eliminar db-test' }

@@ -16,7 +16,7 @@ Cada regla tiene un código `RN-{DOMINIO}-{NN}`, su **origen** y su **estado**.
 | RN-MT-02 | El consultorio de una operación se **deriva de la identidad autenticada** en el servidor. Nunca se toma de un parámetro, encabezado o cuerpo enviado por el cliente. | Derivada de R6 y RG3 | [REQ] (derivada) |
 | RN-MT-03 | Toda referencia entre entidades (turno → paciente, profesional o prestación; bloqueo → profesional) debe apuntar a registros **del mismo consultorio**. | Derivada de R6 | [REQ] (derivada) |
 | RN-MT-04 | Una misma persona puede tener registros de paciente independientes en distintos consultorios. No hay cuenta única entre consultorios. | R6 (implicancia 2) | [REQ]. SU-07: los pacientes no esperarían una cuenta única (supuesto a validar, Discovery §7) |
-| RN-MT-05 | El acceso a un recurso de otro consultorio responde igual que un recurso inexistente, sin revelar que existe. | Derivada de RG3 | [PROP] |
+| RN-MT-05 | El acceso a un recurso de otro consultorio responde igual que un recurso inexistente, sin revelar que existe. | Derivada de RG3 | [REQ] |
 | RN-MT-06 | **Un filtro por consultorio en cada consulta no se considera protección suficiente por sí solo.** Se requiere defensa en profundidad: validación de RN-MT-02 y RN-MT-03, pruebas automatizadas de acceso cruzado por endpoint y, al menos, una barrera adicional en la base de datos. | RG3; respuesta del autor del 2026-10-13 | [REQ] el principio; el mecanismo concreto es [ABIERTA] PA-04 |
 
 Riesgos que estas reglas buscan cubrir, documentados sin elegir todavía la implementación:

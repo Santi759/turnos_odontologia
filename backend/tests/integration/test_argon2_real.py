@@ -136,12 +136,14 @@ def test_el_hasher_de_produccion_produce_el_prefijo_de_la_spec_con_sal_distinta(
     assert primero != segundo
 
 
-# --- Rehash por HTTP con parametros reales ----------------------------------------------------------
+# --- Sin rehash por HTTP con parametros reales (R2-01, C-04) -----------------------------------------
 
 
-def test_login_http_con_hash_de_t2_responde_200_y_la_credencial_pasa_a_los_parametros_vigentes(
+def test_login_http_con_hash_de_t2_responde_200_y_la_credencial_queda_identica(
     entorno: Entorno,
 ):
+    # Adaptada (R2-01): antes la credencial pasaba a los parametros vigentes; ahora el login
+    # nunca la escribe y dos logins exitosos la dejan identica.
     viejo = _hasher_real(time_cost=2).hash(CONTRASENA_A)
     assert viejo.startswith("$argon2id$v=19$m=65536,t=2,p=4$")
     _fijar_credencial(entorno, viejo)
@@ -150,13 +152,9 @@ def test_login_http_con_hash_de_t2_responde_200_y_la_credencial_pasa_a_los_param
     respuesta = _login(cliente)
 
     assert respuesta.status_code == 200
-    nuevo = _credencial(entorno)
-    assert nuevo != viejo
-    assert nuevo.startswith(PREFIJO_DE_LA_SPEC)
-    assert not _hasher_real().check_needs_rehash(nuevo)
-    assert _hasher_real().verify(nuevo, CONTRASENA_A)  # la contrasena sigue autenticando
+    assert _credencial(entorno) == viejo
     assert _login(cliente).status_code == 200
-    assert _credencial(entorno) == nuevo  # y ya no se vuelve a reescribir
+    assert _credencial(entorno) == viejo
 
 
 def test_login_http_con_hash_vigente_no_cambia_la_credencial(entorno: Entorno):

@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+from sqlalchemy.engine import make_url
 
 # Valor de AUTH_SECRET_KEY que declara .env.example: un marcador que se rechaza (DD-17);
 # una prueba verifica que coincide con la plantilla.
@@ -83,6 +84,14 @@ class Settings(BaseSettings):
     test_database_url: SecretStr | None = Field(
         default=None, validation_alias="TEST_DATABASE_URL"
     )
+    # DD-02: rol `turnos_login` (solo el login) y rol de administracion (Alembic y comandos
+    # locales). Opcionales: los comandos locales no usan la de login; `crear_app` la exige.
+    database_login_url: SecretStr | None = Field(
+        default=None, validation_alias="DATABASE_LOGIN_URL"
+    )
+    database_migration_url: SecretStr | None = Field(
+        default=None, validation_alias="DATABASE_MIGRATION_URL"
+    )
     cors_allowed_origins: Annotated[list[str], NoDecode] = Field(
         validation_alias="CORS_ALLOWED_ORIGINS"
     )
@@ -128,6 +137,27 @@ class Settings(BaseSettings):
             )
         if not self.auth_cookie_secure and self.app_env != "local":
             raise ValueError("AUTH_COOKIE_SECURE=false solo se admite con APP_ENV=local")
+        return self
+
+    @model_validator(mode="after")
+    def _validar_roles_distintos(self) -> "Settings":
+        """Tres roles, tres usuarios distintos (R2-05): se compara el usuario, no el host."""
+        urls = (
+            ("DATABASE_URL", self.database_url),
+            ("DATABASE_LOGIN_URL", self.database_login_url),
+            ("DATABASE_MIGRATION_URL", self.database_migration_url),
+        )
+        usuarios = [
+            (nombre, make_url(url.get_secret_value()).username)
+            for nombre, url in urls
+            if url is not None
+        ]
+        for i, (nombre, usuario) in enumerate(usuarios):
+            for otro, otro_usuario in usuarios[i + 1 :]:
+                if usuario == otro_usuario:
+                    raise ValueError(
+                        f"{nombre} y {otro} deben usar roles de PostgreSQL distintos"
+                    )
         return self
 
     @property

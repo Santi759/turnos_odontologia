@@ -75,14 +75,14 @@ Prácticas propuestas para cualquier alternativa: algoritmo robusto de derivaci�
 
 ### Aislamiento multi-consultorio — defensa en profundidad
 
-[DEC] D2: aislamiento por consultorio. Principio [REQ] RN-MT-06: **el filtro por consultorio no alcanza solo**. Capas candidatas ([ABIERTA] PA-04; se elige en el Change correspondiente):
+[DEC] D2: aislamiento por consultorio. Principio [REQ] RN-MT-06: **el filtro por consultorio no alcanza solo**. Capas adoptadas en C-04 (PA-04 resuelta; ver la capacidad `aislamiento-base-de-datos`):
 
 1. **Contexto derivado de la identidad** (RN-MT-02): obligatorio.
 2. **Repositorios acotados** al consultorio: obligatorio.
-3. **Referencias del mismo consultorio garantizadas por la base**, por ejemplo con claves foráneas compuestas que incluyen `consultorio_id` (RN-MT-03): candidata.
-4. **Seguridad a nivel de fila (RLS) de PostgreSQL**, con el consultorio de la sesión como variable: candidata. [MERCADO] Odonto.ar declara RLS en su política de privacidad (informe §6.1; la fuente sigue pendiente de verificación personal, §8.1, fila 8); esto es evidencia de que un competidor la usa, no prueba de que sea necesaria aquí.
+3. **Referencias del mismo consultorio garantizadas por la base**, por ejemplo con claves foráneas compuestas que incluyen `consultorio_id` (RN-MT-03): adoptada en C-04 (convención `(consultorio_id, id)`, DD-08, verificada por prueba de esquema).
+4. **Seguridad a nivel de fila (RLS) de PostgreSQL**, con el consultorio de la sesión como variable: adoptada en C-04 (RLS habilitada y forzada, contexto transaccional, falla cerrada sin contexto, DD-03). [MERCADO] Odonto.ar declara RLS en su política de privacidad (informe §6.1; la fuente sigue pendiente de verificación personal, §8.1, fila 8); esto es evidencia de que un competidor la usa, no prueba de que sea necesaria aquí.
 5. **Pruebas automatizadas de acceso cruzado** por endpoint: obligatorias.
-6. **Identificadores no secuenciales** para dificultar la enumeración: candidata.
+6. **Identificadores no secuenciales** para dificultar la enumeración: adoptada (UUIDv7 generado por PostgreSQL, DC-01; capa de PA-04 resuelta en C-04).
 
 Riesgos documentados en `05_reglas_de_negocio.md` (dominio RN-MT).
 

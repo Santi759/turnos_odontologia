@@ -4,6 +4,7 @@ import secrets
 from pathlib import Path
 
 import pytest
+from pydantic import SecretStr
 from alembic import command
 from alembic.config import Config
 
@@ -14,11 +15,16 @@ RAIZ_BACKEND = Path(__file__).resolve().parents[2]
 
 URL_DESARROLLO = "postgresql+psycopg://app:clave-dev@db:5432/turnos"
 URL_PRUEBAS = "postgresql+psycopg://app:clave-test@db-test:5432/turnos_test"
+# Desde C-04 `DATABASE_URL` es del rol de la API; la migracion de desarrollo usa la de administracion.
+URL_API = "postgresql+psycopg://turnos_app:clave-api@db:5432/turnos"
 
 
-def _settings(test_database_url: str | None = URL_PRUEBAS) -> Settings:
+def _settings(
+    test_database_url: str | None = URL_PRUEBAS, migracion: str | None = URL_DESARROLLO
+) -> Settings:
     datos: dict[str, str | None] = {
-        "DATABASE_URL": URL_DESARROLLO,
+        "DATABASE_URL": URL_API,
+        "DATABASE_MIGRATION_URL": migracion,
         "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
         "APP_ENV": "local",
         "AUTH_SECRET_KEY": secrets.token_urlsafe(48),
@@ -164,8 +170,13 @@ def _ejecutar_upgrade_sql(
     database_url: str,
     test_database_url: str | None,
     argumentos_x: list[str],
+    migration_url: str | None = None,
 ) -> str:
     monkeypatch.setenv("DATABASE_URL", database_url)
+    if migration_url is None:
+        monkeypatch.delenv("DATABASE_MIGRATION_URL", raising=False)
+    else:
+        monkeypatch.setenv("DATABASE_MIGRATION_URL", migration_url)
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("AUTH_SECRET_KEY", secrets.token_urlsafe(48))
@@ -228,11 +239,47 @@ def test_env_py_con_target_test_valido_genera_el_sql_de_la_migracion(monkeypatch
 
 def test_env_py_sin_destino_sigue_usando_la_base_de_desarrollo(monkeypatch):
     # Con una TEST_DATABASE_URL insegura, el destino de desarrollo no se ve afectado.
+    # Ajuste C-04: desarrollo usa DATABASE_MIGRATION_URL y `DATABASE_URL` es del rol de la API.
     sql = _ejecutar_upgrade_sql(
         monkeypatch,
-        database_url=URL_DESARROLLO,
+        database_url=URL_API,
         test_database_url=URL_DESARROLLO,
         argumentos_x=[],
+        migration_url=URL_DESARROLLO,
     )
 
     assert "CREATE EXTENSION IF NOT EXISTS btree_gist" in sql
+
+
+# --- 1.3 El destino de desarrollo usa DATABASE_MIGRATION_URL (delta base-de-datos-local) ---
+
+
+def test_desarrollo_usa_la_url_de_migracion_y_nunca_la_de_la_api():
+    resuelta = resolver_url_de_migracion(_settings(), None, None)
+
+    assert resuelta == URL_DESARROLLO
+    assert resuelta != URL_API
+
+
+def test_desarrollo_sin_url_de_migracion_falla_mencionandola_sin_valores():
+    with pytest.raises(ValueError, match="DATABASE_MIGRATION_URL") as excinfo:
+        resolver_url_de_migracion(_settings(migracion=None), "desarrollo", None)
+
+    assert "clave-api" not in str(excinfo.value)
+    assert "turnos_app" not in str(excinfo.value)
+
+
+def test_los_destinos_de_pruebas_no_exigen_la_url_de_migracion():
+    assert resolver_url_de_migracion(_settings(migracion=None), "test", None) == URL_PRUEBAS
+    assert resolver_url_de_migracion(_settings(migracion=None), None, URL_PRUEBAS) == URL_PRUEBAS
+
+
+def test_la_guardia_de_pruebas_tambien_compara_con_la_url_de_migracion():
+    configuracion = _settings(test_database_url="postgresql+psycopg://x:y@admin-host:5432/turnos")
+    configuracion = configuracion.model_copy(
+        update={
+            "database_migration_url": SecretStr("postgresql+psycopg://app:z@admin-host:5432/turnos")
+        }
+    )
+    with pytest.raises(ValueError, match="DATABASE_MIGRATION_URL"):
+        resolver_url_de_migracion(configuracion, "test", None)

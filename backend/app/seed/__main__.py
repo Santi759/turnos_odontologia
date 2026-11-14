@@ -1,7 +1,7 @@
 """Comando explicito del seed: `python -m app.seed` (DC-07, DM-08).
 
 Separado de las migraciones y del arranque de la API. Solo con APP_ENV=local y solo
-contra `DATABASE_URL`. Salida: unicamente cantidades.
+contra `DATABASE_MIGRATION_URL`. Salida: unicamente cantidades.
 """
 import sys
 from collections.abc import Callable
@@ -11,7 +11,7 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, cargar_configuracion
-from app.core.database import crear_engine, crear_fabrica_de_sesiones
+from app.core.database import AdministracionNoConfigurada, abrir_sesion_de_administracion
 from app.seed.aplicar import aplicar_seed
 from app.seed.entorno import validar_entorno_de_seed
 
@@ -19,7 +19,7 @@ _TABLA_INEXISTENTE = "42P01"
 
 
 def _abrir_sesion_por_defecto(settings: Settings) -> Session:
-    return crear_fabrica_de_sesiones(crear_engine(settings))()
+    return abrir_sesion_de_administracion(settings)
 
 
 def _error(mensaje: str) -> int:
@@ -41,7 +41,10 @@ def main(
     except RuntimeError as exc:
         return _error(str(exc))
 
-    sesion = abrir_sesion(settings)
+    try:
+        sesion = abrir_sesion(settings)
+    except AdministracionNoConfigurada as exc:
+        return _error(str(exc))
     try:
         with sesion:
             resumen = aplicar_seed(sesion)

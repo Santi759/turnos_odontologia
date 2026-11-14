@@ -123,6 +123,13 @@ def test_buscar_por_email_de_otro_consultorio_igual_que_inexistente(
 # --- Escrituras acotadas ---------------------------------------------------------
 
 
+def _credencial_en_base(escenario: Escenario, usuario_id: uuid.UUID) -> str | None:
+    # La credencial es una columna diferida con raiseload (C-04, 4.5): se lee con SQL explicito.
+    return escenario.sesion.execute(
+        text("SELECT credencial FROM usuario WHERE id = :i"), {"i": usuario_id}
+    ).scalar_one()
+
+
 def test_alta_con_el_consultorio_del_contexto(escenario: Escenario):
     usuario = escenario.repo_a().crear(
         NuevoUsuario(
@@ -134,7 +141,7 @@ def test_alta_con_el_consultorio_del_contexto(escenario: Escenario):
 
     assert usuario.consultorio_id == escenario.consultorio_a
     assert usuario.email == "nueva.persona@example.test"
-    assert usuario.credencial is None
+    assert _credencial_en_base(escenario, usuario.id) is None
     assert usuario.activo is True
     assert usuario.id.version == 7
     assert escenario.repo_b().buscar_por_email("nueva.persona@example.test") is None
@@ -225,3 +232,17 @@ def test_contexto_de_un_consultorio_inexistente_no_devuelve_resultado(
     repo = ConsultorioRepositorio(escenario.sesion, ContextoConsultorio(uuid.uuid4()))
 
     assert repo.obtener_actual() is None
+
+
+def test_las_consultas_de_usuarios_no_seleccionan_la_credencial(escenario: Escenario):
+    from sqlalchemy.dialects import postgresql
+
+    repo = escenario.repo_a()
+    consultas = (
+        repo._consulta_listar(),
+        repo._consulta_obtener_por_id(escenario.usuarios_a[0]),
+        repo._consulta_buscar_por_email(EMAIL),
+    )
+
+    for consulta in consultas:
+        assert "credencial" not in str(consulta.compile(dialect=postgresql.dialect()))

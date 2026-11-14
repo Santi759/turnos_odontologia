@@ -67,13 +67,16 @@ def _columnas(motor: Engine, tabla: str) -> set[str]:
 # --- Cadena de revisiones ------------------------------------------------------
 
 
-def test_la_revision_head_es_0003_y_depende_de_0002(config_alembic: Config):
+def test_la_revision_0003_depende_de_0002_y_head_es_0004(config_alembic: Config):
+    # Ajuste C-04: `head` pasa a ser 0004 (aislamiento-roles-rbac); 0003 conserva su cadena.
     scripts = ScriptDirectory.from_config(config_alembic)
 
     head = scripts.get_revision(scripts.get_current_head())
+    autenticacion = scripts.get_revision("0003")
 
-    assert head.revision == "0003"
-    assert head.down_revision == "0002"
+    assert head.revision == "0004"
+    assert head.down_revision == "0003"
+    assert autenticacion.down_revision == "0002"
 
 
 # --- Migracion reversible -------------------------------------------------------

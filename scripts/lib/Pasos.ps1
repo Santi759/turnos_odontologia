@@ -47,3 +47,16 @@ function New-ClaveAuthEfimera {
         $generador.Dispose()
     }
 }
+
+function New-ContrasenaRolPruebaEfimera {
+    # Contrasena efimera de un rol de prueba (turnos_app o turnos_login, DD-21): 32 bytes de un
+    # CSPRNG en base64url sin relleno (43 caracteres). Solo vive en el entorno del proceso.
+    $generador = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $bytes = New-Object byte[] 32
+        $generador.GetBytes($bytes)
+        return [Convert]::ToBase64String($bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=')
+    } finally {
+        $generador.Dispose()
+    }
+}

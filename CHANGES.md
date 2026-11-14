@@ -394,7 +394,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
   - Respuesta de recurso ajeno idéntica a "no encontrado" (RN-MT-05)
   - Arnés de pruebas de acceso cruzado (`tests/isolation/`): fixture con 2 consultorios, helper para ejecutar cada endpoint como usuario del otro consultorio; **regla de proceso: todo change posterior con endpoints de datos de consultorio agrega su prueba aquí**
   - Esquemas Pydantic de entrada que excluyen `consultorio_id` y campos de control
-  - Decisiones previas al propose: PA-04 (capas definitivas), PA-06
+  - Decisiones previas al propose: PA-04 (capas definitivas; resuelta en C-04), PA-06 (resuelta en C-04, DA-07)
   - Tests: acceso cruzado (lectura, modificación, referencia por ID), matriz de roles, intento de pasar `consultorio_id` en body/query/header es ignorado o rechazado
 - **Dependencias**: C-03
 - **Governance**: CRITICO
@@ -410,7 +410,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
   - Endpoints admin: `POST/GET/PATCH /api/usuarios`, desactivación (`activo=false`), asignación de rol, siempre dentro del consultorio del administrador
   - Un usuario desactivado pierde el acceso de inmediato (RN-AU-06); roles distintos de administrador reciben 403
   - Esquemas sin `consultorio_id`; contraseña inicial/restablecimiento según lo decidido en PA-11
-  - Decisiones previas al propose: PA-03 y PA-11 (ya resueltas en C-03; confirmar alcance de restablecimiento), PA-06 (¿usuario en varios consultorios?)
+  - Decisiones previas al propose: PA-03 y PA-11 (ya resueltas en C-03; confirmar alcance de restablecimiento), PA-06 (¿usuario en varios consultorios?; resuelta en C-04, DA-07)
   - Tests: CRUD por rol, aislamiento cruzado, desactivación efectiva en la siguiente petición
 - **Dependencias**: C-04
 - **Governance**: ALTO (gestión de roles y acceso; no toca el mecanismo de autenticación)
@@ -446,7 +446,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 ### [C-07] `profesionales`
 - **Estado**: `[ ]` pendiente
 - **Scope**: US-005.
-  - Modelo `Profesional` (`consultorio_id`, `nombre`, `usuario_id` opcional, `activo`); migración 003
+  - Modelo `Profesional` (`consultorio_id`, `nombre`, `usuario_id` opcional, `activo`); siguiente migración disponible (0005+ según el orden en que se apliquen los Changes)
   - Endpoints admin `POST/GET/PATCH /api/profesionales`; lectura para secretaría y odontólogo (propio)
   - Vínculo opcional con `Usuario` de rol odontólogo **del mismo consultorio** (RN-MT-03); inactivo no admite turnos nuevos y conserva los existentes
   - Decisiones previas al propose: PA-17 (¿profesionales sin cuenta?), PA-09 (¿todos hacen todas las prestaciones?; si cambia el modelo se decide aquí o en C-08), SU-03
@@ -462,7 +462,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 ### [C-08] `prestaciones-duracion`
 - **Estado**: `[ ]` pendiente
 - **Scope**: US-006 y regla R1.
-  - Modelo `Prestacion` (`consultorio_id`, `nombre` único por consultorio, `duracion_minutos` > 0, `activa`); migración 004
+  - Modelo `Prestacion` (`consultorio_id`, `nombre` único por consultorio, `duracion_minutos` > 0, `activa`); siguiente migración disponible (0005+ según el orden en que se apliquen los Changes)
   - Endpoints admin `POST/GET/PATCH /api/prestaciones`
   - Función pura de dominio `calcular_fin(inicio, prestacion)` (RN-AG-01) con tests unitarios (reutilizable por C-15)
   - Cambiar la duración **no** altera turnos existentes (SU-05); prestación inactiva no se ofrece
@@ -480,7 +480,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 ### [C-09] `horarios-atencion`
 - **Estado**: `[ ]` pendiente
 - **Scope**: US-007 y regla R3.
-  - Modelo `HorarioAtencion` (`consultorio_id`, `profesional_id`, `dia_semana` 0-6, `hora_inicio`, `hora_fin`); constraints `hora_inicio < hora_fin` y no solapamiento de franjas del mismo profesional y día; migración 005
+  - Modelo `HorarioAtencion` (`consultorio_id`, `profesional_id`, `dia_semana` 0-6, `hora_inicio`, `hora_fin`); constraints `hora_inicio < hora_fin` y no solapamiento de franjas del mismo profesional y día; siguiente migración disponible (0005+ según el orden en que se apliquen los Changes)
   - Endpoints admin `PUT/GET /api/profesionales/{id}/horarios`
   - Varias franjas por día (mañana/tarde); referencias del mismo consultorio (RN-MT-03)
   - Cambio de franjas con turnos existentes: aún no existen turnos; dejar el gancho documentado para C-15/C-17
@@ -497,7 +497,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 ### [C-10] `bloqueos-agenda`
 - **Estado**: `[ ]` pendiente
 - **Scope**: US-008 y regla R4.
-  - Modelo `Bloqueo` (`consultorio_id`, `profesional_id` opcional, `inicio`, `fin`, `tipo` vacaciones|ausencia|feriado|otro, `descripcion` sin datos clínicos); constraint `inicio < fin`; migración 006
+  - Modelo `Bloqueo` (`consultorio_id`, `profesional_id` opcional, `inicio`, `fin`, `tipo` vacaciones|ausencia|feriado|otro, `descripcion` sin datos clínicos); constraint `inicio < fin`; siguiente migración disponible (0005+ según el orden en que se apliquen los Changes)
   - Endpoints admin `POST/GET/DELETE /api/bloqueos`; sin profesional = todo el consultorio (marcado [PROP] hasta cerrar PA-10)
   - Función de dominio `intersecta_bloqueo(turno, bloqueos)` con tests unitarios
   - Mínimo ante turnos existentes: **informar** los afectados sin cancelar (cuando existan turnos en C-15/C-18 se completa)
@@ -536,7 +536,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 ### [C-12] `pacientes`
 - **Estado**: `[ ]` pendiente
 - **Scope**: US-017 y US-019. Manejo de datos personales (Ley 25.326): ficha básica, sin datos clínicos.
-  - Modelo `Paciente` (`consultorio_id`, `nombre`, `apellido`, `telefono`, `email` opcional, `contacto_preferido` opcional, `activo`, `creado_en`); migración 007
+  - Modelo `Paciente` (`consultorio_id`, `nombre`, `apellido`, `telefono`, `email` opcional, `contacto_preferido` opcional, `activo`, `creado_en`); siguiente migración disponible (0005+ según el orden en que se apliquen los Changes)
   - Endpoints `POST/GET/PATCH /api/pacientes`, búsqueda por nombre/apellido/teléfono **solo dentro del consultorio** (RN-MT-04), desactivación (sin borrado físico, RN-PA-06)
   - Roles: administrador y secretaría C/L/M; odontólogo solo lectura de pacientes con turnos propios (se completa en C-19)
   - Sin campos clínicos ni obra social (D3, RN-PA-09); campos no necesarios opcionales (RN-PA-05)
@@ -554,7 +554,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 ### [C-13] `aviso-privacidad`
 - **Estado**: `[ ]` pendiente
 - **Scope**: US-018. Esencial #8 del informe §6.3 (sin carácter de asesoramiento legal).
-  - Modelo `AceptacionPrivacidad` (`consultorio_id`, `paciente_id`, `version_aviso`, `aceptado_en`, `medio` presencial|online); registro **inmutable**; migración 008
+  - Modelo `AceptacionPrivacidad` (`consultorio_id`, `paciente_id`, `version_aviso`, `aceptado_en`, `medio` presencial|online); registro **inmutable**; siguiente migración disponible (0005+ según el orden en que se apliquen los Changes)
   - Endpoints `POST /api/pacientes/{id}/aceptaciones`, `GET .../aceptaciones`; nueva versión del aviso permite nueva aceptación
   - Texto de aviso de ejemplo versionado (seed), configurable por consultorio sin lógica legal propia
   - Comportamiento si el paciente no acepta: [ABIERTA]; no se bloquea la creación de turnos en la v0.1 salvo decisión
@@ -593,7 +593,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
 - **Estado**: `[ ]` pendiente
 - **Scope**: US-011. Núcleo del problema (D1): crear turnos sin superposiciones.
   - Modelo `Turno` (`consultorio_id`, `profesional_id`, `paciente_id`, `prestacion_id`, `inicio`, `fin` calculado con R1, `estado`, `creado_por`, `creado_en`, `actualizado_en`, `actualizado_por`); sin texto libre salvo decisión PA-15
-  - Migración 009: tabla `turno`, extensión `btree_gist`, **restricción de exclusión** por `profesional_id` y rango `[inicio, fin)` aplicada solo a los estados que ocupan agenda (RN-AG-02b); referencias del mismo consultorio garantizadas en DB (claves compuestas o equivalente de PA-04)
+  - Siguiente migración disponible (0005+ según el orden en que se apliquen los Changes): tabla `turno`, **restricción de exclusión** por `profesional_id` y rango `[inicio, fin)` aplicada solo a los estados que ocupan agenda (RN-AG-02b); referencias del mismo consultorio garantizadas en DB (claves compuestas o equivalente de PA-04)
   - Servicio de dominio `crear_turno`: valida activos y mismo consultorio (RN-MT-03), pasado (RN-TU-06), franja completa (RN-AG-06), bloqueos (RN-AG-08), superposición con mensaje claro; transacción atómica (RN-GL-02); traduce el rechazo de la restricción al mismo error de superposición; rechazos sin datos de otros pacientes (RN-GL-03)
   - `POST /api/turnos` (sin `consultorio_id` en el body); turno nace `reservado` [PROP]
   - Intervalos semiabiertos: consecutivos aceptados

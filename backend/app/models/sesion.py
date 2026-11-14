@@ -22,6 +22,8 @@ class Sesion(Base):
     __tablename__ = "sesion"
     __table_args__ = (
         UniqueConstraint("token_hmac", name="uq_sesion_token_hmac"),
+        # DD-08: convencion uniforme de toda tabla con consultorio_id (C-04).
+        UniqueConstraint("consultorio_id", "id", name="uq_sesion_consultorio_id_id"),
         ForeignKeyConstraint(
             ["consultorio_id", "usuario_id"],
             ["usuario.consultorio_id", "usuario.id"],
@@ -49,7 +51,10 @@ class Sesion(Base):
     )
     consultorio_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     usuario_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
-    token_hmac: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    # Diferido con raiseload (C-04, DD-30): `turnos_app` solo puede insertarlo, nunca leerlo.
+    token_hmac: Mapped[bytes] = mapped_column(
+        LargeBinary, nullable=False, deferred=True, deferred_raiseload=True
+    )
     creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     ultimo_uso_en: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False

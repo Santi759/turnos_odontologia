@@ -26,6 +26,7 @@ from app.auth.dependencias import (
     identidad_actual,
     obtener_servicio,
     obtener_sesion_db,
+    obtener_sesion_login,
     obtener_settings,
     rechazo,
     verificar_origen,
@@ -123,10 +124,12 @@ def login(
     entrada: EntradaLogin = Depends(entrada_login),
     settings: Settings = Depends(obtener_settings),
     servicio: ServicioAuth = Depends(obtener_servicio),
+    db_login: Session = Depends(obtener_sesion_login),
     db: Session = Depends(obtener_sesion_db),
 ) -> RespuestaIdentidad:
     try:
         iniciada = servicio.iniciar_sesion(
+            db_login,
             db,
             codigo=entrada.codigo_consultorio,
             email=entrada.email,

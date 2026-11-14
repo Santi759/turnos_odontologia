@@ -423,3 +423,77 @@ def test_credencial_vacia_rechazada(sesion: Session):
     )
 
     assert sqlstate == CHECK
+
+
+# --- Columnas diferidas con raiseload (C-04, 4.5, DD-30) ------------------------------------
+
+
+def _usuario_orm(sesion: Session):
+    from sqlalchemy import select
+
+    from app.models.usuario import Usuario
+
+    consultorio_id = _consultorio(sesion)
+    sesion.execute(
+        text(
+            "INSERT INTO usuario (consultorio_id, email, nombre, rol, credencial) "
+            "VALUES (:c, :e, 'Persona Ficticia', 'secretaria', 'hash-ficticio')"
+        ),
+        {"c": consultorio_id, "e": EMAIL},
+    )
+    return sesion.scalars(select(Usuario)).one()
+
+
+def test_select_de_usuario_no_trae_la_credencial(sesion: Session):
+    from sqlalchemy import select
+    from sqlalchemy.dialects import postgresql
+
+    from app.models.usuario import Usuario
+
+    sql = str(select(Usuario).compile(dialect=postgresql.dialect()))
+
+    assert "credencial" not in sql
+    assert "email" in sql
+
+
+def test_acceder_a_la_credencial_sin_cargarla_lanza_error(sesion: Session):
+    from sqlalchemy.exc import InvalidRequestError
+
+    usuario = _usuario_orm(sesion)
+
+    with pytest.raises(InvalidRequestError):
+        usuario.credencial
+
+
+def test_la_credencial_se_carga_solo_si_se_pide_explicitamente(sesion: Session):
+    from sqlalchemy import select
+    from sqlalchemy.orm import undefer
+
+    from app.models.usuario import Usuario
+
+    _usuario_orm(sesion)
+    sesion.expunge_all()
+
+    usuario = sesion.scalars(select(Usuario).options(undefer(Usuario.credencial))).one()
+
+    assert usuario.credencial == "hash-ficticio"
+
+
+def test_select_de_sesion_no_trae_token_hmac_y_acceder_lanza_error(sesion: Session):
+    from sqlalchemy import select
+    from sqlalchemy.dialects import postgresql
+    from sqlalchemy.exc import InvalidRequestError
+
+    from app.models.sesion import Sesion
+    from tests.integration.datos_auth import insertar_sesion
+
+    sql = str(select(Sesion).compile(dialect=postgresql.dialect()))
+    assert "token_hmac" not in sql
+    assert "revocada_en" in sql
+
+    consultorio_id = _consultorio(sesion)
+    usuario_id = _usuario(sesion, consultorio_id)
+    insertar_sesion(sesion, consultorio_id, usuario_id)
+    orm = sesion.scalars(select(Sesion)).one()
+    with pytest.raises(InvalidRequestError):
+        orm.token_hmac

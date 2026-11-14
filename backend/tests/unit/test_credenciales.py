@@ -13,10 +13,13 @@ from argon2 import PasswordHasher, Type
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from app.auth import acceso_previo
+from app.auth import acceso_admin
+from app.auth.cuenta import Cuenta
 from app.credenciales.__main__ import main
 
 URL_INEXISTENTE = "postgresql+psycopg://app:secreto@host-inexistente.invalid:5432/turnos"
+# C-04: los comandos locales usan DATABASE_MIGRATION_URL (rol `app`); la de la API es otro rol.
+URL_API_INEXISTENTE = "postgresql+psycopg://turnos_app:secreto@host-api-inexistente.invalid:5432/turnos"
 CODIGO = "ficticio-a"
 EMAIL = "persona.ficticia@example.test"
 CONTRASENA = "clave-de-prueba-a1"
@@ -29,7 +32,9 @@ HASHER_RAPIDO = PasswordHasher(
 
 def _entorno(monkeypatch: pytest.MonkeyPatch, app_env: str) -> None:
     monkeypatch.setenv("APP_ENV", app_env)
-    monkeypatch.setenv("DATABASE_URL", URL_INEXISTENTE)
+    monkeypatch.setenv("DATABASE_URL", URL_API_INEXISTENTE)
+    monkeypatch.setenv("DATABASE_MIGRATION_URL", URL_INEXISTENTE)
+    monkeypatch.delenv("DATABASE_LOGIN_URL", raising=False)
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
     monkeypatch.setenv("AUTH_SECRET_KEY", secrets.token_urlsafe(48))
     monkeypatch.setenv("AUTH_COOKIE_SECURE", "true")
@@ -89,7 +94,7 @@ class Escenario:
         self.revocaciones: list[tuple] = []
         self.consultorio_id = uuid.uuid4()
         self.usuario_id = uuid.uuid4()
-        cuenta = acceso_previo.Cuenta(
+        cuenta = Cuenta(
             usuario_id=self.usuario_id,
             consultorio_id=self.consultorio_id,
             email=EMAIL,
@@ -101,7 +106,7 @@ class Escenario:
             consultorio_activo=True,
         )
         monkeypatch.setattr(
-            acceso_previo,
+            acceso_admin,
             "buscar_cuenta",
             lambda s, codigo, email: cuenta if cuenta_existe else None,
         )
@@ -114,8 +119,8 @@ class Escenario:
             self.revocaciones.append((consultorio_id, usuario_id, ahora))
             return 2
 
-        monkeypatch.setattr(acceso_previo, "escribir_credencial", escribir)
-        monkeypatch.setattr(acceso_previo, "revocar_sesiones_de_usuario", revocar)
+        monkeypatch.setattr(acceso_admin, "escribir_credencial", escribir)
+        monkeypatch.setattr(acceso_admin, "revocar_sesiones_de_usuario", revocar)
 
     def abrir_sesion(self, settings: object) -> SesionFalsa:
         self.aperturas += 1
@@ -381,7 +386,7 @@ def test_si_la_credencial_cambio_desde_la_lectura_no_se_confirma_ni_se_revocan_s
 ):
     _entorno(monkeypatch, "local")
     escenario = Escenario(monkeypatch, credencial=HASH_PREVIO)
-    monkeypatch.setattr(acceso_previo, "escribir_credencial", lambda *a: False)
+    monkeypatch.setattr(acceso_admin, "escribir_credencial", lambda *a: False)
     terminal = Terminal(
         visibles=[CODIGO, EMAIL, "REEMPLAZAR"], ocultas=[CONTRASENA, CONTRASENA]
     )
@@ -496,3 +501,185 @@ def test_la_politica_se_evalua_antes_que_la_confirmacion_del_reemplazo(
     assert codigo != 0
     assert len(terminal.pedidos_visibles) == 2  # no llego a pedir la confirmacion
     assert escenario.revocaciones == [] and escenario.escrituras == []
+
+
+# --- 6.5 Revision local de hashes (`--revisar-hashes`, DD-32) -------------------------------------
+
+from app.auth.acceso_admin import CredencialParaRevision  # noqa: E402
+
+
+def _hash(**parametros) -> str:
+    base = dict(time_cost=3, memory_cost=65536, parallelism=4, hash_len=32, salt_len=16, type=Type.ID)
+    base.update(parametros)
+    return PasswordHasher(**base).hash(CONTRASENA)
+
+
+def _siete_cuentas() -> list[CredencialParaRevision]:
+    credenciales = [
+        _hash(),  # vigente
+        _hash(time_cost=2),  # parametros anteriores
+        _hash(memory_cost=19456),  # parametros anteriores
+        _hash(type=Type.I),  # formato no admitido
+        _hash(type=Type.D),  # formato no admitido
+        "esto no es un hash",  # formato no admitido
+        None,  # sin credencial
+    ]
+    return [CredencialParaRevision(uuid.uuid4(), uuid.uuid4(), c) for c in credenciales]
+
+
+def _revision(monkeypatch, cuentas: list[CredencialParaRevision] | None = None, **opciones):
+    escenario = Escenario(monkeypatch, **opciones)
+    filas = _siete_cuentas() if cuentas is None else cuentas
+    monkeypatch.setattr(acceso_admin, "listar_credenciales_para_revision", lambda sesion: filas)
+    return escenario, filas
+
+
+def test_revisar_y_reemplazar_son_excluyentes_y_fallan_antes_de_conectar(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    _entorno(monkeypatch, "local")
+    escenario, _ = _revision(monkeypatch)
+    terminal = Terminal(visibles=[CODIGO, EMAIL], ocultas=[CONTRASENA, CONTRASENA])
+    intentos, registrar = _escuchar_conexiones()
+    try:
+        codigo = escenario.ejecutar(terminal, ["--revisar-hashes", "--reemplazar"])
+    finally:
+        event.remove(Engine, "do_connect", registrar)  # type: ignore[arg-type]
+
+    assert codigo == 1 and intentos == []
+    assert escenario.aperturas == 0
+    assert (terminal.pedidos_visibles, terminal.pedidos_ocultos) == ([], [])
+    assert "argumento" in _salida(capsys)
+
+
+def test_revisar_con_app_env_test_se_rechaza_sin_conectar(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    _entorno(monkeypatch, "test")
+    escenario, _ = _revision(monkeypatch)
+
+    codigo = escenario.ejecutar(Terminal(), ["--revisar-hashes"])
+
+    assert codigo == 1 and escenario.aperturas == 0
+    assert "APP_ENV" in _salida(capsys)
+
+
+def test_revisar_sin_terminal_se_rechaza_sin_conectar(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    _entorno(monkeypatch, "local")
+    escenario, _ = _revision(monkeypatch, interactivo=False)
+
+    codigo = escenario.ejecutar(Terminal(), ["--revisar-hashes"])
+
+    assert codigo == 1 and escenario.aperturas == 0
+    assert "terminal interactiva" in _salida(capsys)
+
+
+def test_revisar_sin_url_de_administracion_la_menciona_sin_conectar(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    _entorno(monkeypatch, "local")
+    monkeypatch.delenv("DATABASE_MIGRATION_URL")
+    intentos, registrar = _escuchar_conexiones()
+    try:
+        codigo = main(["--revisar-hashes"], es_interactivo=lambda: True)
+    finally:
+        event.remove(Engine, "do_connect", registrar)  # type: ignore[arg-type]
+
+    salida = _salida(capsys)
+    assert codigo == 1 and intentos == []
+    assert "DATABASE_MIGRATION_URL" in salida
+    for prohibido in ("host-api", "postgresql", "secreto", "@"):
+        assert prohibido not in salida
+
+
+def test_la_revision_clasifica_siete_cuentas_y_lista_las_cinco_a_restablecer(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    _entorno(monkeypatch, "local")
+    escenario, filas = _revision(monkeypatch)
+    terminal = Terminal()
+
+    codigo = escenario.ejecutar(terminal, ["--revisar-hashes"])
+
+    salida = _salida(capsys)
+    assert codigo == 0
+    lineas = salida.splitlines()
+    assert lineas[:4] == [
+        "hashes vigentes: 1",
+        "hashes con parámetros anteriores: 2",
+        "hashes con formato no admitido: 3",
+        "usuarios sin credencial: 1",
+    ]
+    a_restablecer = sorted(
+        f"restablecer: consultorio {f.consultorio_id} usuario {f.usuario_id}"
+        for f in filas[1:6]
+    )
+    assert sorted(lineas[4:]) == a_restablecer
+    assert f"{filas[0].usuario_id}" not in salida and f"{filas[6].usuario_id}" not in salida
+    assert (terminal.pedidos_visibles, terminal.pedidos_ocultos) == ([], [])
+
+
+def test_la_revision_no_escribe_ni_confirma_y_siempre_revierte_y_cierra(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    _entorno(monkeypatch, "local")
+    escenario, _ = _revision(monkeypatch)
+
+    codigo = escenario.ejecutar(Terminal(), ["--revisar-hashes"])
+
+    assert codigo == 0
+    assert (escenario.sesion.confirmaciones, escenario.sesion.reversiones, escenario.sesion.cierres) == (0, 1, 1)
+    assert escenario.escrituras == [] and escenario.revocaciones == []
+
+
+def test_la_salida_de_la_revision_no_contiene_datos_sensibles(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    _entorno(monkeypatch, "local")
+    escenario, _ = _revision(monkeypatch)
+
+    escenario.ejecutar(Terminal(), ["--revisar-hashes"])
+
+    salida = _salida(capsys)
+    for prohibido in ("$argon2", "@", "ficticio-a", "postgresql", "esto no es un hash"):
+        assert prohibido not in salida
+
+
+def test_la_revision_sin_cuentas_a_restablecer_no_lista_ninguna(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    _entorno(monkeypatch, "local")
+    cuentas = [CredencialParaRevision(uuid.uuid4(), uuid.uuid4(), _hash()) for _ in range(2)]
+    cuentas.append(CredencialParaRevision(uuid.uuid4(), uuid.uuid4(), None))
+    escenario, _ = _revision(monkeypatch, cuentas)
+
+    codigo = escenario.ejecutar(Terminal(), ["--revisar-hashes"])
+
+    assert codigo == 0
+    assert _salida(capsys).splitlines() == [
+        "hashes vigentes: 2",
+        "hashes con parámetros anteriores: 0",
+        "hashes con formato no admitido: 0",
+        "usuarios sin credencial: 1",
+    ]
+
+
+def test_un_fallo_al_listar_se_informa_con_mensaje_fijo_y_revierte(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    _entorno(monkeypatch, "local")
+    escenario = Escenario(monkeypatch)
+
+    def romper(sesion):
+        raise RuntimeError("detalle interno con postgresql://x@y")
+
+    monkeypatch.setattr(acceso_admin, "listar_credenciales_para_revision", romper)
+
+    codigo = escenario.ejecutar(Terminal(), ["--revisar-hashes"])
+
+    salida = _salida(capsys)
+    assert codigo == 1
+    assert "detalle interno" not in salida and "postgresql" not in salida
+    assert (escenario.sesion.confirmaciones, escenario.sesion.reversiones) == (0, 1)

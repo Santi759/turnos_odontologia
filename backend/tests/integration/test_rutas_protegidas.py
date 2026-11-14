@@ -17,6 +17,7 @@ from app.auth.cookies import NOMBRE_COOKIE
 from app.auth.dependencias import identidad_actual
 from tests.integration.app_auth import ORIGEN, crear_app_real, settings_de_prueba
 from tests.integration.datos_auth import CONTRASENA_A, EMAIL, Entorno
+from tests.rutas import aplanar, depende_de
 
 NO_AUTENTICADO = {"detail": "No autenticado."}
 RECHAZADA = {"detail": "Solicitud rechazada."}
@@ -44,26 +45,13 @@ def _cliente(app: FastAPI) -> TestClient:
 
 
 def _depende_de_identidad(dependiente: Dependant) -> bool:
-    return any(
-        sub.call is identidad_actual or _depende_de_identidad(sub) for sub in dependiente.dependencies
-    )
-
-
-def _aplanar(rutas) -> list:
-    """Rutas efectivas: FastAPI reciente deja los routers incluidos como nodos perezosos."""
-    planas = []
-    for ruta in rutas:
-        if hasattr(ruta, "effective_candidates"):  # _IncludedRouter (API interna de FastAPI)
-            planas.extend(_aplanar(ruta.effective_candidates()))
-        else:
-            planas.append(ruta)
-    return planas
+    return depende_de(dependiente, identidad_actual)
 
 
 def _rutas(app: FastAPI) -> list[tuple[str, str, bool]]:
     """(metodo, ruta, requiere_identidad) de cada metodo de cada ruta; HEAD es implicito de GET."""
     rutas = []
-    for ruta in _aplanar(app.routes):
+    for ruta in aplanar(app.routes):
         dependiente = getattr(ruta, "dependant", None)
         assert dependiente is not None or isinstance(ruta, Route), f"ruta no contemplada: {ruta!r}"
         requiere = dependiente is not None and _depende_de_identidad(dependiente)

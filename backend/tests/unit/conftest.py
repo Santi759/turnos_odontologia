@@ -10,6 +10,8 @@ if TYPE_CHECKING:
     from app.core.config import Settings
 
 ORIGEN_FRONTEND = "http://localhost:5173"
+# C-04: `crear_app` exige la URL del rol de login (otro usuario que `DATABASE_URL`).
+URL_LOGIN_POR_DEFECTO = "postgresql+psycopg://turnos_login:login@db:5432/turnos"
 
 
 @pytest.fixture(autouse=True)
@@ -24,6 +26,9 @@ def entorno_auth_aislado(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("AUTH_SESSION_MINUTES", "30")
     monkeypatch.setenv("AUTH_SESSION_MAX_HOURS", "12")
     monkeypatch.setenv("AUTH_COOKIE_SECURE", "true")
+    # El .env del autor puede traer las URLs de los roles; no deben filtrarse a las pruebas.
+    monkeypatch.delenv("DATABASE_LOGIN_URL", raising=False)
+    monkeypatch.delenv("DATABASE_MIGRATION_URL", raising=False)
 
 
 @pytest.fixture
@@ -35,9 +40,11 @@ def fabrica_settings() -> Callable[..., Settings]:
     def crear(
         database_url: str = "postgresql+psycopg://app:app@db:5432/turnos",
         origenes: str = ORIGEN_FRONTEND,
+        database_login_url: str | None = URL_LOGIN_POR_DEFECTO,
     ) -> Settings:
         return Settings(
             DATABASE_URL=database_url,
+            DATABASE_LOGIN_URL=database_login_url,
             CORS_ALLOWED_ORIGINS=origenes,
             APP_ENV="local",
             # Clave ficticia generada al ejecutar: nunca un literal (DD-17).

@@ -58,7 +58,11 @@ class Usuario(Base):
     )
     email: Mapped[str] = mapped_column(Text, nullable=False)
     nombre: Mapped[str] = mapped_column(Text, nullable=False)
-    credencial: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Diferida con raiseload (C-04, DD-30): `turnos_app` no puede leerla y `select(Usuario)` nunca la
+    # pide. Solo se carga con `undefer(Usuario.credencial)` desde un rol que la tenga concedida.
+    credencial: Mapped[str | None] = mapped_column(
+        Text, nullable=True, deferred=True, deferred_raiseload=True
+    )
     rol: Mapped[str] = mapped_column(Text, nullable=False)
     activo: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")

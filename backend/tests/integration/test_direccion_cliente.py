@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.auth import acceso_previo
+from app.auth import acceso_login
 from app.auth.cookies import NOMBRE_COOKIE
 from tests.integration.app_auth import ORIGEN, AppDePrueba, crear_app_de_prueba
 from tests.integration.datos_auth import CONTRASENA_A, EMAIL, Entorno
@@ -62,9 +62,9 @@ def test_sin_direccion_determinable_el_login_responde_400_sin_buscar_ni_verifica
     direccion,
 ):
     busquedas: list[str] = []
-    original = acceso_previo.buscar_cuenta
+    original = acceso_login.buscar_cuenta
     monkeypatch.setattr(
-        acceso_previo, "buscar_cuenta", lambda *a, **k: (busquedas.append("x"), original(*a, **k))[1]
+        acceso_login, "buscar_cuenta", lambda *a, **k: (busquedas.append("x"), original(*a, **k))[1]
     )
 
     respuesta = _cliente(app_prueba.app, direccion).post("/prueba/login", content=CUERPO, headers=JSON)

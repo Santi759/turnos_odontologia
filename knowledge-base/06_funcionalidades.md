@@ -13,7 +13,7 @@ Organizadas por **épica** y por **historia de usuario** (US-NNN). Cada historia
 | Historia del núcleo | Condición | Depende de |
 |---|---|---|
 | US-001 | Condicionada | PA-03 (mecanismo de autenticación), PA-11 (recuperación de contraseña) |
-| US-002 | Condicionada | PA-04 (capas de aislamiento) |
+| US-002 | Sin condicion | PA-04 resuelta en C-04 |
 | US-003 | Sin dependencias abiertas propias | Requiere US-001 y US-002 |
 | US-004 | **Bloqueada** | PA-05 (alta de consultorios) |
 | US-005 | Sin dependencias abiertas propias | Requiere US-001 y US-002; PA-17 para el vínculo con usuarios |

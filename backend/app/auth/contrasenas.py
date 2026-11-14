@@ -59,6 +59,32 @@ def _es_formato_admitido(almacenado: object) -> bool:
     return True
 
 
+class EstadoHash(str, Enum):
+    """Clasificacion de una credencial almacenada (DD-32); los valores son textos fijos."""
+
+    VIGENTE = "vigente"
+    PARAMETROS_ANTERIORES = "parametros_anteriores"
+    FORMATO_NO_ADMITIDO = "formato_no_admitido"
+    SIN_CREDENCIAL = "sin_credencial"
+
+
+def clasificar_hash(almacenado: str | None, hasher: Hasher | None = None) -> EstadoHash:
+    """Clasifica un hash con la misma decision que `verificar` y `necesita_rehash`.
+
+    Nulo: sin credencial. Formato no admitido (no `$argon2id$` o no analizable): no puede autenticar.
+    Argon2id analizable con parametros distintos de la politica (memoria, tiempo, paralelismo, version,
+    longitud de sal o de hash): autentica pero esta desactualizado. Si no: vigente.
+    """
+    if almacenado is None:
+        return EstadoHash.SIN_CREDENCIAL
+    if not _es_formato_admitido(almacenado):
+        return EstadoHash.FORMATO_NO_ADMITIDO
+    comparador = hasher if hasher is not None else crear_hasher()
+    if comparador.check_needs_rehash(almacenado):
+        return EstadoHash.PARAMETROS_ANTERIORES
+    return EstadoHash.VIGENTE
+
+
 class VerificadorContrasenas:
     """Hash y verificacion; el hash ficticio se calcula una vez al construirlo."""
 

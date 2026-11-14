@@ -15,6 +15,8 @@ def entorno_limpio(monkeypatch):
     for nombre in (
         "DATABASE_URL",
         "TEST_DATABASE_URL",
+        "DATABASE_LOGIN_URL",
+        "DATABASE_MIGRATION_URL",
         "CORS_ALLOWED_ORIGINS",
         "APP_ENV",
         "AUTH_SECRET_KEY",
@@ -428,3 +430,94 @@ def test_los_mensajes_fijos_nombran_la_variable_y_no_contienen_valores():
             texto = getattr(modulo_config, nombre)
             assert "AUTH_SECRET_KEY" in texto
             assert "{" not in texto and "%" not in texto
+
+
+# --- 1.1 URLs de login y de administracion separadas (DD-02, R2-05) -------------------
+
+URL_APP = "postgresql+psycopg://turnos_app:clave-app-ficticia@db:5432/turnos"
+URL_LOGIN = "postgresql+psycopg://turnos_login:clave-login-ficticia@db:5432/turnos"
+URL_ADMIN = "postgresql+psycopg://app:clave-admin-ficticia@db:5432/turnos"
+CLAVES_FICTICIAS = ("clave-app-ficticia", "clave-login-ficticia", "clave-admin-ficticia")
+
+
+def _cargar(monkeypatch, **cambios):
+    for nombre, valor in _entorno_valido(DATABASE_URL=URL_APP, **cambios).items():
+        monkeypatch.setenv(nombre, valor)
+    return cargar_configuracion()
+
+
+def test_las_urls_de_login_y_migracion_son_opcionales(monkeypatch):
+    configuracion = _cargar(monkeypatch)
+
+    assert configuracion.database_login_url is None
+    assert configuracion.database_migration_url is None
+
+
+def test_las_tres_urls_con_usuarios_distintos_cargan(monkeypatch):
+    configuracion = _cargar(
+        monkeypatch, DATABASE_LOGIN_URL=URL_LOGIN, DATABASE_MIGRATION_URL=URL_ADMIN
+    )
+
+    assert configuracion.database_login_url.get_secret_value() == URL_LOGIN
+    assert configuracion.database_migration_url.get_secret_value() == URL_ADMIN
+    for clave in CLAVES_FICTICIAS:
+        assert clave not in repr(configuracion)
+        assert clave not in str(configuracion)
+
+
+def test_solo_la_url_de_login_o_solo_la_de_migracion_cargan(monkeypatch):
+    assert _cargar(monkeypatch, DATABASE_LOGIN_URL=URL_LOGIN).database_migration_url is None
+    monkeypatch.delenv("DATABASE_LOGIN_URL")
+    assert _cargar(monkeypatch, DATABASE_MIGRATION_URL=URL_ADMIN).database_login_url is None
+
+
+@pytest.mark.parametrize(
+    ("login", "migracion", "variables"),
+    [
+        (URL_APP, None, ("DATABASE_URL", "DATABASE_LOGIN_URL")),
+        (None, URL_APP, ("DATABASE_URL", "DATABASE_MIGRATION_URL")),
+        (URL_LOGIN, URL_LOGIN, ("DATABASE_LOGIN_URL", "DATABASE_MIGRATION_URL")),
+        # mismo usuario con hosts distintos: tambien se rechaza (R2-05)
+        (
+            "postgresql+psycopg://turnos_app:otra-clave-ficticia@otro-host:5433/otra:base".replace(
+                ":otra:base", "/otra"
+            ),
+            None,
+            ("DATABASE_URL", "DATABASE_LOGIN_URL"),
+        ),
+    ],
+)
+def test_el_mismo_usuario_en_dos_urls_falla_nombrando_ambas_variables_sin_valores(
+    monkeypatch, login, migracion, variables
+):
+    cambios = {}
+    if login:
+        cambios["DATABASE_LOGIN_URL"] = login
+    if migracion:
+        cambios["DATABASE_MIGRATION_URL"] = migracion
+
+    mensaje = _cargar_esperando_error(
+        monkeypatch, **_entorno_valido(DATABASE_URL=URL_APP, **cambios)
+    )
+
+    for variable in variables:
+        assert variable in mensaje
+    for valor in (*CLAVES_FICTICIAS, "otra-clave-ficticia", "turnos_app:", "@db:"):
+        assert valor not in mensaje
+
+
+def test_mismo_host_puerto_y_base_con_usuarios_distintos_es_valido(monkeypatch):
+    configuracion = _cargar(
+        monkeypatch, DATABASE_LOGIN_URL=URL_LOGIN, DATABASE_MIGRATION_URL=URL_ADMIN
+    )
+
+    assert configuracion.database_url.get_secret_value() == URL_APP
+
+
+def test_los_nombres_de_rol_distinguen_mayusculas(monkeypatch):
+    configuracion = _cargar(
+        monkeypatch,
+        DATABASE_LOGIN_URL=URL_LOGIN.replace("turnos_login", "Turnos_App"),
+    )
+
+    assert configuracion.database_login_url is not None

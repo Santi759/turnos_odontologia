@@ -45,7 +45,7 @@ Toda entidad, salvo `Consultorio`, lleva `consultorio_id` (R6, implicancia 1). U
 ### Consultorio
 
 - **Atributos:**
-  - `id` (tipo de identificador a definir; identificadores no secuenciales son una capa candidata de PA-04)
+  - `id` (UUIDv7 generado por PostgreSQL, DC-01; identificador no secuencial, una de las capas de PA-04)
   - `nombre` (texto)
   - `identificador_publico` (texto único, solo si se aprueba la reserva pública D4)
   - `zona_horaria` (texto; por defecto `America/Argentina/Buenos_Aires`, SU-01)
@@ -61,7 +61,7 @@ Toda entidad, salvo `Consultorio`, lleva `consultorio_id` (R6, implicancia 1). U
 - **Atributos:**
   - `id`
   - `consultorio_id`
-  - `email` (identificador de inicio de sesión, [PROP]; si es único en todo el sistema, el alta podría revelar que una persona ya está registrada en otro consultorio: ver PA-06)
+  - `email` (identificador de inicio de sesión, [PROP]; único dentro de cada consultorio y, en la v0.1, cada usuario pertenece a un solo consultorio: PA-06 resuelta en C-04, DA-07)
   - `nombre` (texto)
   - `credencial` (por ejemplo, hash de contraseña; depende de PA-03)
   - `rol` (enum: `administrador`, `secretaria`, `odontologo`)

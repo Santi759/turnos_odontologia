@@ -1,7 +1,7 @@
 """Limpieza por lotes de sesiones e intentos vencidos (DD-28, PC-03).
 
 Cada lote borra como maximo `TAMANO_DE_LOTE` filas en su propia transaccion (`commit` por lote).
-Las sentencias de borrado viven en `app.auth.acceso_previo`, el unico modulo que toca esas tablas.
+Las sentencias de borrado viven en `app.auth.acceso_admin` (rol de administracion).
 """
 
 from collections.abc import Callable
@@ -10,7 +10,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.auth import acceso_previo
+from app.auth import acceso_admin
 
 TAMANO_DE_LOTE = 1000
 
@@ -43,12 +43,12 @@ def limpiar(
 ) -> ResumenLimpieza:
     sesiones = _borrar_por_lotes(
         sesion,
-        lambda: acceso_previo.limpiar_sesiones(
+        lambda: acceso_admin.limpiar_sesiones(
             sesion, ahora, minutos_inactividad, TAMANO_DE_LOTE
         ),
         max_lotes,
     )
     intentos = _borrar_por_lotes(
-        sesion, lambda: acceso_previo.limpiar_intentos(sesion, ahora, TAMANO_DE_LOTE), max_lotes
+        sesion, lambda: acceso_admin.limpiar_intentos(sesion, ahora, TAMANO_DE_LOTE), max_lotes
     )
     return ResumenLimpieza(sesiones=sesiones, intentos=intentos)

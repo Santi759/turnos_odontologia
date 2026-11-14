@@ -5,13 +5,18 @@ consultorio y su email. Es el unico medio de obtener credenciales en C-03.
 
 Uso (solo desarrollo local; requiere una terminal interactiva):
 
-    docker compose run --rm -it api python -m app.credenciales [--reemplazar]
+    docker compose run --rm -it api python -m app.credenciales [--reemplazar | --revisar-hashes]
 
-El comando pide, en este orden: el codigo del consultorio, el email, la contrasena nueva dos veces
+Con `--revisar-hashes` (excluyente con `--reemplazar`, DD-32) no pide datos: en una transaccion de solo
+lectura clasifica la credencial de todos los usuarios (vigente, parametros anteriores, formato no
+admitido, sin credencial) e informa cantidades y los `id` de consultorio y usuario de las cuentas a
+restablecer. Nunca modifica filas ni muestra hashes, emails ni codigos.
+
+Sin `--revisar-hashes`, el comando pide, en este orden: el codigo del consultorio, el email, la contrasena nueva dos veces
 (lectura oculta con `getpass`) y, con `--reemplazar`, escribir `REEMPLAZAR`.
 
 Reglas:
-- Solo corre con `APP_ENV=local` y solo sobre `DATABASE_URL`; con otro entorno falla antes de
+- Solo corre con `APP_ENV=local` y solo sobre `DATABASE_MIGRATION_URL`; con otro entorno falla antes de
   abrir ninguna conexion.
 - La contrasena nunca se acepta por argumentos, variables de entorno, archivos ni entrada redirigida:
   el unico argumento que existe es `--reemplazar` y cualquier otro falla sin repetir lo recibido.
@@ -26,15 +31,19 @@ Reglas:
 import getpass
 import sys
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app.auth import acceso_previo
+from app.auth import acceso_admin
+from app.auth.cuenta import Cuenta
 from app.auth.contrasenas import (
     ContrasenaRechazada,
     Hasher,
+    EstadoHash,
     ReglaContrasena,
+    clasificar_hash,
     crear_hasher,
     normalizar_contrasena,
     terminos_de_contexto,
@@ -42,7 +51,7 @@ from app.auth.contrasenas import (
 )
 from app.auth.reloj import Reloj, RelojSistema
 from app.core.config import Settings, cargar_configuracion
-from app.core.database import crear_engine, crear_fabrica_de_sesiones
+from app.core.database import AdministracionNoConfigurada, abrir_sesion_de_administracion
 from app.core.linea_de_comandos import AnalizadorSinEco, ArgumentosInvalidos
 
 PALABRA_DE_CONFIRMACION = "REEMPLAZAR"
@@ -61,21 +70,30 @@ class Fallo(Exception):
 
 
 def _abrir_sesion_por_defecto(settings: Settings) -> Session:
-    return crear_fabrica_de_sesiones(crear_engine(settings))()
+    return abrir_sesion_de_administracion(settings)
 
 
 def _stdin_es_terminal() -> bool:
     return sys.stdin.isatty()
 
 
-def _analizar(argv: Sequence[str]) -> bool:
-    """Devuelve si se pidio `--reemplazar`; cualquier otro argumento falla sin eco."""
+@dataclass(frozen=True, slots=True)
+class Opciones:
+    reemplazar: bool
+    revisar_hashes: bool
+
+
+def _analizar(argv: Sequence[str]) -> Opciones:
+    """Opciones del comando; cualquier otro argumento o la combinacion excluyente falla sin eco."""
     analizador = AnalizadorSinEco(prog="python -m app.credenciales")
-    analizador.add_argument("--reemplazar", action="store_true")
-    return analizador.parse_args(list(argv)).reemplazar
+    grupo = analizador.add_mutually_exclusive_group()
+    grupo.add_argument("--reemplazar", action="store_true")
+    grupo.add_argument("--revisar-hashes", action="store_true")
+    argumentos = analizador.parse_args(list(argv))
+    return Opciones(reemplazar=argumentos.reemplazar, revisar_hashes=argumentos.revisar_hashes)
 
 
-def _validar_politica(contrasena: str, cuenta: acceso_previo.Cuenta, codigo: str) -> None:
+def _validar_politica(contrasena: str, cuenta: Cuenta, codigo: str) -> None:
     terminos = terminos_de_contexto(
         codigo=codigo.strip().lower(),
         email=cuenta.email,
@@ -89,7 +107,7 @@ def _validar_politica(contrasena: str, cuenta: acceso_previo.Cuenta, codigo: str
 
 
 def _pedir_contrasena(
-    leer_oculto: Callable[[str], str], cuenta: acceso_previo.Cuenta, codigo: str
+    leer_oculto: Callable[[str], str], cuenta: Cuenta, codigo: str
 ) -> str:
     primera = leer_oculto("Contrasena nueva: ")
     segunda = leer_oculto("Repita la contrasena: ")
@@ -101,7 +119,7 @@ def _pedir_contrasena(
 
 def _establecer(
     sesion: Session,
-    cuenta: acceso_previo.Cuenta,
+    cuenta: Cuenta,
     contrasena: str,
     *,
     reemplazar: bool,
@@ -110,13 +128,13 @@ def _establecer(
 ) -> str:
     """Escribe la credencial (con control optimista) y, al reemplazar, revoca las sesiones."""
     nueva = hasher.hash(normalizar_contrasena(contrasena))
-    if not acceso_previo.escribir_credencial(
+    if not acceso_admin.escribir_credencial(
         sesion, cuenta.consultorio_id, cuenta.usuario_id, nueva, cuenta.credencial
     ):
         raise Fallo("la credencial cambió desde que se leyó; reintente")
     if not reemplazar:
         return "credencial establecida"
-    revocadas = acceso_previo.revocar_sesiones_de_usuario(
+    revocadas = acceso_admin.revocar_sesiones_de_usuario(
         sesion, cuenta.consultorio_id, cuenta.usuario_id, reloj.ahora()
     )
     return f"credencial reemplazada; sesiones revocadas: {revocadas}"
@@ -133,7 +151,7 @@ def _ejecutar(
     hasher: Hasher,
     reloj: Reloj,
 ) -> str:
-    cuenta = acceso_previo.buscar_cuenta(sesion, codigo, email)
+    cuenta = acceso_admin.buscar_cuenta(sesion, codigo, email)
     if cuenta is None:
         raise Fallo("no se encontró la cuenta indicada")
     if cuenta.credencial is not None and not reemplazar:
@@ -148,9 +166,46 @@ def _ejecutar(
     )
 
 
+def _revisar_hashes(sesion: Session) -> list[str]:
+    """Informe de solo lectura (DD-32): cantidades por clase y `id` de las cuentas a restablecer."""
+    cantidades = dict.fromkeys(EstadoHash, 0)
+    a_restablecer: list[str] = []
+    for fila in acceso_admin.listar_credenciales_para_revision(sesion):
+        estado = clasificar_hash(fila.credencial)
+        cantidades[estado] += 1
+        if estado in (EstadoHash.PARAMETROS_ANTERIORES, EstadoHash.FORMATO_NO_ADMITIDO):
+            a_restablecer.append(
+                f"restablecer: consultorio {fila.consultorio_id} usuario {fila.usuario_id}"
+            )
+    return [
+        f"hashes vigentes: {cantidades[EstadoHash.VIGENTE]}",
+        f"hashes con parámetros anteriores: {cantidades[EstadoHash.PARAMETROS_ANTERIORES]}",
+        f"hashes con formato no admitido: {cantidades[EstadoHash.FORMATO_NO_ADMITIDO]}",
+        f"usuarios sin credencial: {cantidades[EstadoHash.SIN_CREDENCIAL]}",
+        *a_restablecer,
+    ]
+
+
 def _fallar(mensaje: str) -> int:
     print(f"error: {mensaje}", file=sys.stderr)
     return 1
+
+
+def _revisar(settings: Settings, abrir_sesion: Callable[[Settings], Session]) -> int:
+    try:
+        sesion = abrir_sesion(settings)
+    except AdministracionNoConfigurada as exc:
+        return _fallar(str(exc))
+    try:
+        lineas = _revisar_hashes(sesion)
+    except Exception:
+        return _fallar("no se pudo revisar las credenciales")
+    finally:
+        sesion.rollback()  # la transaccion es de solo lectura: nunca se confirma
+        sesion.close()
+    for linea in lineas:
+        print(linea)
+    return 0
 
 
 def main(
@@ -165,7 +220,7 @@ def main(
 ) -> int:
     """Las costuras son para las pruebas; el comando real usa los valores por defecto."""
     try:
-        reemplazar = _analizar(sys.argv[1:] if argv is None else argv)
+        opciones = _analizar(sys.argv[1:] if argv is None else argv)
     except ArgumentosInvalidos as exc:
         return _fallar(str(exc))
     try:
@@ -177,9 +232,15 @@ def main(
     if not es_interactivo():
         return _fallar("se requiere una terminal interactiva")
 
+    if opciones.revisar_hashes:
+        return _revisar(settings, abrir_sesion)
+    reemplazar = opciones.reemplazar
     codigo = leer_visible("Codigo del consultorio: ")
     email = leer_visible("Email del usuario: ")
-    sesion = abrir_sesion(settings)
+    try:
+        sesion = abrir_sesion(settings)
+    except AdministracionNoConfigurada as exc:
+        return _fallar(str(exc))
     try:
         resultado = _ejecutar(
             sesion,

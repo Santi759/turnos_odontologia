@@ -14,6 +14,7 @@ RUTAS_DE_DOCUMENTACION = ["/docs", "/redoc", "/openapi.json"]
 def _settings(app_env: str) -> Settings:
     return Settings(
         DATABASE_URL="postgresql+psycopg://app:app@db:5432/turnos",
+        DATABASE_LOGIN_URL="postgresql+psycopg://turnos_login:login@db:5432/turnos",
         CORS_ALLOWED_ORIGINS="http://localhost:5173",
         APP_ENV=app_env,
         AUTH_SECRET_KEY=secrets.token_urlsafe(48),

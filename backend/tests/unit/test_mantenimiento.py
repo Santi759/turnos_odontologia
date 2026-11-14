@@ -1,6 +1,6 @@
 """Comando local de mantenimiento: guardia, argumentos y lotes (tarea 10.1; DD-28, PC-03).
 
-Sin base: la sesion y las funciones de borrado de `acceso_previo` se sustituyen. Los borrados reales
+Sin base: la sesion y las funciones de borrado de `acceso_admin` se sustituyen. Los borrados reales
 se prueban en `tests/integration/test_mantenimiento.py` (10.2).
 """
 
@@ -11,19 +11,23 @@ import pytest
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from app.auth import acceso_previo
+from app.auth import acceso_admin
 from app.core.linea_de_comandos import ArgumentosInvalidos
 from app.mantenimiento import limpieza
 from app.mantenimiento.__main__ import analizar, main
 from app.mantenimiento.limpieza import TAMANO_DE_LOTE, ResumenLimpieza, limpiar
 
 URL_INEXISTENTE = "postgresql+psycopg://app:secreto@host-inexistente.invalid:5432/turnos"
+# C-04: los comandos locales usan DATABASE_MIGRATION_URL (rol `app`); la de la API es otro rol.
+URL_API_INEXISTENTE = "postgresql+psycopg://turnos_app:secreto@host-api-inexistente.invalid:5432/turnos"
 AHORA = datetime(2026, 11, 6, 12, 0, 0, tzinfo=UTC)
 
 
 def _entorno(monkeypatch: pytest.MonkeyPatch, app_env: str) -> None:
     monkeypatch.setenv("APP_ENV", app_env)
-    monkeypatch.setenv("DATABASE_URL", URL_INEXISTENTE)
+    monkeypatch.setenv("DATABASE_URL", URL_API_INEXISTENTE)
+    monkeypatch.setenv("DATABASE_MIGRATION_URL", URL_INEXISTENTE)
+    monkeypatch.delenv("DATABASE_LOGIN_URL", raising=False)
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
     monkeypatch.setenv("AUTH_SECRET_KEY", secrets.token_urlsafe(48))
     monkeypatch.setenv("AUTH_COOKIE_SECURE", "true")
@@ -52,10 +56,10 @@ class Borrados:
         self.pendientes = {"sesiones": list(sesiones), "intentos": list(intentos)}
         self.llamadas: list[tuple[str, dict]] = []
         monkeypatch.setattr(
-            acceso_previo, "limpiar_sesiones", lambda s, ahora, minutos, limite: self._lote("sesiones", ahora, minutos, limite)
+            acceso_admin, "limpiar_sesiones", lambda s, ahora, minutos, limite: self._lote("sesiones", ahora, minutos, limite)
         )
         monkeypatch.setattr(
-            acceso_previo, "limpiar_intentos", lambda s, ahora, limite: self._lote("intentos", ahora, None, limite)
+            acceso_admin, "limpiar_intentos", lambda s, ahora, limite: self._lote("intentos", ahora, None, limite)
         )
 
     def _lote(self, tabla: str, ahora, minutos, limite) -> int:

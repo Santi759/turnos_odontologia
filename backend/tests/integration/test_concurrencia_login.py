@@ -85,7 +85,7 @@ def _lanzar(fabrica: sessionmaker[Session], servicio: ServicioAuth, pedidos: lis
             with fabrica() as sesion:
                 barrera.wait(timeout=30)
                 try:
-                    servicio.iniciar_sesion(sesion, **pedido)
+                    servicio.iniciar_sesion(sesion, sesion, **pedido)
                     resultados.append("200")
                 except LoginRechazado:
                     resultados.append("401")
@@ -211,6 +211,7 @@ def test_ocho_logins_http_concurrentes_ejecutan_a_lo_sumo_cuatro_verificaciones_
     )
     app = crear_app(settings_de_prueba())
     app.state.fabrica_sesiones = base_concurrente
+    app.state.fabrica_sesiones_login = base_concurrente  # el login usa su propia fabrica (C-04)
     app.state.servicio_auth = servicio
     respuestas: dict[int, int] = {}
     errores: list[BaseException] = []
@@ -278,6 +279,7 @@ def _lanzar_por_http(
 ) -> Counter:
     app = crear_app(settings_de_prueba())
     app.state.fabrica_sesiones = fabrica
+    app.state.fabrica_sesiones_login = fabrica  # el login usa su propia fabrica (C-04)
     app.state.servicio_auth = _servicio()
     barrera = threading.Barrier(len(cuerpos))
     estados: list[int] = []

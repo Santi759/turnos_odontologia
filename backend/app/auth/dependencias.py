@@ -20,6 +20,8 @@ from app.auth.claves import DireccionClienteNoDeterminable, normalizar_ip, token
 from app.auth.cookies import NOMBRE_COOKIE, valor_cookie_borrada
 from app.auth.servicio import ServicioAuth
 from app.core.config import Settings
+from app.core.contexto_bd import aplicar_contexto
+from app.models.usuario import Rol
 from app.repositories.contexto import ContextoConsultorio
 
 registro = logging.getLogger(__name__)
@@ -34,7 +36,7 @@ DETALLE_TIPO_NO_ADMITIDO = "Tipo de contenido no admitido."
 class IdentidadAutenticada:
     sesion_id: uuid.UUID
     usuario_id: uuid.UUID
-    rol: str
+    rol: Rol
     nombre: str
     email: str
     consultorio_nombre: str
@@ -46,6 +48,39 @@ def rechazo(estado: int, detalle: str, **cabeceras: str) -> HTTPException:
     return HTTPException(
         status_code=estado, detail=detalle, headers={"Cache-Control": "no-store", **cabeceras}
     )
+
+
+PARAMETRO_CONSULTORIO = "consultorio_id"
+CABECERA_CONSULTORIO = "X-Consultorio-Id"
+DETALLE_CONSULTORIO_DEL_CLIENTE = "El consultorio no se acepta del cliente."
+
+
+def _consultorio_del_cliente(ubicacion: str, nombre: str) -> HTTPException:
+    """422 con tipo, ubicacion y mensaje fijos: nunca el valor ni la variante de mayusculas (X1)."""
+    return HTTPException(
+        status_code=422,
+        detail=[
+            {
+                "type": "consultorio_no_admitido",
+                "loc": [ubicacion, nombre],
+                "msg": DETALLE_CONSULTORIO_DEL_CLIENTE,
+            }
+        ],
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+def rechazar_consultorio_del_cliente(request: Request) -> None:
+    """Dependencia GLOBAL (DD-18, PD-02): el consultorio no se acepta de la query ni de cabeceras.
+
+    Rechaza con 422, antes de cualquier otra dependencia, un parametro de query `consultorio_id` (sin
+    distinguir mayusculas) o la cabecera `X-Consultorio-Id`. Es la UNICA cabecera de la lista: ninguna
+    otra se rechaza ni se lee jamas como fuente de identidad o de consultorio (X1). No usa el valor.
+    """
+    if any(nombre.casefold() == PARAMETRO_CONSULTORIO for nombre in request.query_params):
+        raise _consultorio_del_cliente("query", PARAMETRO_CONSULTORIO)
+    if CABECERA_CONSULTORIO.casefold() in request.headers:
+        raise _consultorio_del_cliente("header", CABECERA_CONSULTORIO)
 
 
 def origen_permitido(origen: str | None, permitidos: list[str]) -> bool:
@@ -85,6 +120,12 @@ def obtener_servicio(request: Request) -> ServicioAuth:
 
 def obtener_sesion_db(request: Request) -> Iterator[Session]:
     with request.app.state.fabrica_sesiones() as sesion:
+        yield sesion
+
+
+def obtener_sesion_login(request: Request) -> Iterator[Session]:
+    """Sesion del rol `turnos_login`: SOLO `POST /api/auth/login` la declara (DD-28)."""
+    with request.app.state.fabrica_sesiones_login() as sesion:
         yield sesion
 
 
@@ -132,15 +173,27 @@ def identidad_actual(
         raise rechazo(
             401, DETALLE_NO_AUTENTICADO, **{"Set-Cookie": valor_cookie_borrada(settings)}
         )
+    try:
+        rol = Rol(identidad.rol)
+    except ValueError:
+        # Un rol fuera de los admitidos no autentica (DD-16); codigo fijo, sin el valor ni la cuenta.
+        registro.warning("rol_desconocido")
+        raise rechazo(
+            401, DETALLE_NO_AUTENTICADO, **{"Set-Cookie": valor_cookie_borrada(settings)}
+        ) from None
+    # UNICA construccion de ContextoConsultorio de la aplicacion: del consultorio de la sesion.
+    contexto = ContextoConsultorio(identidad.consultorio_id)
+    # Sin transaccion abierta (el servicio confirmo): la primera consulta de la ruta abre una
+    # transaccion que ya lleva el contexto (DD-05).
+    aplicar_contexto(db, contexto)
     return IdentidadAutenticada(
         sesion_id=identidad.sesion_id,
         usuario_id=identidad.usuario_id,
-        rol=identidad.rol,
+        rol=rol,
         nombre=identidad.nombre,
         email=identidad.email,
         consultorio_nombre=identidad.consultorio_nombre,
-        # UNICA construccion de ContextoConsultorio de la aplicacion: del consultorio de la sesion.
-        contexto=ContextoConsultorio(identidad.consultorio_id),
+        contexto=contexto,
     )
 
 
