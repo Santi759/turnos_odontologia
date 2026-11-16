@@ -8,7 +8,7 @@ Convenciones de los escenarios: el comando es `python -m app.mantenimiento limpi
 ## Requirements
 
 ### Requirement: Limpieza solo en el entorno local
-El comando de mantenimiento DEBE (MUST) negarse a ejecutar, sin abrir ninguna conexión, si `APP_ENV` no es `local`, y con `APP_ENV=local` DEBE (MUST) operar solo sobre `DATABASE_URL`. Los argumentos DEBEN (MUST) validarse antes de conectar: solo se admite el subcomando `limpiar` y la opción `--max-lotes` con un entero entre 1 y 1000 (por defecto 100).
+El comando de mantenimiento DEBE (MUST) negarse a ejecutar, sin abrir ninguna conexión, si `APP_ENV` no es `local`, y con `APP_ENV=local` DEBE (MUST) operar solo con la credencial de administración `DATABASE_MIGRATION_URL`, nunca con `DATABASE_URL` ni `DATABASE_LOGIN_URL`, y fallar sin conectar si falta. Los argumentos DEBEN (MUST) validarse antes de conectar: solo se admite el subcomando `limpiar` y la opción `--max-lotes` con un entero entre 1 y 1000 (por defecto 100).
 
 #### Scenario: Entorno de pruebas rechazado
 - **DADO** `APP_ENV=test` y `DATABASE_URL` apuntando a `host-inexistente.invalid`
@@ -23,6 +23,12 @@ El comando de mantenimiento DEBE (MUST) negarse a ejecutar, sin abrir ninguna co
 #### Scenario: Valor por defecto y límites de --max-lotes
 - **CUANDO** se analizan los argumentos `limpiar`, `limpiar --max-lotes 1` y `limpiar --max-lotes 1000`
 - **ENTONCES** se aceptan con un máximo de lotes efectivo de 100, 1 y 1000 respectivamente
+
+#### Scenario: Usa la credencial de administración
+- **DADO** `APP_ENV=local`, `DATABASE_URL` apuntando a `host-api.invalid` y `DATABASE_MIGRATION_URL` apuntando a `host-admin.invalid`
+- **CUANDO** se abre la sesión de base por defecto del comando
+- **ENTONCES** el motor apunta a `host-admin.invalid`
+- **Y** sin `DATABASE_MIGRATION_URL` el comando falla sin conectar con un mensaje que la menciona
 
 ### Requirement: Borrado solo de filas vencidas
 El comando DEBE (MUST) borrar únicamente sesiones vencidas e intentos vencidos, según el reloj de la aplicación y la configuración vigente. NO DEBE (MUST NOT) borrar sesiones válidas ni intentos dentro de la retención de 24 horas, ni modificar ninguna otra tabla.
@@ -66,3 +72,15 @@ La salida y los errores del comando DEBEN (MUST) contener solo cantidades y text
 - **CUANDO** se ejecuta `limpiar`
 - **ENTONCES** la salida es exactamente `sesiones eliminadas: 3; intentos eliminados: 4`
 - **Y** no contiene `@`, `postgresql` ni ningún `id` de sesión
+
+### Requirement: Comando de mantenimiento mediante el servicio administrativo
+El comando DEBE (MUST) documentarse y ejecutarse con `docker compose run --rm --no-deps admin python -m app.mantenimiento`, el único servicio que recibe `DATABASE_MIGRATION_URL`. Ejecutado con el servicio `api`, que no la recibe, DEBE (MUST) terminar con código distinto de cero y el mensaje que la menciona, sin abrir conexiones.
+
+#### Scenario: Comando documentado con admin
+- **CUANDO** se inspeccionan `README.md` y la ayuda del módulo `app.mantenimiento`
+- **ENTONCES** el comando se indica con el servicio `admin` y no con `api`
+
+#### Scenario: Ejecutado con el entorno de la API
+- **DADO** `APP_ENV=local` y el entorno de la API, sin `DATABASE_MIGRATION_URL`
+- **CUANDO** se ejecuta el comando
+- **ENTONCES** termina con código distinto de cero y un mensaje que menciona `DATABASE_MIGRATION_URL`, sin abrir conexiones

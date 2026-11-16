@@ -122,7 +122,7 @@ El login DEBE (MUST) exigir `Content-Type` con tipo de medio `application/json` 
 - **ENTONCES** la respuesta es 200
 
 ### Requirement: Aislamiento de cuentas entre consultorios
-La cuenta autenticada DEBE (MUST) ser la del par (código de consultorio, email) enviado; la contraseña de una cuenta de otro consultorio con el mismo email NO DEBE (MUST NOT) autenticar. Una sesión DEBE (MUST) producir siempre el contexto de su propio consultorio.
+La cuenta autenticada DEBE (MUST) ser la del par (código de consultorio, email) enviado; la contraseña de una cuenta de otro consultorio con el mismo email NO DEBE (MUST NOT) autenticar. Una sesión DEBE (MUST) producir siempre el contexto de su propio consultorio. Desde C-04, un `consultorio_id` enviado por el cliente en la query o en la cabecera `X-Consultorio-Id` se rechaza (capacidad `validacion-entrada`), y ningún dato del cliente deriva el contexto.
 
 #### Scenario: Mismo email en A y B con contraseñas distintas
 - **DADO** `persona.ficticia@example.test` en A con `contrasena-ficticia-a1` y en B con `contrasena-ficticia-b1`
@@ -131,9 +131,11 @@ La cuenta autenticada DEBE (MUST) ser la del par (código de consultorio, email)
 - **Y** con el código `ficticio-b` y `contrasena-ficticia-b1` la respuesta es 200 con el consultorio "Consultorio Ficticio B"
 
 #### Scenario: La sesión de A nunca da contexto de B
+Se conserva el nombre del escenario de C-03 (OpenSpec no admite renombrar escenarios en una delta) con contenido actualizado por la decisión DA-06 de C-04: el consultorio del cliente ya no se ignora, se rechaza.
 - **DADO** una sesión válida de A
-- **CUANDO** una ruta protegida de prueba devuelve el `consultorio_id` del contexto resuelto, aunque la petición incluya `consultorio_id` de B en la query y en una cabecera `X-Consultorio-Id`
+- **CUANDO** una ruta protegida de prueba devuelve el `consultorio_id` del contexto resuelto, sin `consultorio_id` en la query ni cabeceras de consultorio
 - **ENTONCES** el contexto es el de A
+- **Y** si la petición incluye `consultorio_id` de B en la query, o la cabecera `X-Consultorio-Id` con el `id` de B, la respuesta es el rechazo de `validacion-entrada` y la ruta no se ejecuta
 
 ### Requirement: Cookie de sesión
 La sesión DEBE (MUST) transportarse solo en la cookie `turnos_session` con `HttpOnly`, `SameSite=Lax`, `Path=/`, sin `Domain`, `Secure` salvo configuración local explícita, y `Max-Age` igual a `AUTH_SESSION_MAX_HOURS` en segundos. El token DEBE (MUST) ser aleatorio de al menos 256 bits y no aparecer en ningún cuerpo JSON.
@@ -171,7 +173,7 @@ La base DEBE (MUST) guardar de cada sesión solo el HMAC-SHA256 del token calcul
 - **ENTONCES** la respuesta es 401 con el cuerpo de no autenticado y no se consulta la tabla de sesiones
 
 ### Requirement: Contexto de consultorio derivado de la sesión
-En cada petición protegida, la identidad DEBE (MUST) resolverse desde la cookie a una sesión no revocada y no vencida de un usuario activo de un consultorio activo, y de ella DEBEN (MUST) salir el usuario, el rol y el `ContextoConsultorio`. Ningún dato del cliente DEBE (MUST) alterar ese contexto.
+En cada petición protegida, la identidad DEBE (MUST) resolverse desde la cookie a una sesión no revocada y no vencida de un usuario activo de un consultorio activo, y de ella DEBEN (MUST) salir el usuario, el rol tipado y el `ContextoConsultorio`. Ese contexto DEBE (MUST) aplicarse a las transacciones de la base de esa petición (capacidad `aislamiento-base-de-datos`). Ningún dato del cliente DEBE (MUST) alterar ese contexto.
 
 #### Scenario: Identidad resuelta desde la sesión
 - **DADO** una sesión válida de `persona.ficticia@example.test` en A
@@ -186,6 +188,11 @@ En cada petición protegida, la identidad DEBE (MUST) resolverse desde la cookie
 - **CUANDO** se hace `GET /api/auth/me` con un token bien formado que no corresponde a ninguna sesión
 - **ENTONCES** la respuesta es 401 con el cuerpo de no autenticado
 - **Y** incluye `Set-Cookie` que borra `turnos_session` (`Max-Age=0`, mismos `Path`, `SameSite`, `HttpOnly` y `Secure`)
+
+#### Scenario: Contexto aplicado a la base
+- **DADO** una sesión válida de A y una ruta protegida de prueba que lee `current_setting('app.consultorio_id', true)` en su transacción
+- **CUANDO** se invoca la ruta
+- **ENTONCES** el valor es el `id` de A
 
 ### Requirement: Vencimiento por inactividad
 Una sesión DEBE (MUST) dejar de ser válida cuando transcurren `AUTH_SESSION_MINUTES` minutos desde su último uso registrado. Cada petición autenticada válida DEBE (MUST) renovar el último uso, como máximo una vez por minuto.
@@ -290,26 +297,8 @@ La documentación de la API (`/docs`, `/redoc` y `/openapi.json`) DEBE (MUST) pu
 - **CUANDO** se hace `GET /docs`, `GET /redoc` y `GET /openapi.json` sin cookie
 - **ENTONCES** las tres respuestas son 200 y `GET /docs/oauth2-redirect` responde 404
 
-### Requirement: Contraseñas con Argon2id y rehash
-Las credenciales DEBEN (MUST) guardarse como hash Argon2id en formato PHC con los parámetros fijados por la aplicación. Tras un login exitoso con un hash de parámetros distintos, la credencial DEBE (MUST) reemplazarse por un hash con los parámetros vigentes. Solo el formato `$argon2id$` DEBE (MUST) admitirse.
-
-#### Scenario: Formato del hash
-- **CUANDO** se establece una credencial con el comando local
-- **ENTONCES** la `credencial` guardada empieza con `$argon2id$v=19$m=65536,t=3,p=4$`
-
-#### Scenario: Rehash al cambiar parámetros
-- **DADO** un usuario cuya credencial es un hash Argon2id válido con `t=2`
-- **CUANDO** inicia sesión con la contraseña correcta
-- **ENTONCES** la respuesta es 200 y su `credencial` pasa a un hash con `m=65536,t=3,p=4`
-- **Y** la contraseña sigue autenticando
-
-#### Scenario: Sin rehash si los parámetros son vigentes
-- **DADO** un usuario con un hash de los parámetros vigentes
-- **CUANDO** inicia sesión con la contraseña correcta
-- **ENTONCES** su `credencial` no cambia
-
 ### Requirement: Verificaciones de contraseña simultáneas acotadas
-Cada proceso de la API DEBE (MUST) ejecutar como máximo 4 verificaciones Argon2 simultáneas (incluidas las del hash ficticio y el rehash), mediante un mecanismo acotado. Un login evaluado que no obtiene cupo dentro del tiempo de espera (3 segundos) DEBE (MUST) responder 503 con el cuerpo exacto `{"detail": "Servicio ocupado. Intente más tarde."}` y `Retry-After: 5`, sin registrar un fallo, sin crear sesión y con la misma respuesta para cuentas existentes e inexistentes.
+Cada proceso de la API DEBE (MUST) ejecutar como máximo 4 verificaciones Argon2 simultáneas (incluidas las del hash ficticio), mediante un mecanismo acotado. Un login evaluado que no obtiene cupo dentro del tiempo de espera (3 segundos) DEBE (MUST) responder 503 con el cuerpo exacto `{"detail": "Servicio ocupado. Intente más tarde."}` y `Retry-After: 5`, sin registrar un fallo, sin crear sesión y con la misma respuesta para cuentas existentes e inexistentes.
 
 #### Scenario: Límite de cuatro verificaciones simultáneas
 - **DADO** un verificador de prueba que se bloquea hasta recibir una señal y registra cuántas verificaciones corren a la vez
@@ -391,11 +380,11 @@ Cada login exitoso DEBE (MUST) borrar, como máximo, 100 sesiones revocadas o ve
 - **ENTONCES** se borran exactamente 100
 
 ### Requirement: Migración de autenticación reversible
-La migración `0003` DEBE (MUST) depender de `0002` y crear `sesion` e `intento_login` vacías y la columna `consultorio.codigo` con su backfill. Su reversión a `0002` DEBE (MUST) eliminar exactamente esos objetos y dejar `consultorio` y `usuario` como en `0002`, y solo DEBE (MUST) ejecutarse contra la base de pruebas.
+La migración `0003` DEBE (MUST) depender de `0002` y crear `sesion` e `intento_login` vacías y la columna `consultorio.codigo` con su backfill. Su reversión a `0002` DEBE (MUST) eliminar exactamente esos objetos y dejar `consultorio` y `usuario` como en `0002`, y solo DEBE (MUST) ejecutarse contra la base de pruebas. Desde C-04, la revisión siguiente es `0004`.
 
 #### Scenario: Cadena de revisiones con 0003
 - **CUANDO** se inspecciona el historial de migraciones
-- **ENTONCES** la revisión `head` es `0003` y su revisión anterior es `0002`
+- **ENTONCES** la revisión `0003` tiene como revisión anterior `0002` y como siguiente `0004`
 
 #### Scenario: Subida desde 0002 con datos previos
 - **DADO** la base de pruebas en `0002` con 2 consultorios y 3 usuarios ficticios
@@ -408,3 +397,36 @@ La migración `0003` DEBE (MUST) depender de `0002` y crear `sesion` e `intento_
 - **CUANDO** se baja a `0002`
 - **ENTONCES** no existen `sesion`, `intento_login`, la columna `codigo` ni las restricciones `uq_consultorio_codigo` y `ck_consultorio_codigo_formato`
 - **Y** los consultorios y usuarios siguen existiendo con las mismas columnas y valores que en `0002`
+
+### Requirement: Contraseñas con Argon2id sin rehash en el login
+Las credenciales DEBEN (MUST) guardarse como hash Argon2id en formato PHC con los parámetros fijados por la aplicación, y solo el formato `$argon2id$` DEBE (MUST) admitirse. El login DEBE (MUST) verificar la contraseña contra el hash almacenado aunque sus parámetros sean anteriores, y NO DEBE (MUST NOT) modificar `usuario.credencial` en ningún caso: ni tras un éxito, ni tras un rechazo, ni por un cambio de parámetros. Limitación aceptada: el login no actualiza hashes.
+
+#### Scenario: Formato del hash
+- **CUANDO** se establece una credencial con el comando local
+- **ENTONCES** la `credencial` guardada empieza con `$argon2id$v=19$m=65536,t=3,p=4$`
+
+#### Scenario: Parámetros anteriores sin rehash
+- **DADO** un usuario cuya credencial es un hash Argon2id válido con `t=2`
+- **CUANDO** inicia sesión con la contraseña correcta
+- **ENTONCES** la respuesta es 200 y su `credencial` es idéntica, byte a byte, a la anterior
+- **Y** un segundo login con la misma contraseña también responde 200 sin cambiarla
+
+#### Scenario: Parámetros vigentes sin cambios
+- **DADO** un usuario con un hash de los parámetros vigentes
+- **CUANDO** inicia sesión con la contraseña correcta
+- **ENTONCES** su `credencial` no cambia
+
+#### Scenario: Login rechazado sin cambios en la credencial
+- **DADO** un usuario con un hash Argon2id válido con `t=2`
+- **CUANDO** inicia sesión con una contraseña incorrecta
+- **ENTONCES** la respuesta es 401 y su `credencial` no cambia
+
+#### Scenario: Ninguna escritura sobre usuario durante el login
+- **DADO** un registro de todas las sentencias enviadas a la base durante la petición
+- **CUANDO** se hacen un login exitoso con un hash de `t=2`, uno exitoso con un hash vigente y uno rechazado
+- **ENTONCES** ninguna sentencia de esas peticiones modifica `usuario` y la versión de la fila del usuario (`xmin`) es la misma antes y después
+
+#### Scenario: Credencial reemplazada durante el login
+- **DADO** un login del usuario de A en curso que ya leyó su credencial
+- **CUANDO** el comando local reemplaza la credencial antes de que el login termine
+- **ENTONCES** la `credencial` final es la establecida por el comando y el login no la modifica

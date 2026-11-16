@@ -387,7 +387,7 @@ Para arrancar, solo con autorización del autor: `/opsx:propose foundation-setup
   - `knowledge-base/06_funcionalidades.md` US-001
 
 ### [C-04] `aislamiento-roles-rbac`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado (archivado el 2026-11-16 en `openspec/changes/archive/2026-11-16-aislamiento-roles-rbac/`; 114/114 tareas; revisión de seguridad RT3 final GO; corrección RT3 en `eb34a71`)
 - **Scope**: US-002. Barreras de aislamiento y autorización por rol reutilizables por todos los changes siguientes.
   - Barrera adicional en base de datos según PA-04 (claves foráneas compuestas incluyendo `consultorio_id` y/o RLS con variable de sesión); migración 0004 correspondiente (la 0003 es la de C-03)
   - Dependencias `require_rol(...)` según la matriz de `03_actores_y_roles.md` (RN-AU-03), verificadas en servidor
