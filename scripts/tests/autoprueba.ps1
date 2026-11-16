@@ -174,6 +174,220 @@ Invoke-Caso 'Base de pruebas separada y efimera' {
     Assert-Verdadero ($montajes.Count -eq 1) 'db (desarrollo) no conserva el volumen pgdata'
 }
 
+# --- DD-34 (RT3-01): entorno de la API separado del entorno administrativo ----------------------
+# Estructura de compose SIN interpolar y SIN resolver archivos de entorno: no se leen valores del .env.
+function Get-EstructuraCompose {
+    Push-Location $Raiz
+    try {
+        $texto = docker compose --profile test --profile admin config --no-interpolate --no-env-resolution --format json | Out-String
+        Assert-Verdadero ($LASTEXITCODE -eq 0) 'docker compose config (estructura) fallo'
+        return ($texto | ConvertFrom-Json)
+    } finally { Pop-Location }
+}
+
+# RT3-06: TEST_DATABASE_URL ya no forma parte del entorno permanente de api (9 claves).
+$script:VariablesPermitidasApi = @('DATABASE_URL', 'DATABASE_LOGIN_URL', 'AUTH_SECRET_KEY', 'CORS_ALLOWED_ORIGINS', 'APP_ENV',
+    'AUTH_SESSION_MINUTES', 'AUTH_SESSION_MAX_HOURS', 'AUTH_COOKIE_SECURE', 'WATCHFILES_FORCE_POLLING')
+$script:ObligatoriasApi = @('DATABASE_URL', 'DATABASE_LOGIN_URL', 'AUTH_SECRET_KEY', 'CORS_ALLOWED_ORIGINS', 'APP_ENV')
+$script:OpcionalesApi = @('AUTH_SESSION_MINUTES', 'AUTH_SESSION_MAX_HOURS', 'AUTH_COOKIE_SECURE')
+$script:VariablesDeAdministracion = @('DATABASE_MIGRATION_URL', 'POSTGRES_PASSWORD', 'POSTGRES_USER', 'POSTGRES_DB', 'PGPASSWORD')
+# Variables que el proceso permanente de api nunca recibe, aunque esten definidas en el shell.
+$script:VariablesAjenasAApi = $script:VariablesDeAdministracion + @('TEST_DATABASE_URL')
+
+Invoke-Caso 'Entorno de la API limitado a variables permitidas' {
+    $api = (Get-EstructuraCompose).services.api
+    $propiedades = @($api.PSObject.Properties.Name)
+    Assert-Verdadero ($propiedades -notcontains 'env_file') 'api usa env_file'
+    Assert-Verdadero ($propiedades -contains 'environment') 'api no declara environment'
+    $entorno = $api.environment
+    $claves = @($entorno.PSObject.Properties.Name)
+    $sobrantes = @($claves | Where-Object { $script:VariablesPermitidasApi -notcontains $_ })
+    $faltantes = @($script:VariablesPermitidasApi | Where-Object { $claves -notcontains $_ })
+    Assert-Verdadero ($sobrantes.Count -eq 0) ('api recibe variables no permitidas: ' + ($sobrantes -join ', '))
+    Assert-Verdadero ($faltantes.Count -eq 0) ('api no declara: ' + ($faltantes -join ', '))
+    foreach ($nombre in $script:ObligatoriasApi) {
+        $valor = [string]$entorno.$nombre
+        Assert-Verdadero ($valor -match ('^\$\{' + $nombre + ':\?.+\}$')) ($nombre + ' no se interpola como obligatoria (${' + $nombre + ':?...})')
+    }
+    foreach ($nombre in $script:OpcionalesApi) {
+        $valor = [string]$entorno.$nombre
+        Assert-Verdadero ($valor -eq ('${' + $nombre + ':-}')) ($nombre + ' no se interpola como opcional (${' + $nombre + ':-})')
+    }
+    Assert-Verdadero ([string]$entorno.WATCHFILES_FORCE_POLLING -eq 'true') 'WATCHFILES_FORCE_POLLING no es el literal true'
+}
+
+Invoke-Caso 'Servicio administrativo efimero (admin)' {
+    $compose = Get-EstructuraCompose
+    $servicios = @($compose.services.PSObject.Properties.Name)
+    Assert-Verdadero ($servicios -contains 'admin') 'no existe el servicio admin'
+    $admin = $compose.services.admin
+    $propiedades = @($admin.PSObject.Properties.Name)
+    Assert-Verdadero ($propiedades -contains 'profiles' -and @($admin.profiles) -contains 'admin') 'admin no esta en el perfil admin'
+    Assert-Verdadero ($propiedades -contains 'restart' -and $admin.restart -eq 'no') 'admin no declara restart: "no"'
+    Assert-Verdadero ($propiedades -contains 'env_file') 'admin no carga env_file'
+    $archivos = @($admin.env_file | ForEach-Object { if ($_ -is [string]) { $_ } else { $_.path } })
+    Assert-Verdadero (@($archivos | Where-Object { $_ -match '(^|[\\/])\.env$' }).Count -eq 1) 'admin no carga .env'
+    $puertos = @()
+    if ($propiedades -contains 'ports') { $puertos = @($admin.ports) }
+    Assert-Verdadero ($puertos.Count -eq 0) 'admin publica puertos'
+    $comando = @($admin.command) -join ' '
+    Assert-Verdadero ($comando -like '*sys.exit(*') 'el comando por defecto de admin no termina con error'
+    Assert-Verdadero ($comando -like '*docker compose run --rm --no-deps admin*') 'el comando por defecto de admin no indica el uso con run'
+    Assert-Verdadero ($comando -notlike '*uvicorn*') 'admin arranca uvicorn'
+    Assert-Verdadero (-not [string]::IsNullOrEmpty($compose.services.api.image)) 'api no declara image'
+    Assert-Verdadero ($admin.image -eq $compose.services.api.image) 'admin no usa la imagen del backend de api'
+    foreach ($nombre in $servicios) {
+        $servicio = $compose.services.$nombre
+        if (@($servicio.PSObject.Properties.Name) -contains 'depends_on') {
+            Assert-Verdadero (@($servicio.depends_on.PSObject.Properties.Name) -notcontains 'admin') ($nombre + ' depende de admin')
+        }
+    }
+}
+
+Invoke-Caso 'db y db-test sin cambios por DD-34' {
+    $compose = Get-EstructuraCompose
+    $db = $compose.services.db
+    $propiedades = @($db.PSObject.Properties.Name | Sort-Object)
+    $esperadas = @('env_file', 'healthcheck', 'image', 'networks', 'ports', 'volumes')
+    Assert-Verdadero ((@($propiedades) -join ',') -eq ($esperadas -join ',')) ('db cambio de estructura: ' + ($propiedades -join ','))
+    Assert-Verdadero ($db.image -eq 'postgres:18.6-trixie') 'db no usa postgres:18.6-trixie'
+    $dbTest = $compose.services.'db-test'
+    Assert-Verdadero (@($dbTest.PSObject.Properties.Name) -notcontains 'env_file') 'db-test carga env_file'
+}
+
+Invoke-Caso 'Codigo de solo lectura en api y admin (DD-34, RT3-05)' {
+    $compose = Get-EstructuraCompose
+    foreach ($nombre in @('api', 'admin')) {
+        $servicio = $compose.services.$nombre
+        $propiedades = @($servicio.PSObject.Properties.Name)
+        foreach ($privilegio in @('privileged', 'cap_add', 'security_opt')) {
+            Assert-Verdadero ($propiedades -notcontains $privilegio) ($nombre + ' declara ' + $privilegio)
+        }
+        $montajes = @()
+        if ($propiedades -contains 'volumes') { $montajes = @($servicio.volumes) }
+        $codigo = @($montajes | Where-Object { $_.target -eq '/app' })
+        Assert-Verdadero ($codigo.Count -eq 1) ($nombre + ' no monta el codigo en /app exactamente una vez')
+        Assert-Verdadero ($codigo[0].type -eq 'bind' -and ([string]$codigo[0].source) -match '[\\/]backend$') ($nombre + ' no monta ./backend en /app')
+        $soloLectura = (@($codigo[0].PSObject.Properties.Name) -contains 'read_only') -and ($codigo[0].read_only -eq $true)
+        Assert-Verdadero $soloLectura ($nombre + ' monta /app con escritura')
+        foreach ($montaje in $montajes) {
+            $sobreCodigo = (([string]$montaje.target) -like '/app*') -or (([string]$montaje.source) -match '[\\/]backend([\\/]|$)')
+            $esLectura = (@($montaje.PSObject.Properties.Name) -contains 'read_only') -and ($montaje.read_only -eq $true)
+            Assert-Verdadero (-not $sobreCodigo -or $esLectura) ($nombre + ' tiene un montaje escribible sobre el codigo: ' + $montaje.target)
+        }
+    }
+}
+
+Invoke-Caso 'db-test con contrasena efimera del superusuario, sin literal (RT3-06)' {
+    $entorno = @((Get-EstructuraCompose).services.'db-test'.environment)
+    Assert-Verdadero ($entorno -contains 'POSTGRES_PASSWORD=${TURNOS_DB_TEST_PASSWORD:-}') 'db-test no toma POSTGRES_PASSWORD de TURNOS_DB_TEST_PASSWORD'
+    $literales = @($entorno | Where-Object { $_ -like 'POSTGRES_PASSWORD=*' -and $_ -ne 'POSTGRES_PASSWORD=${TURNOS_DB_TEST_PASSWORD:-}' })
+    Assert-Verdadero ($literales.Count -eq 0) 'db-test declara otra POSTGRES_PASSWORD'
+    $texto = Get-Content -LiteralPath (Join-Path $Raiz 'docker-compose.yml') -Raw
+    Assert-Verdadero (-not ($texto -match 'POSTGRES_PASSWORD\s*[:=]\s*app\b')) 'docker-compose.yml contiene una contrasena literal de db-test'
+}
+
+Invoke-Caso 'URL de la base de pruebas: host db-test y base _test (RT3-06)' {
+    $comando = Get-Command -Name 'New-UrlBaseDePruebas' -ErrorAction SilentlyContinue
+    Assert-Verdadero ($null -ne $comando) 'no existe New-UrlBaseDePruebas'
+    $url = New-UrlBaseDePruebas -Contrasena 'contrasena-ficticia-autoprueba'
+    Assert-Verdadero ($url -cmatch '^postgresql\+psycopg://app:contrasena-ficticia-autoprueba@db-test:5432/[a-z_]+_test$') 'la URL de pruebas no apunta a db-test con una base _test'
+    $pasos = Get-Content -LiteralPath (Join-Path $Raiz 'scripts/lib/Pasos.ps1') -Raw
+    # Los marcadores de formato ({1}) no son contrasenas; cualquier otro texto entre ':' y '@' si.
+    Assert-Verdadero (-not ($pasos -match '://[^/@\s]+:(?!\{\d+\}@)[^@\s$]+@')) 'Pasos.ps1 contiene una URL con contrasena literal'
+    Assert-Verdadero ('postgresql+psycopg://app:literal@db-test:5432/x' -match '://[^/@\s]+:(?!\{\d+\}@)[^@\s$]+@') 'la deteccion de contrasenas literales no funciona'
+}
+
+Invoke-Caso 'test.ps1: URL de pruebas efimera solo por nombre y retirada (RT3-06)' {
+    $texto = Get-Content -LiteralPath (Join-Path $Raiz 'scripts/test.ps1') -Raw
+    Assert-Verdadero ($texto.Contains('$env:TURNOS_DB_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera')) 'test.ps1 no genera la contrasena efimera de db-test'
+    Assert-Verdadero ($texto.Contains('$env:TEST_DATABASE_URL = New-UrlBaseDePruebas -Contrasena $env:TURNOS_DB_TEST_PASSWORD')) 'test.ps1 no arma TEST_DATABASE_URL con la contrasena efimera'
+    $asignacion = $texto.IndexOf('$env:TEST_DATABASE_URL = ')
+    Assert-Verdadero ($asignacion -ge 0 -and $asignacion -lt $texto.IndexOf('Invoke-Paso')) 'TEST_DATABASE_URL no se fija antes del primer paso (podria reutilizar un valor externo)'
+    Assert-Verdadero (-not $texto.Contains('postgresql+psycopg://')) 'test.ps1 contiene una URL literal'
+    $lineas = $texto -split "`r?`n"
+    $conUrl = @($lineas | Where-Object { $_ -match '-e TEST_DATABASE_URL\b' })
+    Assert-Verdadero ($conUrl.Count -eq 3) ('-e TEST_DATABASE_URL aparece ' + $conUrl.Count + ' veces (se esperaban 3)')
+    foreach ($marca in @('alembic -x target=test', 'tests/integration', 'tests/isolation')) {
+        Assert-Verdadero (@($conUrl | Where-Object { $_ -like ('*' + $marca + '*') }).Count -eq 1) ('el paso ' + $marca + ' no recibe TEST_DATABASE_URL por nombre')
+    }
+    Assert-Verdadero (@($lineas | Where-Object { $_ -like '*tests/unit*' -and $_ -match 'TEST_DATABASE_URL' }).Count -eq 0) 'las unitarias reciben TEST_DATABASE_URL'
+    $final = $texto.Substring([Math]::Max(0, $texto.LastIndexOf('finally')))
+    Assert-Verdadero ($final.Contains('Env:TURNOS_DB_TEST_PASSWORD')) 'el bloque final no retira TURNOS_DB_TEST_PASSWORD'
+    Assert-Verdadero ($final.Contains('TEST_DATABASE_URL')) 'el bloque final no restaura TEST_DATABASE_URL'
+}
+
+Invoke-Caso 'db-test sin la contrasena efimera del superusuario no arranca (proyecto aislado, RT3-06)' {
+    # Toma el entorno REAL de db-test (sin interpolar) y lo levanta en un proyecto aislado con las
+    # contrasenas de los roles pero SIN TURNOS_DB_TEST_PASSWORD: PostgreSQL no debe inicializar.
+    $entorno = @((Get-EstructuraCompose).services.'db-test'.environment)
+    $nombreProyecto = 'autoprueba-sinsuperusuario'
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ($nombreProyecto + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+    New-Item -ItemType Directory -Path $tmp -Force | Out-Null
+    $script = (Join-Path $Raiz 'db/test-init/10_roles_prueba.sh').Replace('\', '/')
+    $archivoCompose = Join-Path $tmp 'docker-compose.yml'
+    $compose = @('services:', '  db-test:', '    image: postgres:18.6-trixie', '    profiles: ["test"]', '    environment:')
+    $compose += @($entorno | ForEach-Object { '      - "' + $_ + '"' })
+    $compose += @('    tmpfs:', '      - /var/lib/postgresql', '    volumes:', '      - type: bind',
+        ('        source: "' + $script + '"'), '        target: /docker-entrypoint-initdb.d/10_roles_prueba.sh', '        read_only: true',
+        '    healthcheck:', '      test: ["CMD-SHELL", "pg_isready -U app -d turnos_test"]', '      interval: 2s', '      timeout: 5s', '      retries: 15')
+    [System.IO.File]::WriteAllText($archivoCompose, (($compose -join "`n") + "`n"), (New-Object System.Text.ASCIIEncoding))
+    $previos = @{}
+    foreach ($nombre in @('TURNOS_DB_TEST_PASSWORD', 'TURNOS_APP_TEST_PASSWORD', 'TURNOS_LOGIN_TEST_PASSWORD')) {
+        $previos[$nombre] = [Environment]::GetEnvironmentVariable($nombre, 'Process')
+    }
+    try {
+        [Environment]::SetEnvironmentVariable('TURNOS_DB_TEST_PASSWORD', $null, 'Process')
+        [Environment]::SetEnvironmentVariable('TURNOS_APP_TEST_PASSWORD', (New-ContrasenaRolPruebaEfimera), 'Process')
+        [Environment]::SetEnvironmentVariable('TURNOS_LOGIN_TEST_PASSWORD', (New-ContrasenaRolPruebaEfimera), 'Process')
+        docker compose -p $nombreProyecto -f $archivoCompose --profile test up -d --wait db-test | Out-Null
+        Assert-Verdadero ($LASTEXITCODE -ne 0) 'db-test arranco sin la contrasena efimera del superusuario'
+        $enEjecucion = @(docker compose -p $nombreProyecto -f $archivoCompose --profile test ps --status running -q)
+        Assert-Verdadero ($enEjecucion.Count -eq 0) 'db-test quedo en ejecucion sin la contrasena efimera del superusuario'
+    } finally {
+        foreach ($nombre in $previos.Keys) { [Environment]::SetEnvironmentVariable($nombre, $previos[$nombre], 'Process') }
+        docker compose -p $nombreProyecto -f $archivoCompose --profile test down --remove-orphans | Out-Null
+        Remove-Item -Recurse -Force $tmp
+    }
+}
+
+Invoke-Caso 'Comandos administrativos documentados con admin (DD-34)' {
+    $administrativos = '(alembic\s+upgrade|python\s+-m\s+app\.(seed|credenciales|roles_postgres|mantenimiento))'
+    $readme = Get-Content -LiteralPath (Join-Path $Raiz 'README.md') -Raw -Encoding UTF8
+    Assert-Verdadero (-not ($readme -match ('compose\s+run[^\r\n`]*\sapi\s+' + $administrativos))) 'README indica un comando administrativo con el servicio api'
+    Assert-Verdadero ($readme.Contains('docker compose run --rm --no-deps admin alembic upgrade head')) 'README no indica las migraciones con admin'
+    Assert-Verdadero ($readme.Contains('docker compose run --rm --no-deps admin python -m app.seed')) 'README no indica el seed con admin'
+    foreach ($modulo in @('credenciales', 'roles_postgres', 'mantenimiento')) {
+        $texto = Get-Content -LiteralPath (Join-Path $Raiz ('backend/app/' + $modulo + '/__main__.py')) -Raw -Encoding UTF8
+        Assert-Verdadero (-not ($texto -match ('compose\s+run[^\r\n]*\sapi\s+python\s+-m\s+app\.' + $modulo))) ('la ayuda de app.' + $modulo + ' usa el servicio api')
+        Assert-Verdadero ($texto -match ('docker compose run --rm (-it )?--no-deps admin python -m app\.' + $modulo)) ('la ayuda de app.' + $modulo + ' no usa admin con --no-deps')
+    }
+}
+
+Invoke-Caso 'Variables administrativas del shell no llegan a api' {
+    # Se definen con valores ficticios SOLO en este proceso y se crea un contenedor efimero de api
+    # sin -e: el contenedor no debe recibirlas. Solo se listan NOMBRES de variables.
+    $previos = @{}
+    foreach ($nombre in $script:VariablesAjenasAApi) {
+        $previos[$nombre] = [Environment]::GetEnvironmentVariable($nombre, 'Process')
+        [Environment]::SetEnvironmentVariable($nombre, 'valor-ficticio-autoprueba', 'Process')
+    }
+    Push-Location $Raiz
+    try {
+        $salida = docker compose run --rm --no-deps -T api sh -c 'env | cut -d= -f1'
+        Assert-Verdadero ($LASTEXITCODE -eq 0) 'no se pudo crear el contenedor efimero de api'
+        $nombres = @($salida | ForEach-Object { ([string]$_).Trim() })
+        Assert-Verdadero ($nombres -contains 'DATABASE_URL') 'el contenedor de api no recibio DATABASE_URL'
+        $filtradas = @($script:VariablesAjenasAApi | Where-Object { $nombres -contains $_ })
+        Assert-Verdadero ($filtradas.Count -eq 0) ('api recibio: ' + ($filtradas -join ', '))
+    } finally {
+        Pop-Location
+        foreach ($nombre in $script:VariablesAjenasAApi) {
+            [Environment]::SetEnvironmentVariable($nombre, $previos[$nombre], 'Process')
+        }
+    }
+}
+
 Invoke-Caso 'Verificacion de tipos estricta' {
     $ruta = Join-Path $Raiz 'frontend/tsconfig.json'
     Assert-Verdadero (Test-Path -LiteralPath $ruta) 'frontend/tsconfig.json no existe'
@@ -213,6 +427,57 @@ Invoke-Caso 'test.ps1 sin .env termina con error antes de cualquier suite' {
     } finally {
         Remove-Item -Recurse -Force $tmp
     }
+}
+
+Invoke-Caso 'Verificacion previa: variable de administracion en PowerShell (DD-34)' {
+    $comando = Get-Command -Name 'Assert-SinCredencialesDeAdministracion' -ErrorAction SilentlyContinue
+    Assert-Verdadero ($null -ne $comando) 'no existe Assert-SinCredencialesDeAdministracion'
+    foreach ($nombre in @('DATABASE_MIGRATION_URL', 'POSTGRES_PASSWORD', 'PGPASSWORD')) {
+        $previo = [Environment]::GetEnvironmentVariable($nombre, 'Process')
+        [Environment]::SetEnvironmentVariable($nombre, 'valor-ficticio-autoprueba', 'Process')
+        try {
+            $mensaje = $null
+            try { Assert-SinCredencialesDeAdministracion } catch { $mensaje = $_.Exception.Message }
+            Assert-Verdadero ($null -ne $mensaje) ('no rechazo ' + $nombre)
+            Assert-Verdadero ($mensaje -like ('*' + $nombre + '*')) ('el mensaje no nombra ' + $nombre)
+            Assert-Verdadero ($mensaje -notlike '*valor-ficticio-autoprueba*') 'el mensaje contiene el valor'
+        } finally {
+            [Environment]::SetEnvironmentVariable($nombre, $previo, 'Process')
+        }
+    }
+}
+
+Invoke-Caso 'test.ps1 con variable de administracion termina antes de cualquier paso' {
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('autoprueba-runner-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path (Join-Path $tmp 'scripts/lib') -Force | Out-Null
+    $previo = [Environment]::GetEnvironmentVariable('DATABASE_MIGRATION_URL', 'Process')
+    try {
+        Copy-Item -LiteralPath (Join-Path $Raiz 'scripts/test.ps1') -Destination (Join-Path $tmp 'scripts/test.ps1')
+        Copy-Item -LiteralPath (Join-Path $Raiz 'scripts/lib/Pasos.ps1') -Destination (Join-Path $tmp 'scripts/lib/Pasos.ps1')
+        # Un .env vacio en la copia: el rechazo debe venir de la variable, no de la falta de .env.
+        Set-Content -LiteralPath (Join-Path $tmp '.env') -Value '' -Encoding Ascii
+        [Environment]::SetEnvironmentVariable('DATABASE_MIGRATION_URL', 'valor-ficticio-autoprueba', 'Process')
+        $salida = (powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $tmp 'scripts/test.ps1') | Out-String)
+        $codigo = $LASTEXITCODE
+        Assert-Verdadero ($codigo -ne 0) 'test.ps1 termino con codigo 0 con DATABASE_MIGRATION_URL definida'
+        Assert-Verdadero ($salida -like '*DATABASE_MIGRATION_URL*') 'el mensaje no nombra DATABASE_MIGRATION_URL'
+        Assert-Verdadero ($salida -notlike '*valor-ficticio-autoprueba*') 'la salida contiene el valor'
+        Assert-Verdadero ($salida -notlike '*==> *') 'se ejecuto algun paso antes de la verificacion previa'
+    } finally {
+        [Environment]::SetEnvironmentVariable('DATABASE_MIGRATION_URL', $previo, 'Process')
+        Remove-Item -Recurse -Force $tmp
+    }
+}
+
+Invoke-Caso 'test.ps1: sin variables de administracion en opciones -e' {
+    $texto = Get-Content -LiteralPath (Join-Path $Raiz 'scripts/test.ps1') -Raw
+    foreach ($nombre in @('DATABASE_MIGRATION_URL', 'POSTGRES_PASSWORD', 'POSTGRES_USER', 'POSTGRES_DB', 'PGPASSWORD')) {
+        Assert-Verdadero (-not ($texto -match ('-e\s+' + $nombre + '\b'))) ('test.ps1 pasa -e ' + $nombre)
+    }
+    $previa = $texto.IndexOf('Assert-SinCredencialesDeAdministracion')
+    $primerPaso = $texto.IndexOf('Invoke-Paso')
+    Assert-Verdadero ($previa -ge 0) 'test.ps1 no ejecuta la verificacion previa de variables de administracion'
+    Assert-Verdadero ($previa -lt $primerPaso) 'la verificacion previa no esta antes del primer paso'
 }
 
 Invoke-Caso 'Clave efimera de autenticacion: formato, diversidad y unicidad' {
@@ -287,7 +552,7 @@ Invoke-Caso 'db-test sin contrasenas no arranca (proyecto aislado)' {
         '    profiles: ["test"]',
         '    environment:',
         '      POSTGRES_USER: app',
-        '      POSTGRES_PASSWORD: app',
+        '      POSTGRES_PASSWORD: ${TURNOS_DB_TEST_PASSWORD}',
         '      POSTGRES_DB: turnos_test',
         '      TURNOS_APP_TEST_PASSWORD: ""',
         '      TURNOS_LOGIN_TEST_PASSWORD: ""',
@@ -305,12 +570,16 @@ Invoke-Caso 'db-test sin contrasenas no arranca (proyecto aislado)' {
         '      retries: 15'
     )
     [System.IO.File]::WriteAllText($archivoCompose, (($compose -join "`n") + "`n"), (New-Object System.Text.ASCIIEncoding))
+    $previoDbTest = [Environment]::GetEnvironmentVariable('TURNOS_DB_TEST_PASSWORD', 'Process')
     try {
+        # RT3-06: superusuario con contrasena efimera; lo que falta son las de los roles.
+        $env:TURNOS_DB_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
         docker compose -p $nombreProyecto -f $archivoCompose --profile test up -d --wait db-test | Out-Null
         Assert-Verdadero ($LASTEXITCODE -ne 0) 'db-test arranco sin las contrasenas de los roles'
         $enEjecucion = @(docker compose -p $nombreProyecto -f $archivoCompose --profile test ps --status running -q)
         Assert-Verdadero ($enEjecucion.Count -eq 0) 'db-test quedo en ejecucion sin las contrasenas de los roles'
     } finally {
+        [Environment]::SetEnvironmentVariable('TURNOS_DB_TEST_PASSWORD', $previoDbTest, 'Process')
         docker compose -p $nombreProyecto -f $archivoCompose --profile test down --remove-orphans | Out-Null
         Remove-Item -Recurse -Force $tmp
     }
@@ -355,7 +624,6 @@ Invoke-Caso 'Funciona sin clave en .env (entorno aislado, db-test propia, sin to
     $archivoCompose = Join-Path $tmp 'docker-compose.yml'
     $envFicticio = @(
         'DATABASE_URL=postgresql+psycopg://dev_ficticio:dev_ficticio@host-dev-ficticio.invalid:5432/turnos_dev_ficticio',
-        'TEST_DATABASE_URL=postgresql+psycopg://app:app@db-test:5432/turnos_test',
         'CORS_ALLOWED_ORIGINS=http://localhost:5173',
         'APP_ENV=test'
     )
@@ -368,7 +636,7 @@ Invoke-Caso 'Funciona sin clave en .env (entorno aislado, db-test propia, sin to
         '    profiles: ["test"]',
         '    environment:',
         '      POSTGRES_USER: app',
-        '      POSTGRES_PASSWORD: app',
+        '      POSTGRES_PASSWORD: ${TURNOS_DB_TEST_PASSWORD}',
         '      POSTGRES_DB: turnos_test',
         '      TURNOS_APP_TEST_PASSWORD: ${TURNOS_APP_TEST_PASSWORD}',
         '      TURNOS_LOGIN_TEST_PASSWORD: ${TURNOS_LOGIN_TEST_PASSWORD}',
@@ -391,13 +659,19 @@ Invoke-Caso 'Funciona sin clave en .env (entorno aislado, db-test propia, sin to
         '    volumes:',
         '      - type: bind',
         ('        source: "' + $backend + '"'),
-        '        target: /app'
+        '        target: /app',
+        '        read_only: true'
     )
     [System.IO.File]::WriteAllText($archivoCompose, (($compose -join "`n") + "`n"), (New-Object System.Text.ASCIIEncoding))
     $valorPrevio = $env:AUTH_SECRET_KEY
     $previoApp = $env:TURNOS_APP_TEST_PASSWORD
     $previoLogin = $env:TURNOS_LOGIN_TEST_PASSWORD
+    $previoDbTest = $env:TURNOS_DB_TEST_PASSWORD
+    $previaUrl = $env:TEST_DATABASE_URL
     try {
+        # RT3-06: como test.ps1, contrasena efimera de db-test y URL de pruebas solo en este proceso.
+        $env:TURNOS_DB_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
+        $env:TEST_DATABASE_URL = New-UrlBaseDePruebas -Contrasena $env:TURNOS_DB_TEST_PASSWORD
         Remove-Item Env:AUTH_SECRET_KEY -ErrorAction SilentlyContinue
         $env:TURNOS_APP_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
         $env:TURNOS_LOGIN_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
@@ -405,19 +679,21 @@ Invoke-Caso 'Funciona sin clave en .env (entorno aislado, db-test propia, sin to
         Assert-Verdadero ($LASTEXITCODE -eq 0) 'no se pudo levantar la db-test aislada'
 
         # Precondicion: sin la clave efimera (solo con el env aislado) la migracion SI falla por su ausencia.
-        cmd /c ('docker compose -p ' + $nombreProyecto + ' -f "' + $archivoCompose + '" run --rm --no-deps api alembic -x target=test upgrade head >nul 2>nul')
+        cmd /c ('docker compose -p ' + $nombreProyecto + ' -f "' + $archivoCompose + '" run --rm --no-deps -e TEST_DATABASE_URL api alembic -x target=test upgrade head >nul 2>nul')
         Assert-Verdadero ($LASTEXITCODE -ne 0) 'la migracion no fallo sin la clave: el env aislado no representa un .env sin AUTH_SECRET_KEY'
 
         # Como test.ps1: clave efimera solo en el entorno del proceso, pasada por NOMBRE.
         $env:AUTH_SECRET_KEY = New-ClaveAuthEfimera
-        docker compose -p $nombreProyecto -f $archivoCompose run --rm --no-deps -e AUTH_SECRET_KEY api alembic -x target=test upgrade head | Out-Null
+        docker compose -p $nombreProyecto -f $archivoCompose run --rm --no-deps -e AUTH_SECRET_KEY -e TEST_DATABASE_URL api alembic -x target=test upgrade head | Out-Null
         Assert-Verdadero ($LASTEXITCODE -eq 0) 'las migraciones sobre db-test fallaron con la clave efimera y un env sin clave'
-        docker compose -p $nombreProyecto -f $archivoCompose run --rm --no-deps -e AUTH_SECRET_KEY api python -m pytest -p no:cacheprovider -q tests/integration/test_api_auth.py::test_login_exitoso_responde_200_emite_la_cookie_y_crea_una_sesion tests/integration/test_servicio_auth.py | Out-Null
+        docker compose -p $nombreProyecto -f $archivoCompose run --rm --no-deps -e AUTH_SECRET_KEY -e TEST_DATABASE_URL api python -m pytest -p no:cacheprovider -q tests/integration/test_api_auth.py::test_login_exitoso_responde_200_emite_la_cookie_y_crea_una_sesion tests/integration/test_servicio_auth.py | Out-Null
         Assert-Verdadero ($LASTEXITCODE -eq 0) 'las pruebas de integracion fallaron con la clave efimera y un env sin clave'
     } finally {
         if ($null -ne $valorPrevio) { $env:AUTH_SECRET_KEY = $valorPrevio } else { Remove-Item Env:AUTH_SECRET_KEY -ErrorAction SilentlyContinue }
         if ($null -ne $previoApp) { $env:TURNOS_APP_TEST_PASSWORD = $previoApp } else { Remove-Item Env:TURNOS_APP_TEST_PASSWORD -ErrorAction SilentlyContinue }
         if ($null -ne $previoLogin) { $env:TURNOS_LOGIN_TEST_PASSWORD = $previoLogin } else { Remove-Item Env:TURNOS_LOGIN_TEST_PASSWORD -ErrorAction SilentlyContinue }
+        if ($null -ne $previoDbTest) { $env:TURNOS_DB_TEST_PASSWORD = $previoDbTest } else { Remove-Item Env:TURNOS_DB_TEST_PASSWORD -ErrorAction SilentlyContinue }
+        if ($null -ne $previaUrl) { $env:TEST_DATABASE_URL = $previaUrl } else { Remove-Item Env:TEST_DATABASE_URL -ErrorAction SilentlyContinue }
         # Solo el proyecto aislado (nombre propio, sin volumenes con nombre): nunca el de desarrollo.
         docker compose -p $nombreProyecto -f $archivoCompose --profile test down --remove-orphans | Out-Null
         Remove-Item -Recurse -Force $tmp

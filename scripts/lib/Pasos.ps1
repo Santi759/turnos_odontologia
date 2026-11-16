@@ -16,6 +16,32 @@ function Invoke-Paso {
     }
 }
 
+function New-UrlBaseDePruebas {
+    # RT3-06: URL de la base de pruebas efimera (db-test), armada en el proceso del runner con la
+    # contrasena efimera de su superusuario. Host y base fijos: db-test y turnos_test. Sin literales
+    # de contrasena; el resultado nunca se imprime ni se escribe en archivos.
+    param([Parameter(Mandatory = $true)][string]$Contrasena)
+    if ($Contrasena -cnotmatch '^[A-Za-z0-9_-]+$') {
+        throw 'La contrasena de db-test debe ser base64url (sin caracteres que alteren la URL).'
+    }
+    return ('postgresql+psycopg://{0}:{1}@{2}:5432/{3}' -f 'app', $Contrasena, 'db-test', 'turnos_test')
+}
+
+function Assert-SinCredencialesDeAdministracion {
+    # DD-34 (RT3-01): el runner no debe propagar credenciales de administracion de desarrollo a los
+    # contenedores. Si el proceso de PowerShell las define, se detiene ANTES de cualquier paso.
+    # Solo se nombran las variables; nunca se leen ni se muestran sus valores.
+    $presentes = @()
+    foreach ($nombre in @('DATABASE_MIGRATION_URL', 'POSTGRES_PASSWORD', 'PGPASSWORD')) {
+        if (-not [string]::IsNullOrEmpty([Environment]::GetEnvironmentVariable($nombre, 'Process'))) {
+            $presentes += $nombre
+        }
+    }
+    if ($presentes.Count -gt 0) {
+        throw ('El proceso de PowerShell define variables de administracion (' + ($presentes -join ', ') + '): quitarlas antes de ejecutar las pruebas.')
+    }
+}
+
 function Assert-RequisitosPrevios {
     param([Parameter(Mandatory = $true)][string]$Raiz)
     if (-not (Test-Path -LiteralPath (Join-Path $Raiz '.env'))) {

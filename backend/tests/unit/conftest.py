@@ -29,6 +29,10 @@ def entorno_auth_aislado(monkeypatch: pytest.MonkeyPatch) -> None:
     # El .env del autor puede traer las URLs de los roles; no deben filtrarse a las pruebas.
     monkeypatch.delenv("DATABASE_LOGIN_URL", raising=False)
     monkeypatch.delenv("DATABASE_MIGRATION_URL", raising=False)
+    # DD-34: las credenciales de administracion heredadas del contenedor no deben activar la guardia
+    # de `crear_app` en pruebas ajenas a ella; las pruebas de la guardia las definen explicitamente.
+    monkeypatch.delenv("POSTGRES_PASSWORD", raising=False)
+    monkeypatch.delenv("PGPASSWORD", raising=False)
 
 
 @pytest.fixture

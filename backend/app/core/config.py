@@ -76,8 +76,13 @@ def _error_de_clave(texto: str) -> str | None:
 
 
 class Settings(BaseSettings):
+    # `env_ignore_empty` (DD-34): una variable del entorno con valor vacio cuenta como no definida;
+    # el servicio `api` interpola las opcionales con `${VAR:-}` y deben tomar su valor por defecto.
     model_config = SettingsConfigDict(
-        case_sensitive=False, populate_by_name=True, hide_input_in_errors=True
+        case_sensitive=False,
+        populate_by_name=True,
+        hide_input_in_errors=True,
+        env_ignore_empty=True,
     )
 
     database_url: SecretStr = Field(validation_alias="DATABASE_URL")

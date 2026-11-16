@@ -73,11 +73,54 @@ Dos de `DATABASE_URL`, `DATABASE_LOGIN_URL` y `DATABASE_MIGRATION_URL` con el mi
 - **ENTONCES** la carga es válida
 
 #### Scenario: La API no usa la credencial de administración
-- **DADO** valores válidos con `DATABASE_MIGRATION_URL` y `DATABASE_LOGIN_URL` definidas
+- **DADO** valores válidos con `DATABASE_LOGIN_URL` definida y sin `DATABASE_MIGRATION_URL`
 - **CUANDO** se crea la aplicación
-- **ENTONCES** su motor general usa la URL de `DATABASE_URL`, su motor de login usa la de `DATABASE_LOGIN_URL` y ninguno usa la de `DATABASE_MIGRATION_URL`
+- **ENTONCES** su motor general usa la URL de `DATABASE_URL` y su motor de login usa la de `DATABASE_LOGIN_URL`
+- **Y** con `DATABASE_MIGRATION_URL` definida la creación se rechaza (requisito "La aplicación web rechaza credenciales de administración")
 
 #### Scenario: La API exige la credencial de login
 - **DADO** valores válidos sin `DATABASE_LOGIN_URL`
 - **CUANDO** se crea la aplicación
 - **ENTONCES** la creación falla con un error que menciona `DATABASE_LOGIN_URL` sin abrir conexiones
+
+### Requirement: La aplicación web rechaza credenciales de administración
+La creación de la aplicación web (`crear_app`) DEBE (MUST) fallar antes de crear motores si la configuración o el entorno del proceso contienen `DATABASE_MIGRATION_URL`, `POSTGRES_PASSWORD` o `PGPASSWORD`, con un mensaje fijo que nombre las variables sin sus valores. La guardia NO DEBE (MUST NOT) aplicarse a los comandos administrativos, que no crean la aplicación web.
+
+#### Scenario: Configuración con la credencial de administración
+- **DADO** valores válidos y `DATABASE_MIGRATION_URL` con la contraseña ficticia `clave-admin-ficticia`
+- **CUANDO** se crea la aplicación
+- **ENTONCES** la creación falla con un error que menciona `DATABASE_MIGRATION_URL` y no contiene `clave-admin-ficticia`
+- **Y** no se crearon motores ni se abrieron conexiones
+
+#### Scenario: Variable de administración en el entorno del proceso
+- **DADO** valores válidos sin `DATABASE_MIGRATION_URL` en la configuración y, en el entorno del proceso, una de `DATABASE_MIGRATION_URL`, `POSTGRES_PASSWORD` o `PGPASSWORD` con un valor ficticio, para cada una de las tres
+- **CUANDO** se crea la aplicación
+- **ENTONCES** la creación falla con un error que nombra esa variable y no contiene su valor
+
+#### Scenario: Entorno sin credenciales de administración
+- **DADO** valores válidos y un entorno del proceso sin ninguna de esas variables
+- **CUANDO** se crea la aplicación
+- **ENTONCES** la creación es válida
+
+#### Scenario: Los comandos administrativos no usan la guardia
+- **DADO** el entorno del servicio administrativo, con `DATABASE_MIGRATION_URL` y `POSTGRES_PASSWORD`
+- **CUANDO** se inspeccionan los módulos de Alembic, seed, credenciales, roles y mantenimiento
+- **ENTONCES** ninguno crea la aplicación web y todos abren su sesión con la credencial de administración
+
+#### Scenario: La aplicación web no arranca con el entorno administrativo
+- **DADO** el entorno efectivo del servicio administrativo
+- **CUANDO** se intenta crear la aplicación web en ese contenedor
+- **ENTONCES** la creación falla con un error que nombra solo variables, sin valores
+
+### Requirement: Variables opcionales vacías toman su valor por defecto
+La carga de la configuración DEBE (MUST) tratar una variable definida con valor vacío como no definida: una opcional vacía toma su valor por defecto y una obligatoria vacía hace fallar la carga.
+
+#### Scenario: Opcionales vacías
+- **DADO** valores válidos y `AUTH_SESSION_MINUTES`, `AUTH_SESSION_MAX_HOURS`, `AUTH_COOKIE_SECURE` y `TEST_DATABASE_URL` definidas con valor vacío
+- **CUANDO** se carga la configuración
+- **ENTONCES** la carga es válida con 30 minutos, 12 horas, cookie `Secure` y sin URL de pruebas
+
+#### Scenario: Obligatoria vacía
+- **DADO** valores válidos y `DATABASE_URL` definida con valor vacío
+- **CUANDO** se carga la configuración
+- **ENTONCES** la carga falla con un error que menciona `DATABASE_URL`

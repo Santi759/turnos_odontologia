@@ -11,8 +11,13 @@ $Raiz = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot 'lib/Pasos.ps1')
 
 $codigoSalida = 0
+# RT3-06: valor previo de TEST_DATABASE_URL en este proceso, para restaurarlo al terminar; el runner
+# nunca lo usa: arma su propia URL de pruebas antes del primer paso.
+$previaTestDatabaseUrl = $env:TEST_DATABASE_URL
 $usoDbTest = $false
 try {
+    # DD-34: ninguna credencial de administracion en el proceso (se verifica antes de cualquier paso).
+    Assert-SinCredencialesDeAdministracion
     Assert-RequisitosPrevios -Raiz $Raiz
     Set-Location -LiteralPath $Raiz
     # Clave efimera de autenticacion para las pruebas (no depende del .env del autor):
@@ -23,6 +28,11 @@ try {
     # mismo tratamiento. db-test las recibe por nombre (`environment`) y el paso de aislamiento por -e.
     $env:TURNOS_APP_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
     $env:TURNOS_LOGIN_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
+    # RT3-06: contrasena efimera del superusuario de db-test y URL de pruebas armada en este proceso.
+    # Se pasan por NOMBRE (db-test por interpolacion; los contenedores de prueba con -e) y se retiran
+    # al terminar. El servicio api permanente nunca recibe TEST_DATABASE_URL.
+    $env:TURNOS_DB_TEST_PASSWORD = New-ContrasenaRolPruebaEfimera
+    $env:TEST_DATABASE_URL = New-UrlBaseDePruebas -Contrasena $env:TURNOS_DB_TEST_PASSWORD
 
     Invoke-Paso -Nombre '0. autoprueba del runner y de la higiene del repositorio' -Comando {
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/autoprueba.ps1
@@ -38,13 +48,13 @@ try {
         docker compose up -d --wait db-test
     }
     Invoke-Paso -Nombre '4. migraciones sobre la base de pruebas (alembic upgrade head)' -Comando {
-        docker compose run --rm --no-deps -e AUTH_SECRET_KEY api alembic -x target=test upgrade head
+        docker compose run --rm --no-deps -e AUTH_SECRET_KEY -e TEST_DATABASE_URL api alembic -x target=test upgrade head
     }
     Invoke-Paso -Nombre '5. pruebas de integracion contra PostgreSQL real (db-test)' -Comando {
-        docker compose run --rm --no-deps -e AUTH_SECRET_KEY api python -m pytest -p no:cacheprovider tests/integration -v
+        docker compose run --rm --no-deps -e AUTH_SECRET_KEY -e TEST_DATABASE_URL api python -m pytest -p no:cacheprovider tests/integration -v
     }
     Invoke-Paso -Nombre '6. pruebas de aislamiento con los roles turnos_app y turnos_login (db-test)' -Comando {
-        docker compose run --rm --no-deps -e AUTH_SECRET_KEY -e TURNOS_APP_TEST_PASSWORD -e TURNOS_LOGIN_TEST_PASSWORD api python -m pytest -p no:cacheprovider tests/isolation -v
+        docker compose run --rm --no-deps -e AUTH_SECRET_KEY -e TURNOS_APP_TEST_PASSWORD -e TURNOS_LOGIN_TEST_PASSWORD -e TEST_DATABASE_URL api python -m pytest -p no:cacheprovider tests/isolation -v
     }
     Invoke-Paso -Nombre '7. verificacion de tipos del frontend (tsc --noEmit)' -Comando {
         docker compose run --rm --no-deps frontend npm run typecheck
@@ -60,6 +70,8 @@ try {
     Remove-Item Env:AUTH_SECRET_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:TURNOS_APP_TEST_PASSWORD -ErrorAction SilentlyContinue
     Remove-Item Env:TURNOS_LOGIN_TEST_PASSWORD -ErrorAction SilentlyContinue
+    Remove-Item Env:TURNOS_DB_TEST_PASSWORD -ErrorAction SilentlyContinue
+    if ($null -ne $previaTestDatabaseUrl) { $env:TEST_DATABASE_URL = $previaTestDatabaseUrl } else { Remove-Item Env:TEST_DATABASE_URL -ErrorAction SilentlyContinue }
     if ($usoDbTest) {
         # La base de pruebas es efimera (tmpfs): se elimina siempre, incluso tras un fallo.
         try { docker compose --profile test rm -sf db-test | Out-Null } catch { Write-Host 'Aviso: no se pudo eliminar db-test' }

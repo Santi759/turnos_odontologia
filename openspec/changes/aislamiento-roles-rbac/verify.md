@@ -406,3 +406,232 @@ Además, comprobado en solo lectura:
 Con este registro la transición controlada de desarrollo (grupo 13) y su verificación posterior (grupo 14) quedan terminadas sin incidentes. La 13.8 (procedimiento de recuperación) **no fue requerida**: no se ejecutó rollback, downgrade ni restauración.
 
 Pendiente: 15.1 (commit de cierre con autorización del autor) y Archive.
+
+## 16.10 A6: recreación controlada de `api` con DD-34 (2026-11-15, autorizada por el autor)
+
+**Resultado: APROBADO.** Única operación de despliegue: `docker compose up -d --no-deps api`.
+
+**Precondiciones** (solo lectura, todas en verde):
+
+- `db` sano (`pg_isready` rc=0) y Alembic `0004`.
+- Catálogo idéntico a A3 (RLS forzada, 10 funciones `SECURITY DEFINER`, 11 políticas, privilegios).
+- Filas y huellas iguales al cierre del grupo 14.
+- Respaldo A1 intacto (SHA-256 `bdbff5b1…37ead`, permisos restringidos).
+- `frontend` detenido y sin contenedores `db-test`.
+- `main` en `1b8d559`, sin stage, con solo los archivos del grupo 16 modificados.
+- Estructura de `docker-compose.yml` (sin interpolar ni resolver archivos de entorno): `api` sin `env_file`, con exactamente las 10 claves permitidas y ninguna de `DATABASE_MIGRATION_URL`, `POSTGRES_PASSWORD`, `POSTGRES_USER`, `POSTGRES_DB` ni `PGPASSWORD`; `admin` con perfil `admin`, sin puertos y sin servicios que dependan de él.
+- Ningún archivo de código, prueba, script, `docker-compose.yml` ni `README.md` cambió después del inicio de 16.9.
+
+**Ejecución**: `docker compose up -d --no-deps api`, rc=0 (`Recreate`, `Recreated`, `Starting`, `Started`; solo el contenedor `api`).
+
+| Contenedor | Antes | Después |
+|---|---|---|
+| `api` | `ef1fe991819e`, creado el 2026-11-15 a las 21:41:26 UTC (A4, entorno anterior) | `46017f8655b1`, creado el 2026-11-15 a las 23:23:16 UTC (configuración DD-34), 0 reinicios |
+| `db` | `6844b5d91884`, creado el 2026-11-15 a las 00:02:40 UTC | **la misma identidad y la misma fecha** (no se recreó ni reinició) |
+
+**Comprobación inmediata**:
+
+- `GET http://127.0.0.1:8000/api/health`: HTTP 200, `{"status":"ok"}`.
+- Logs de arranque de `api`: `Started server process` y `Application startup complete.`; 0 líneas con `error` o `traceback`. El arranque implica que la guardia de `crear_app` (DD-34) no encontró credenciales de administración en el entorno del proceso.
+- `db` sano; Alembic `0004`; filas y huellas sin cambios.
+- Logs de `db` desde A6: sin líneas (0 `ERROR`, 0 `FATAL`).
+- No se ejecutaron migraciones ni escrituras en PostgreSQL; `frontend` sigue detenido.
+
+La verificación exhaustiva (nombres de variables del entorno efectivo, guardias de rol con conexiones reales, `pg_stat_activity`, catálogo y logs) corresponde a 16.11 y no se ejecutó.
+
+## 16.11 Verificación de seguridad posterior a A6 (2026-11-15, autorizada por el autor)
+
+**Resultado: APROBADO.** Solo lecturas; sin login, sesiones, escrituras ni migraciones.
+
+**Servicio y contenedores**:
+
+- `api` en ejecución, el mismo contenedor de A6 (`46017f8655b1`).
+- `GET /api/health`: HTTP 200, `{"status":"ok"}`.
+- `db` con la misma identidad y fecha de creación (`6844b5d91884`, 2026-11-15 a las 00:02:40 UTC).
+- `frontend` detenido; 0 contenedores `db-test`.
+
+**Entorno efectivo de `api`** (`docker compose exec -T api sh -c 'env | cut -d= -f1'`, solo nombres):
+
+- Nombres: `APP_ENV`, `AUTH_COOKIE_SECURE`, `AUTH_SECRET_KEY`, `AUTH_SESSION_MAX_HOURS`, `AUTH_SESSION_MINUTES`, `CORS_ALLOWED_ORIGINS`, `DATABASE_LOGIN_URL`, `DATABASE_URL`, `TEST_DATABASE_URL`, `WATCHFILES_FORCE_POLLING`, más las de la imagen y del sistema (`HOME`, `HOSTNAME`, `LANG`, `PATH`, `PWD`, `PYTHONDONTWRITEBYTECODE`, `PYTHONUNBUFFERED`, `PYTHON_SHA256`, `PYTHON_VERSION`).
+- **Ausentes**: `DATABASE_MIGRATION_URL`, `POSTGRES_PASSWORD`, `POSTGRES_USER`, `POSTGRES_DB` y `PGPASSWORD`.
+- **Presentes**: `DATABASE_URL` y `DATABASE_LOGIN_URL`.
+
+**Conexiones reales con los motores de la API** (`g1611_motores.py`, en el directorio temporal de la sesión de Claude, con `docker compose exec -T api python -`; `crear_engine` y `crear_engine_login` con la guardia `verificar_rol_de_conexion`; solo una consulta de catálogo; conexiones abiertas unos segundos y luego cerradas):
+
+- `turnos_app: guardia OK current_user=turnos_app superusuario=False bypassrls=False`.
+- `turnos_login: guardia OK current_user=turnos_login superusuario=False bypassrls=False`.
+
+**`pg_stat_activity`** con esas conexiones abiertas (solo lectura, como `app`; IP de `api`: `172.18.0.3`):
+
+| `usename` | `client_addr` | Desde `api` | `rolsuper` | `rolbypassrls` | Conexiones |
+|---|---|---|---|---|---|
+| `turnos_app` | 172.18.0.3 | sí | f | f | 1 |
+| `turnos_login` | 172.18.0.3 | sí | f | f | 1 |
+
+No hay otras conexiones de cliente.
+
+**PostgreSQL**:
+
+- Catálogo idéntico al de A3: Alembic `0004`; 10 funciones `SECURITY DEFINER` con `search_path=pg_catalog, pg_temp`; 11 políticas; RLS habilitada y forzada en las 4 tablas; `uq_sesion_consultorio_id_id`; matriz de privilegios.
+- Los cuatro roles con los mismos atributos y sin membresías; verificadores de `app`, `turnos_app` y `turnos_login` sin cambios (digests comparados en silencio).
+- Filas y huellas **idénticas** a las del cierre del grupo 14 y a las de A6.
+- Respaldo A1: SHA-256 `bdbff5b176b1cb8efc050fff0d0c03c062a2604b89b4ad68fa47d15054e37ead`, permisos restringidos.
+
+**Logs desde A6**:
+
+- `api`, 9 líneas: arranque (`Started reloader process`, `Started server process`, `Waiting for application startup.`, `Application startup complete.`) y 3 `GET /api/health` 200; 0 `error`, `traceback` o `exception`; 0 `WARNING`.
+- `db`: sin líneas (0 `ERROR`, 0 `FATAL`).
+- Sin advertencias esperadas ni errores inesperados.
+
+La separación DD-34 queda **operativa en desarrollo**: el proceso permanente de la API no recibe credenciales de administración y sus conexiones usan solo los roles restringidos.
+
+## 16.12 Verificación del servicio `admin` (2026-11-15, autorizada por el autor)
+
+**Resultado: APROBADO.** Solo comandos de comprobación, sin TTY ni impresión de variables; ningún comando de escritura (`upgrade`, `downgrade`, seed, `crear`, `--reemplazar` ni mantenimiento).
+
+**Precondiciones**: health 200; `db` sano (`pg_isready` rc=0) y en `0004`; `api` `46017f8655b1` y `db` `6844b5d91884` registrados; `frontend` detenido; huellas registradas.
+
+| Prueba | Comando | Resultado |
+|---|---|---|
+| A | `docker compose run --rm --no-deps -T admin alembic current` | rc=0, `0004 (head)`; sin migraciones aplicadas |
+| B | `docker compose run --rm --no-deps -T api alembic current` | rc=1, `ValueError: DATABASE_MIGRATION_URL no esta definida: las migraciones de desarrollo requieren la credencial de administracion`; 0 líneas con `://` en la salida y ninguna línea nueva en los logs de `db` (no se abrió conexión) |
+| C | `docker compose run --rm --no-deps -T admin` (sin comando) | rc=1, solo el mensaje fijo `admin: servicio solo para comandos administrativos; usar: docker compose run --rm --no-deps admin <comando>`; 0 contenedores `admin` después |
+| D | `docker compose run --rm --no-deps -T admin python -c …` (`crear_app()` con `crear_engine` y `crear_engine_login` interceptados) | `CredencialAdministrativaEnLaApi: la aplicacion web no debe recibir credenciales de administracion; variables presentes: DATABASE_MIGRATION_URL, POSTGRES_PASSWORD`; `motores_creados=0` (rechazo antes de crear motores; solo nombres, sin valores) |
+| E | `docker compose ps -a` | `api` y `db` en ejecución, `frontend` detenido; 0 contenedores `admin` ni `*-run-*` residuales |
+
+**Verificación posterior**:
+
+- `api` y `db` son los mismos contenedores.
+- Health 200 y `db` sano.
+- Catálogo idéntico a A3 (Alembic `0004`).
+- Filas y huellas sin cambios (iguales a las previas a 16.12 y al cierre del grupo 14).
+- Logs desde 16.12: `db` sin líneas; `api` sin `error`, `traceback` ni `WARNING`.
+
+**Conclusión DD-34**: la administración ocurre solo en contenedores efímeros de `admin`; `admin` no queda en ejecución; `api` no puede administrar (falla cerrado) y la aplicación web no arranca con el entorno de `admin`.
+
+## 16.20 A7: recreación de `api` con la ampliación de DD-34 (2026-11-16, autorizada por el autor)
+
+**Resultado: APROBADO.** Única operación de despliegue: `docker compose up -d --no-deps api`.
+
+**Precondiciones** (solo lectura, todas en verde):
+
+- `db` sano (`pg_isready` rc=0).
+- Catálogo idéntico a A3 (Alembic `0004`, RLS forzada, 10 funciones `SECURITY DEFINER`, 11 políticas, privilegios).
+- Filas y huellas iguales al grupo 14 y a A6.
+- Respaldo A1 intacto (SHA-256 `bdbff5b1…37ead`, permisos restringidos).
+- `frontend` detenido; 0 contenedores `db-test`, `*-run-*` o de autoprueba.
+- `main` en `1b8d559` sin stage.
+- Ningún archivo de implementación modificado desde el inicio de 16.19 (16.19 vigente).
+- `docker-compose.yml` sin interpolar: `api` sin `env_file`, con exactamente 9 claves y ninguna de administración ni `TEST_DATABASE_URL`; `api` y `admin` con `/app` de solo lectura; sin `privileged`, `cap_add` ni `security_opt`.
+
+**Ejecución**: `docker compose up -d --no-deps api`, rc=0 (`Recreate`, `Recreated`, `Starting`, `Started`; solo `api`).
+
+| Contenedor | Antes | Después |
+|---|---|---|
+| `api` | `46017f8655b159f03def05f4b55f4c84685ee289014c217ad4769625a55e3576`, creado el 2026-11-15 a las 23:23:16 UTC (A6) | `d9432b1341ae32eea38e2e1e64a92bc7f9f68526c0803fc7300c2f5bc7e1e22b`, creado el 2026-11-16 a las 00:17:40 UTC, 0 reinicios |
+| `db` | `6844b5d918842ec4c55b69a0bfbcd52e4339874088d1eb7548ddcbe9cfea59a8`, creado el 2026-11-15 a las 00:02:40 UTC | **la misma identidad y la misma fecha** |
+
+**Comprobación inmediata**:
+
+- `GET /api/health`: HTTP 200, `{"status":"ok"}`.
+- Montajes efectivos de `api` (`docker inspect`): `/app rw=false` y `/repo/.env.example rw=false`.
+- Entorno efectivo de `api` (solo nombres): las 9 claves permitidas más las de la imagen y del sistema; **0** de `TEST_DATABASE_URL`, `DATABASE_MIGRATION_URL`, `POSTGRES_PASSWORD`, `POSTGRES_USER`, `POSTGRES_DB` y `PGPASSWORD`.
+- Logs de arranque: `Started reloader process ... using WatchFiles`, `Started server process`, `Application startup complete.`; 0 `error` o `traceback`.
+- `db` sano, Alembic `0004`, filas y huellas sin cambios; logs de `db` desde A7 sin líneas.
+- Sin migraciones ni escrituras; `frontend` detenido.
+
+ALTO-2 y MEDIO-1 quedan aplicados al servicio permanente. La verificación exhaustiva (guardias con conexiones reales, `pg_stat_activity`, catálogo completo, `admin alembic current` y recarga real) corresponde a 16.21 y no se ejecutó.
+
+## 16.21 Verificación exhaustiva posterior a A7 (2026-11-16, autorizada por el autor)
+
+**Resultado: APROBADO.** Solo lecturas, salvo el cambio temporal de fecha autorizado (restaurado exactamente); sin login, sesiones, escrituras ni migraciones.
+
+**Fase 1, estado y seguridad**:
+
+- `api` en ejecución, health 200.
+- `api` `d9432b1341ae32eea38e2e1e64a92bc7f9f68526c0803fc7300c2f5bc7e1e22b` y `db` `6844b5d918842ec4c55b69a0bfbcd52e4339874088d1eb7548ddcbe9cfea59a8` (2026-11-15 a las 00:02:40 UTC) sin cambios.
+- Montajes efectivos de `api`: `bind /app rw=false` y `bind /repo/.env.example rw=false`; no hay otros.
+- Entorno efectivo (solo nombres): las 9 claves permitidas más las de la imagen y del sistema.
+- **Ausentes**: `TEST_DATABASE_URL`, `DATABASE_MIGRATION_URL`, `POSTGRES_PASSWORD`, `POSTGRES_USER`, `POSTGRES_DB`, `PGPASSWORD`. **Presentes**: `DATABASE_URL`, `DATABASE_LOGIN_URL`.
+
+**Fase 2, conexiones y PostgreSQL**:
+
+- Motores de la API (`g1611_motores.py`, conexiones abiertas unos segundos, consulta de catálogo):
+  - `turnos_app: guardia OK current_user=turnos_app superusuario=False bypassrls=False`.
+  - `turnos_login: guardia OK current_user=turnos_login superusuario=False bypassrls=False`.
+- `pg_stat_activity` con esas conexiones abiertas: desde `172.18.0.3` (IP de `api`), solo `turnos_app` y `turnos_login`, sin `rolsuper` ni `rolbypassrls`.
+- Alembic `0004`.
+- Catálogo idéntico a A3: 10 funciones `SECURITY DEFINER` con `search_path` fijo, 11 políticas, RLS forzada en 4 tablas, privilegios y roles.
+- Filas y huellas iguales al grupo 14, a A6 y a A7.
+- Respaldo A1 intacto (SHA-256 `bdbff5b1…37ead`, permisos restringidos).
+
+**Fase 3, servicio `admin`**:
+
+- `docker compose run --rm --no-deps -T admin alembic current`: rc=0, `0004 (head)`.
+- En un contenedor efímero de `admin`, `/proc/mounts` muestra `/app` con `ro` y una escritura en `/app` se rechaza (`Read-only file system`); no queda archivo.
+- 0 contenedores residuales.
+
+**Fase 4, recarga real** (`recarga_1621.py`, en el directorio temporal de la sesión de Claude):
+
+- Archivo `backend/app/api/salud.py`: versionado, sin cambios pendientes, SHA-256 `0bd8e33254e76f14259bd930c3293574fa2a41841709bd1c4b2f6c94dbd7d335` (contenido de código, no es un secreto), fecha original del 2026-11-03 a las 15:23:44 UTC.
+- Se cambió **solo** la fecha de modificación en el host (`os.utime`, conservando atime). Logs de `api`:
+  - `WatchFiles detected changes in 'app/api/salud.py'. Reloading...`
+  - `Shutting down`
+  - `Started server process [91]`
+  - `Application startup complete.`
+- Después, health 200.
+- En `finally`, atime y mtime restaurados exactamente (nanosegundos).
+- SHA-256, modo, tamaño y estado Git ("sin cambios") idénticos.
+- El contenedor `api` no se recreó.
+
+**Fase 5, logs y estado**:
+
+- `api` desde el inicio de 16.21: 10 líneas, 1 recarga, 1 `Application startup complete.`, 2 `GET /api/health` 200, 0 `error`, `traceback` o `exception`. El único `WARNING` es el aviso esperado de WatchFiles.
+- `db` sin líneas (0 `ERROR`, 0 `FATAL`).
+- `frontend` detenido; sin `db-test` ni contenedores temporales.
+- Catálogo, roles y privilegios idénticos a A3; datos sin cambios.
+
+ALTO-2 y MEDIO-1 quedan **verificados en desarrollo**: el código de `api` y de `admin` es de solo lectura, la recarga funciona y el proceso permanente de `api` no recibe `TEST_DATABASE_URL` ni credenciales de administración.
+
+## 16.13 Revisión de seguridad RT3 final (2026-11-16, autorizada por el autor)
+
+**Resultado: GO.** Ningún hallazgo crítico ni alto abierto. Revisión estática del diff y de la evidencia registrada; sin servicios, migraciones ni escrituras.
+
+**Alcance**:
+
+- Diff completo contra `1b8d559` (24 archivos versionados y 1 nuevo, `backend/tests/unit/test_montaje_codigo.py`), excluida la diferencia preexistente de finales de línea de `test_superposicion_turnos.py`.
+- Controles revisados: separación de credenciales `api`/`admin`; entorno de `api` (9 claves, sin `TEST_DATABASE_URL` ni variables de administración); montajes de solo lectura de `api` y `admin`, sin otros escribibles sobre el código ni privilegios adicionales; guardia `CredencialAdministrativaEnLaApi`; roles `turnos_app` y `turnos_login`; privilegios, 11 políticas RLS y 10 funciones `SECURITY DEFINER` (`alembic/` y `db/` sin cambios desde `1b8d559`; catálogo idéntico a A3); servicio `admin` efímero; runner (contraseña efímera de `db-test`, `TEST_DATABASE_URL` por nombre solo a contenedores efímeros, limpieza o restauración en `finally`, rechazo de variables de administración en PowerShell); guardias de base de pruebas (sin cambios); documentación y ayudas de los comandos.
+- Evidencia revisada: 16.1 a 16.12 (DD-34, ALTO-1), 16.15 a 16.18 (TDD de ALTO-2 y MEDIO-1), 16.19 (regresión: autoprueba 35, unitarias 785, integración 509, aislamiento 234, `tsc`, Vitest 2), 16.20 (A7) y 16.21 (verificación exhaustiva y recarga real).
+
+**Estado de los hallazgos**:
+
+| Hallazgo | Estado | Evidencia |
+|---|---|---|
+| ALTO-1: credencial de superusuario en el proceso de `api` | **Corregido y verificado** | DD-34; 16.11 y 16.21 (entorno sin variables de administración); guardia probada (16.1, 16.2, 16.12 D) |
+| ALTO-2: `api` podía modificar el código que ejecuta `admin` | **Corregido y verificado** | `./backend:/app:ro` en ambos (16.15, 16.16); `/app rw=false` en el servicio (16.20, 16.21); `admin` con `ro` (16.21 fase 3); prueba EROFS en el runner (16.19) |
+| MEDIO-1: `TEST_DATABASE_URL` en el entorno permanente de `api` | **Corregido y verificado** | 16.17 y 16.18; regresión con la URL efímera (16.19); ausencia en el servicio (16.20, 16.21) |
+| Bajo-4: precedencia del shell en la interpolación | **No corregido; deuda DT-13** | Mitigado por la guardia de rol DD-29 (verificada en 16.11 y 16.21) y por la verificación previa del runner |
+| DT-14: `TEST_DATABASE_URL` obsoleta en la plantilla y en `.env` | **Deuda documentada** | Ya no la usan ni `api` ni el runner; solo llega a contenedores efímeros de `admin` vía `env_file` (credencial ficticia de `db-test`) |
+| DT-10, DT-11 y DT-12 (bajos de la primera revisión) | **No corregidos; deuda documentada** | `design.md` |
+| Informativos anteriores (DT-01, DT-02, DT-03/DD-06, DT-05, DT-06; IP detrás de proxy; `env_ignore_empty` y el mensaje de clave vacía) | **Vigentes como deuda o limitación documentada** | `design.md`, `tdd-evidencia.md` |
+
+**Observaciones nuevas (informativas, sin vía de escalada bloqueante; no se agregan tareas)**:
+
+- `pg_hba` admite `scram-sha-256` desde cualquier host de la red de Compose. Un proceso de `api` comprometido podría intentar adivinar en línea la contraseña de `app`, sin límite de intentos en la base. Mitigación: contraseña de administración fuerte (cambiada por el autor en 13.1) y red solo local; endurecimiento dentro de DT-02.
+- `api` corre como `root` dentro del contenedor. El montaje `ro` se aplica igual, porque el contenedor no tiene `CAP_SYS_ADMIN` ni `privileged`, verificado por la autoprueba.
+- `docker compose run admin` sin `--no-deps` recrearía `db`, porque su `config-hash` está desactualizado. Ya está documentado: todos los comandos llevan `--no-deps`.
+
+**Matriz**: 226 escenarios en 14 specs, sin duplicados, faltantes ni números fuera de rango. Las 175 referencias `archivo::funcion` existen en `backend/tests/` y todos los casos AUTO citados existen en `autoprueba.ps1`. No quedan pendientes vigentes; la única excepción documentada es base-de-datos-local #22. Se corrigieron dos afirmaciones históricas que podían leerse como vigentes ("194 de 194" de 12.7 y "última corrida completa" de 10.1), conservando el texto original.
+
+**Secretos**: el diff, el archivo nuevo, `verify.md` y `tdd-evidencia.md` no contienen hashes Argon2 ni SCRAM, JWT, claves privadas, SID de usuario ni emails reales. Las URLs con contraseña son ficticias de pruebas (hosts `*.invalid` o valores literales de prueba) o marcadores de formato. Los valores hexadecimales de 64 caracteres son el SHA-256 del respaldo y de `salud.py` y los identificadores de contenedores.
+
+**Riesgos residuales aceptados**: DT-01 a DT-14 según `design.md`, entre ellos el superusuario `app` para administración, RLS ante una aplicación comprometida y DT-13 (precedencia del shell), además de las observaciones informativas de arriba. Fuera de alcance: quien controle el host, Docker o el archivo `.env`.
+
+**Limitaciones**:
+
+- base-de-datos-local #22 (`docker compose up -d` sin perfiles) no se ejecutó para no recrear servicios.
+- La escritura con el contexto de otro consultorio (`WITH CHECK`) se probó en `db-test`, no en desarrollo.
+- La recarga real se verificó con un solo archivo.
+- RT3 final es una revisión estática sobre evidencia registrada; no se repitió la regresión.
+
+**Conclusión**: **GO** para preparar el commit de corrección (16.14). Archive queda condicionado a ese commit y a la autorización del autor.

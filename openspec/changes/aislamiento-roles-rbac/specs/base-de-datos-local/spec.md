@@ -99,3 +99,80 @@ Se conserva el nombre del escenario de C-01 (OpenSpec no admite renombrar escena
 - **DADO** una ejecución sin `-x target` y sin `DATABASE_MIGRATION_URL`
 - **CUANDO** Alembic resuelve la URL de la migración
 - **ENTONCES** la resolución falla con un error que menciona `DATABASE_MIGRATION_URL`, sin abrir ninguna conexión
+
+## ADDED Requirements
+
+### Requirement: Entorno de la API limitado a variables permitidas
+El servicio `api` de Docker Compose NO DEBE (MUST NOT) usar `env_file` y DEBE (MUST) recibir solo las variables permitidas, cada una con su valor interpolado de forma explícita en un mapa `environment`. NO DEBE (MUST NOT) recibir `DATABASE_MIGRATION_URL`, `POSTGRES_PASSWORD`, `POSTGRES_USER`, `POSTGRES_DB`, `PGPASSWORD` ni `TEST_DATABASE_URL`.
+
+#### Scenario: Definición del servicio api
+- **CUANDO** se inspecciona `docker-compose.yml`
+- **ENTONCES** `api` no tiene `env_file` y las claves de su `environment` son exactamente `DATABASE_URL`, `DATABASE_LOGIN_URL`, `AUTH_SECRET_KEY`, `CORS_ALLOWED_ORIGINS`, `APP_ENV`, `AUTH_SESSION_MINUTES`, `AUTH_SESSION_MAX_HOURS`, `AUTH_COOKIE_SECURE` y `WATCHFILES_FORCE_POLLING`
+- **Y** cada valor es un literal o una interpolación explícita, con `${VARIABLE:?mensaje}` para las cinco primeras, nunca una entrada de lista sin valor
+- **Y** ninguna clave es de administración
+
+#### Scenario: Entorno efectivo del contenedor api
+- **DADO** el servicio `api` en ejecución
+- **CUANDO** se listan solo los nombres de las variables de entorno del contenedor
+- **ENTONCES** no aparecen `DATABASE_MIGRATION_URL`, `POSTGRES_PASSWORD`, `POSTGRES_USER`, `POSTGRES_DB`, `PGPASSWORD` ni `TEST_DATABASE_URL`
+
+#### Scenario: Variables del shell no se propagan
+- **DADO** un proceso de PowerShell que define `DATABASE_MIGRATION_URL` y `POSTGRES_PASSWORD` con valores ficticios
+- **CUANDO** se crea un contenedor del servicio `api` desde ese proceso sin opciones `-e`
+- **ENTONCES** esas variables no aparecen entre los nombres del entorno del contenedor
+
+### Requirement: Servicio administrativo efímero separado de la API
+Docker Compose DEBE (MUST) definir un servicio `admin` con la imagen del backend, `env_file: .env`, perfil `admin`, `restart: "no"` y sin puertos publicados, del que ningún otro servicio dependa. Su comando por defecto DEBE (MUST) terminar de inmediato con código distinto de cero y un mensaje fijo que indique usar `docker compose run --rm --no-deps admin <comando>`, para que seleccionarlo con `up` no lo deje en ejecución.
+
+#### Scenario: Definición del servicio admin
+- **CUANDO** se inspecciona `docker-compose.yml`
+- **ENTONCES** `admin` tiene perfil `admin`, `restart: "no"`, `env_file`, ningún `ports` y un comando por defecto que termina con error
+- **Y** ningún servicio lo declara en `depends_on`
+
+#### Scenario: Arranque normal sin admin
+- **CUANDO** se ejecuta `docker compose up -d` sin perfiles
+- **ENTONCES** no se crea ningún contenedor del servicio `admin`
+
+#### Scenario: Selección explícita no lo deja en ejecución
+- **CUANDO** se selecciona `admin` explícitamente con `up` o se ejecuta `docker compose run --rm --no-deps admin` sin comando
+- **ENTONCES** el contenedor termina con código distinto de cero y el mensaje fijo, sin publicar puertos
+- **Y** `docker compose ps` no muestra ningún contenedor `admin` en ejecución
+
+### Requirement: Administración solo desde el servicio admin
+Las migraciones de desarrollo, el seed y los comandos de credenciales, roles y mantenimiento DEBEN (MUST) documentarse y ejecutarse con `docker compose run --rm --no-deps admin`. Ejecutados con `api` DEBEN (MUST) fallar sin conectar, con el mensaje que menciona `DATABASE_MIGRATION_URL`.
+
+#### Scenario: Migraciones de desarrollo con admin
+- **DADO** la base de desarrollo en una revisión conocida
+- **CUANDO** se ejecuta `docker compose run --rm --no-deps admin alembic current`
+- **ENTONCES** informa esa revisión usando `DATABASE_MIGRATION_URL`
+
+#### Scenario: Administración desde api falla cerrado
+- **CUANDO** se ejecuta `docker compose run --rm --no-deps api alembic current`
+- **ENTONCES** termina con código distinto de cero y un mensaje que menciona `DATABASE_MIGRATION_URL`, sin abrir conexiones
+
+#### Scenario: Comandos documentados con admin
+- **CUANDO** se inspeccionan `README.md` y la ayuda de los módulos `app.credenciales`, `app.roles_postgres` y `app.mantenimiento`
+- **ENTONCES** las migraciones de desarrollo, el seed y esos comandos se indican con el servicio `admin` y no con `api`
+
+### Requirement: Código montado de solo lectura en api y admin
+Los servicios `api` y `admin` DEBEN (MUST) montar el código del backend de solo lectura (`./backend:/app:ro`) y NO DEBEN (MUST NOT) tener otro montaje escribible sobre el código ni privilegios adicionales (`privileged`, `cap_add`, `security_opt`). La recarga de la API, las pruebas y los comandos administrativos DEBEN (MUST) funcionar sin escribir en `/app`.
+
+#### Scenario: Definición de los montajes
+- **CUANDO** se inspecciona `docker-compose.yml`
+- **ENTONCES** `api` y `admin` montan `./backend` en `/app` con `read_only` y ningún otro montaje de esos servicios es escribible sobre el código
+- **Y** ninguno declara `privileged`, `cap_add` ni `security_opt`
+
+#### Scenario: Escritura en el código rechazada
+- **DADO** un contenedor del servicio `api`
+- **CUANDO** se intenta crear un archivo en `/app`
+- **ENTONCES** la operación falla con un error de sistema de archivos de solo lectura y no queda ningún archivo
+
+#### Scenario: Montaje efectivo del servicio en ejecución
+- **DADO** el servicio `api` en ejecución
+- **CUANDO** se inspeccionan los montajes del contenedor
+- **ENTONCES** el destino `/app` figura como no escribible
+
+#### Scenario: La recarga funciona con el código de solo lectura
+- **DADO** el servicio `api` en ejecución con el código de solo lectura
+- **CUANDO** cambia la fecha de modificación de un archivo del backend en el host, sin cambiar su contenido
+- **ENTONCES** el proceso de recarga detecta el cambio, reinicia el servidor y `GET /api/health` responde 200

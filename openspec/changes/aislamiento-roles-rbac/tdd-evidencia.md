@@ -284,9 +284,9 @@ Pruebas previas modificadas y su justificacion (acumulado; el detalle de cada un
 - Busqueda de `TURNOS_APP_TEST_PASSWORD=`, `TURNOS_LOGIN_TEST_PASSWORD=` y `PASSWORD '` en `backend/`, `scripts/`, `docker-compose.yml`, `db/` y el Change: las unicas apariciones son (a) las asercion y construccion de sentencias con verificadores `SCRAM-SHA-256` de `app/roles_postgres` y sus pruebas, (b) `CREATE ROLE ... PASSWORD '{clave}'` de dos pruebas de aislamiento con una clave generada por `secrets.token_urlsafe(24)` en `db-test`, y (c) el texto de la spec de `ejecucion-de-pruebas`. Ningun literal de contrasena real; datos solo ficticios.
 
 
-## 10.2 Matriz escenario -> prueba (14 deltas, 194 escenarios)
+## 10.2 Matriz escenario -> prueba (14 deltas, 226 escenarios: 194 + 25 de DD-34 + 7 de la segunda revisión RT3)
 
-Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS = `backend/tests/isolation/`, AUTO = `scripts/tests/autoprueba.ps1`, RUN = `scripts/test.ps1`. Los numeros son el orden de los escenarios (`#### Scenario`) en cada `spec.md`. Resultado de la ultima corrida completa: `scripts/test.ps1` codigo 0 (ver "Tarea 10.1").
+Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS = `backend/tests/isolation/`, AUTO = `scripts/tests/autoprueba.ps1`, RUN = `scripts/test.ps1`. Los numeros son el orden de los escenarios (`#### Scenario`) en cada `spec.md`. Resultado de la ultima corrida completa: `scripts/test.ps1` codigo 0 (ver "Tarea 10.1"). *(Referencia histórica de 10.1; la última corrida completa vigente es la de 16.19.)*
 
 ### acceso-previo-al-contexto (37)
 
@@ -398,7 +398,7 @@ Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS =
 | 12, 13 | INT `test_autorizacion_roles::me_y_logout_estan_disponibles_para_cada_rol` |
 | 14 | UNI `test_comparaciones_de_rol.py` |
 
-### base-de-datos-local (17)
+### base-de-datos-local (30)
 
 | # | Prueba |
 |---|---|
@@ -414,8 +414,21 @@ Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS =
 | 15 | UNI `test_migraciones::destino_desarrollo_explicito_resuelve_la_base_de_desarrollo`, `desarrollo_usa_la_url_de_migracion_y_nunca_la_de_la_api` (la delta MODIFICA el destino: ahora `DATABASE_MIGRATION_URL`) |
 | 16 | UNI `test_migraciones::destino_desconocido_se_rechaza_listando_los_valores_admitidos` |
 | 17 | UNI `test_migraciones::desarrollo_sin_url_de_migracion_falla_mencionandola_sin_valores` |
+| 18 | AUTO "Entorno de la API limitado a variables permitidas" (estructura sin interpolar; 9 claves desde RT3-06, sin `TEST_DATABASE_URL`) |
+| 19 | AUTO "Variables administrativas del shell no llegan a api" (nombres del entorno de un contenedor efímero de `api` con la configuración nueva). Servicio en ejecución: 16.11 verificó la ausencia de las variables de administración; **la ausencia de `TEST_DATABASE_URL` (escenario ampliado por RT3-06) quedó verificada en 16.21** (`verify.md`) |
+| 20 | AUTO "Variables administrativas del shell no llegan a api" |
+| 21 | AUTO "Servicio administrativo efimero (admin)" |
+| 22 | AUTO "Servicio administrativo efimero (admin)" (perfil `admin`); comprobación manual en 16.6: `docker compose config` sin perfiles no incluye `admin`. `up` sin perfiles no se ejecutó (recrearía servicios); 16.12 confirmó que no queda ningún contenedor `admin` (`docker compose ps -a`) |
+| 23 | AUTO "Servicio administrativo efimero (admin)" (comando por defecto con `sys.exit`, `restart: "no"`, sin puertos; estático). **Ejecución real verificada en 16.12** (rc=1, solo el mensaje fijo, sin contenedor residual) |
+| 24 | **Verificado en 16.12**: `docker compose run --rm --no-deps admin alembic current` → `0004 (head)`; la resolución a `DATABASE_MIGRATION_URL` está cubierta por UNI `test_migraciones::desarrollo_usa_la_url_de_migracion_y_nunca_la_de_la_api` |
+| 25 | UNI `test_migraciones::desarrollo_sin_url_de_migracion_falla_mencionandola_sin_valores`, `test_comandos_administracion::cada_comando_sin_la_url_de_administracion_la_menciona_sin_conectar` (comportamiento sin `DATABASE_MIGRATION_URL`, que es el entorno de `api`). **Comando real con `api` verificado en 16.12** (rc=1, mensaje que menciona `DATABASE_MIGRATION_URL`, sin conexión) |
+| 26 | AUTO "Comandos administrativos documentados con admin (DD-34)" |
+| 27 | AUTO "Codigo de solo lectura en api y admin (DD-34, RT3-05)" (montajes `read_only`, sin otro montaje escribible sobre el código, sin `privileged`, `cap_add` ni `security_opt`) |
+| 28 | UNI `test_montaje_codigo::el_codigo_montado_en_app_es_de_solo_lectura` (EROFS en un contenedor de `api`; también en el runner de 16.19) |
+| 29 | **Verificado en 16.20 y 16.21**: `docker inspect` del servicio `api` en ejecución (`/app rw=false`); `admin` efímero con `/app` `ro` (`/proc/mounts`) |
+| 30 | Comprobación focalizada en 16.16 (contenedor efímero: `Started reloader process ... using WatchFiles`, `Application startup complete.`). **Recarga real del servicio verificada en 16.21** (cambio solo de fecha en el host: `WatchFiles detected changes ... Reloading...`, `Application startup complete.`, health 200; fecha restaurada, SHA-256 y Git idénticos) |
 
-### configuracion-backend (12)
+### configuracion-backend (19)
 
 | # | Prueba |
 |---|---|
@@ -424,10 +437,17 @@ Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS =
 | 7 | AUTO ".env ignorado por Git" |
 | 8 | AUTO "Plantilla completa con valores ficticios" (las tres URLs de rol y sus usuarios); UNI `test_plantilla_env::test_la_plantilla_declara_exactamente_las_14_variables`, `test_las_tres_urls_de_base_usan_el_usuario_de_su_rol`, `test_la_plantilla_usa_valores_ficticios_para_las_contrasenas_de_los_roles` (tarea 1.6, GREEN registrado abajo) |
 | 9, 10 | UNI `test_config.py` (mismo rol rechazado; mismo servidor con roles distintos admitido) |
-| 11 | UNI `test_crear_app::ningun_motor_de_la_app_apunta_a_database_migration_url` |
+| 11 | UNI `test_crear_app::con_un_entorno_sin_credenciales_de_administracion_la_app_se_crea`, `rechaza_la_configuracion_con_database_migration_url` (escenario modificado por DD-34; reemplaza a `ningun_motor_de_la_app_apunta_a_database_migration_url`) |
 | 12 | UNI `test_crear_app::crear_app_sin_database_login_url_falla_con_mensaje_fijo_sin_abrir_conexiones` |
+| 13 | UNI `test_crear_app::rechaza_la_configuracion_con_database_migration_url` |
+| 14 | UNI `test_crear_app::rechaza_una_variable_de_administracion_en_el_entorno_del_proceso` (3 casos), `nombra_todas_las_variables_de_administracion_presentes` |
+| 15 | UNI `test_crear_app::con_un_entorno_sin_credenciales_de_administracion_la_app_se_crea` |
+| 16 | UNI `test_crear_app::los_comandos_administrativos_no_crean_la_app_web` (7 módulos), `test_comandos_administracion::la_sesion_por_defecto_de_cada_comando_apunta_al_host_de_administracion` |
+| 17 | UNI `test_crear_app::la_app_web_no_arranca_con_el_entorno_administrativo` (entorno equivalente al de `admin`, simulado). **Dentro del contenedor `admin`: verificado en 16.12** (`CredencialAdministrativaEnLaApi`, `motores_creados=0`) |
+| 18 | UNI `test_config::opcionales_vacias_toman_su_valor_por_defecto` |
+| 19 | UNI `test_config::una_obligatoria_vacia_hace_fallar_la_carga` (4 casos) |
 
-### credenciales-locales (9)
+### credenciales-locales (11)
 
 | # | Prueba |
 |---|---|
@@ -439,8 +459,10 @@ Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS =
 | 7 | UNI `test_credenciales::revisar_y_reemplazar_son_excluyentes_y_fallan_antes_de_conectar` |
 | 8 | INT `test_credenciales::una_transaccion_confirmada_entre_la_lectura_y_la_escritura_hace_fallar_el_comando` |
 | 9 | INT `test_credenciales::restablecer_un_hash_de_t2_deja_el_hash_vigente_revoca_sesiones_y_sale_de_la_revision` |
+| 10 | AUTO "Comandos administrativos documentados con admin (DD-34)" (ayuda de `app.credenciales`) |
+| 11 | UNI `test_comandos_administracion::cada_comando_sin_la_url_de_administracion_la_menciona_sin_conectar` (credenciales) |
 
-### ejecucion-de-pruebas (5)
+### ejecucion-de-pruebas (11)
 
 | # | Prueba |
 |---|---|
@@ -449,8 +471,14 @@ Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS =
 | 3 | AUTO "Contrasena efimera de rol de prueba: formato y unicidad" |
 | 4 | AUTO "test.ps1: contrasenas de los roles por nombre, sin literal y retiradas" |
 | 5 | AUTO "db-test sin contrasenas no arranca (proyecto aislado)" |
+| 6 | AUTO "test.ps1: sin variables de administracion en opciones -e" |
+| 7 | RUN `scripts/test.ps1` completo con el compose de DD-34 (16.9, código 0) |
+| 8 | AUTO "Verificacion previa: variable de administracion en PowerShell (DD-34)", "test.ps1 con variable de administracion termina antes de cualquier paso" |
+| 9 | AUTO "test.ps1: URL de pruebas efimera solo por nombre y retirada (RT3-06)", "db-test con contrasena efimera del superusuario, sin literal (RT3-06)" |
+| 10 | AUTO "URL de la base de pruebas: host db-test y base _test (RT3-06)"; UNI `test_database::guardia_*` (la guardia de base de pruebas no cambió); RUN 16.19 (migraciones e integración contra `db-test` con la URL efímera) |
+| 11 | AUTO "db-test sin la contrasena efimera del superusuario no arranca (proyecto aislado, RT3-06)" |
 
-### mantenimiento-local (4)
+### mantenimiento-local (6)
 
 | # | Prueba |
 |---|---|
@@ -458,6 +486,8 @@ Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS =
 | 2 | UNI `test_mantenimiento::los_argumentos_invalidos_se_rechazan_antes_de_conectar`, `analizar_lanza_argumentos_invalidos_sin_repetir_el_valor` |
 | 3 | UNI `test_mantenimiento::el_maximo_de_lotes_por_defecto_y_los_limites_se_aceptan` |
 | 4 | UNI `test_comandos_administracion::cada_comando_sin_la_url_de_administracion_la_menciona_sin_conectar` (mantenimiento), `la_sesion_por_defecto_de_cada_comando_apunta_al_host_de_administracion` |
+| 5 | AUTO "Comandos administrativos documentados con admin (DD-34)" (ayuda de `app.mantenimiento`) |
+| 6 | UNI `test_comandos_administracion::cada_comando_sin_la_url_de_administracion_la_menciona_sin_conectar` (mantenimiento) |
 
 ### modelo-consultorios-usuarios (3)
 
@@ -495,12 +525,14 @@ Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS =
 | 3 | UNI `test_contexto_y_repositorios::la_unica_aparicion_del_parametro_de_contexto_esta_en_contexto_bd`, `aplicar_contexto_solo_se_llama_desde_dependencias`, `fijar_consultorio_de_login_solo_se_llama_desde_el_servicio` |
 | 4 | AIS `test_acceso_cruzado::usuario_de_b_y_uuid_inexistente_dan_404_identicos_con_turnos_app[/prueba/sin-filtro/usuarios]`, `cada_consultorio_ve_solo_los_suyos_y_el_otro_le_da_404`; AIS `test_rls.py` |
 
-### seed-ficticio (3)
+### seed-ficticio (5)
 
 | # | Prueba |
 |---|---|
 | 1, 2 | UNI `test_seed::entorno_de_pruebas_rechazado_con_mensaje_que_menciona_app_env`, `entorno_local_admitido` |
 | 3 | UNI `test_comandos_administracion::la_sesion_por_defecto_de_cada_comando_apunta_al_host_de_administracion` (seed) |
+| 4 | AUTO "Comandos administrativos documentados con admin (DD-34)" (README: seed con `admin`) |
+| 5 | UNI `test_comandos_administracion::cada_comando_sin_la_url_de_administracion_la_menciona_sin_conectar` (seed) |
 
 ### validacion-entrada (8)
 
@@ -516,6 +548,8 @@ Notacion: UNI = `backend/tests/unit/`, INT = `backend/tests/integration/`, AIS =
 | 8 | UNI `test_lecturas_de_peticion::las_lecturas_de_la_peticion_coinciden_exactamente_con_la_lista_blanca`, `ninguna_lectura_fuera_del_rechazo_usa_un_nombre_de_consultorio_o_tenant` |
 
 Resultado: **194 de 194 escenarios cubiertos por pruebas automatizadas** (verificado en la sesion de 12.7: las 167 referencias `archivo::funcion` de la matriz existen en `backend/tests/` y los 8 casos AUTO existen en `scripts/tests/autoprueba.ps1`). El escenario configuracion-backend #8 quedo cubierto al completarse la tarea 1.6. Dos escenarios sin prueba al empezar 10.2 (autenticacion-sesion #19 y pruebas-aislamiento #2) se cubrieron con pruebas nuevas.
+
+*Nota RT3 final (2026-11-16): el párrafo anterior es el estado histórico de 12.7. El estado vigente es **226 de 226** (194 + 25 de DD-34 + 7 de la segunda revisión RT3), con cobertura automatizada o verificación registrada en `verify.md` (16.11, 16.12, 16.20, 16.21); única excepción documentada: base-de-datos-local #22.*
 
 ## 1.6 Plantilla de variables (RED)
 
@@ -543,3 +577,126 @@ La edicion de `.env.example` la hizo el autor a mano (tres conexiones de C-04); 
 Comando: `docker compose run --rm --no-deps -e AUTH_SECRET_KEY api python -m pytest -p no:cacheprovider tests/unit/test_plantilla_env.py tests/unit/test_plantilla_ausente.py -v` (imagen `api` reconstruida antes; `AUTH_SECRET_KEY` efimera generada con `New-ClaveAuthEfimera`, como `scripts/test.ps1`).
 Resultado GREEN: **23 passed** (RED fue 4 failed, 19 passed). Autoprueba, caso 'Plantilla completa con valores ficticios' (script aislado): `[OK]`, codigo 0.
 REFACTOR: no corresponde (solo cambio la plantilla, sin cambios de codigo). Sin expectativas relajadas.
+
+## Grupo 16: corrección RT3 ALTO-1 (DD-34), 2026-11-15
+
+Pruebas focalizadas en contenedores efímeros del servicio `api` (`docker compose run --rm --no-deps -T api ...`), sin tocar la base de desarrollo; la API de desarrollo en ejecución no se recreó (sigue con el entorno anterior hasta A6). La autoprueba se ejecutó en el host.
+
+| Tarea | Prueba | Capa | Red de seguridad | RED | GREEN | Triangulación | Refactor |
+|---|---|---|---|---|---|---|---|
+| 16.1/16.2 | `tests/unit/test_crear_app.py` | Unit | 765 unitarias en verde | 6 fallos: `se creo el motor crear_engine_login antes de la guardia` (antes, un `ImportError`: se agregó primero la clase sin lógica) | `rechazar_credenciales_de_administracion` en `app/main.py`; 22/22 del archivo | configuración con `DATABASE_MIGRATION_URL`, cada una de las 3 variables en el entorno, las 3 juntas, entorno limpio, `crear_app()` con el entorno de `admin`; 7 módulos administrativos sin `crear_app` (AST) | — |
+| 16.3 | `tests/unit/test_config.py` | Unit | 81 del archivo en verde | 3 fallos (opcionales vacías, `DATABASE_URL` vacía aceptada, URLs de rol vacías cargadas) | `env_ignore_empty=True`; 87/87 | 4 obligatorias vacías; `AUTH_SECRET_KEY=""` del entorno ahora se rechaza como obligatoria y el mensaje fijo de clave vacía se verifica con el valor recibido directamente | — |
+| 16.4 (parcial) | `tests/unit/conftest.py` | Unit | — | 8 pruebas de `crear_app` fallaban por `POSTGRES_PASSWORD` heredada del contenedor anterior | el fixture autouse también retira `POSTGRES_PASSWORD` y `PGPASSWORD` (mismo criterio que `DATABASE_MIGRATION_URL`) | — | — |
+| 16.5/16.6 | `scripts/tests/autoprueba.ps1` | Autoprueba | 22 casos en verde | 3 de 4 casos nuevos fallaban: `api usa env_file`; `no existe el servicio admin`; `api recibio: DATABASE_MIGRATION_URL, POSTGRES_PASSWORD, POSTGRES_USER, POSTGRES_DB` (solo nombres) | `docker-compose.yml` según DD-34; 26/26 | estructura sin interpolar ni resolver `env_file`; propagación desde el shell con valores ficticios en un contenedor efímero | — |
+| 16.7 | `scripts/tests/autoprueba.ps1` | Autoprueba | 26 en verde | 3 fallos (función inexistente; `test.ps1` sin verificación previa) | `Assert-SinCredencialesDeAdministracion` y su llamada antes de cualquier paso; 29/29 | las 3 variables una por una; `test.ps1` copiado con `DATABASE_MIGRATION_URL` ficticia termina sin ejecutar pasos | — |
+| 16.8 | `scripts/tests/autoprueba.ps1` | Autoprueba | 29 en verde | `README indica un comando administrativo con el servicio api` | `README.md` y ayuda de 3 módulos; 30/30 | README (migraciones y seed) y los 3 módulos | — |
+
+Resultado acumulado: `tests/unit` **784 passed** (765 + 20 nuevas − 1 reemplazada) en un contenedor `api` con el entorno nuevo; autoprueba **30/30**.
+
+**16.4 sin verificar en integración**: la ejecución focalizada en `db-test` falló en las migraciones de pruebas (`password authentication failed for user "app"` contra `db-test`). Diagnóstico sin leer `.env`: `TEST_DATABASE_URL` tiene usuario `app`, host `db-test` y base `turnos_test`, pero su contraseña **no** es la ficticia `app` que declara `db-test`; ninguna variable del shell la sobrescribe. Pendiente de la revisión del autor.
+
+**16.4 verificada (2026-11-15, segunda ejecución)**: el autor corrigió a mano `TEST_DATABASE_URL` en su `.env` (usuario `app`, host `db-test`, contraseña ficticia `app`; comprobado solo como booleano, sin leer el archivo). Ejecución focalizada `verif_164.ps1` (directorio temporal de la sesión de Claude) sobre `db-test` efímera, con `AUTH_SECRET_KEY` y contraseñas de rol efímeras: migraciones de pruebas OK; los 15 archivos de integración que construyen la app **252 passed**; los 3 archivos de aislamiento que la construyen con conexiones reales de `turnos_app` y `turnos_login` (guardias de rol activas) **19 passed**. `db-test` eliminada al terminar; `api` y `db` de desarrollo con el mismo contenedor. Los fixtures construyen la aplicación sin `DATABASE_MIGRATION_URL`; la guardia de base de pruebas (`validar_url_de_pruebas`) sigue en `tests/integration/conftest.py` y `tests/isolation/conftest.py`.
+
+### 16.9 Regresión completa en `db-test` con el compose de DD-34 (2026-11-15)
+
+**Precondiciones** (solo lectura): `db` de desarrollo sano, mismo contenedor desde A4, catálogo idéntico a A3 y huellas iguales al cierre del grupo 14; `api` de desarrollo sin recrear (contenedor de A4, todavía con el entorno anterior: 2 nombres de variables de administración presentes hasta A6); `frontend` detenido; `TEST_DATABASE_URL` con host `db-test`, base `turnos_test`, contraseña ficticia y destino distinto del de desarrollo (comprobado solo como booleanos); guardias de base de pruebas en `tests/integration/conftest.py` y `tests/isolation/conftest.py`; respaldo A1 con SHA-256 `bdbff5b1…37ead` y permisos restringidos.
+
+**Comando**: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1`, en segundo plano, con la salida en el directorio temporal de la sesión de Claude: **código 0**, "Todas las suites pasaron."
+
+| Paso | Resultado |
+|---|---|
+| Verificación previa DD-34 | sin variables de administración en el proceso de PowerShell |
+| 0. autoprueba | **30** `[OK]`, 0 `[FALLA]` |
+| 1. construir imágenes | OK |
+| 2. unitarias | **784 passed** (765 + 20 nuevas del grupo 16 − 1 reemplazada) |
+| 3. `db-test` | levantada (efímera, tmpfs) |
+| 4. migraciones de pruebas | `0001 -> 0002 -> 0003 -> 0004` sobre `db-test` |
+| 5. integración | **509 passed** |
+| 6. aislamiento (`turnos_app`, `turnos_login`) | **234 passed** (163 en `test_rls`, `test_acceso_cruzado`, `test_privilegios`, `test_funciones_acceso`, `test_contexto_transaccional` y `test_guardia_rol_api`) |
+| 7. `tsc --noEmit` | OK |
+| 8. Vitest | **2 passed** (1 archivo) |
+
+Guardia de credenciales de administración: las 13 pruebas de `test_crear_app.py` sobre la guardia y la separación de los comandos administrativos en verde. Las pruebas de las guardias de rol, RLS, privilegios y aislamiento entre consultorios siguen en verde. No hay regresiones respecto del Verify de 12.7 (765/509/234/2), salvo el aumento de unitarias por las pruebas nuevas.
+
+**Estado final**: `db-test` eliminada (0 contenedores `db-test`). `api` y `db` de desarrollo con los mismos contenedores; catálogo idéntico a A3, huellas iguales a las previas a 16.9 y logs de `db` sin `ERROR` ni `FATAL` desde el inicio de 16.9. No se tocó la base de desarrollo. La salida del runner no contiene secretos: las 36 líneas con `://` son identificadores de pruebas con URLs ficticias o enlaces de documentación.
+
+**Matriz**: actualizada a **219 escenarios** (194 + 25 de DD-34). Cubiertos por pruebas automatizadas: los 25, con dos matices. **Pendientes de A6 o de 16.12**, por depender del despliegue o de ejecutar comandos reales en desarrollo:
+
+- base-de-datos-local #19 (servicio en ejecución), #22 (`up` sin perfiles), #23 (ejecución real de `admin`), #24 (`admin alembic current`) y #25 (comando real con `api`);
+- configuracion-backend #17 dentro del contenedor `admin`.
+
+Todos tienen cobertura automatizada parcial o equivalente indicada en la matriz, salvo #24, cuya resolución de URL está cubierta por pruebas unitarias y cuyo comando real se verifica en 16.12.
+
+**Actualización tras 16.11 y 16.12 (2026-11-15)**: los escenarios de DD-34 que dependían del despliegue quedaron verificados en desarrollo (`verify.md`, secciones "16.11" y "16.12"). La única excepción es base-de-datos-local #22, `docker compose up -d` sin perfiles, que no se ejecutó porque recrearía servicios; queda cubierto por la autoprueba (perfil `admin`) y por la ausencia de contenedores `admin` comprobada en 16.12.
+
+### 16.15 a 16.18: segunda revisión RT3, ALTO-2 y MEDIO-1 (2026-11-15)
+
+Verificaciones focalizadas: autoprueba en el host, unitarias en contenedores efímeros de `api` con `--no-deps` y proyectos de Compose aislados para `db-test` (eliminados al terminar). Sin contacto con la base de desarrollo; la API de desarrollo no se recreó (A7 pendiente).
+
+| Tarea | Prueba | RED | GREEN |
+|---|---|---|---|
+| 16.15/16.16 (ALTO-2) | AUTO "Codigo de solo lectura en api y admin (DD-34, RT3-05)"; UNI `tests/unit/test_montaje_codigo.py` | `api monta /app con escritura`; la unitaria creó su archivo ficticio único en `/app`, lo borró y falló (0 residuos) | `./backend:/app:ro` en `api` y `admin`; autoprueba 31/31; unitarias 785; `uvicorn --reload` en un contenedor efímero: `Started reloader process ... using WatchFiles` y `Application startup complete.` |
+| 16.17/16.18 (MEDIO-1) | AUTO "Entorno de la API limitado…" (9 claves), "db-test con contrasena efimera del superusuario, sin literal", "URL de la base de pruebas: host db-test y base _test", "test.ps1: URL de pruebas efimera solo por nombre y retirada", "db-test sin la contrasena efimera del superusuario no arranca (proyecto aislado)", "Variables administrativas del shell no llegan a api" (con `TEST_DATABASE_URL`) | 6 fallos (`api recibe … TEST_DATABASE_URL`; sin `TURNOS_DB_TEST_PASSWORD`; sin `New-UrlBaseDePruebas`; `test.ps1` sin contraseña efímera; `db-test arranco sin la contrasena efimera`; `api recibio: TEST_DATABASE_URL`) | `docker-compose.yml` (`api` sin `TEST_DATABASE_URL`; `db-test` con `POSTGRES_PASSWORD=${TURNOS_DB_TEST_PASSWORD:-}`), `New-UrlBaseDePruebas` en `Pasos.ps1`, `test.ps1` (contraseña CSPRNG por ejecución, URL armada en el proceso antes del primer paso, `-e TEST_DATABASE_URL` solo en los pasos 4 a 6, retirada y restauración en `finally`), casos aislados adaptados sin literales (código montado `read_only`); autoprueba **35/35**; unitarias 785 |
+
+**Ajuste de una prueba nueva en el GREEN**: la detección de "contraseña literal" en `Pasos.ps1` marcaba los marcadores de formato `{0}:{1}`; se excluyeron solo esos marcadores y se agregó una aserción que demuestra que la detección sigue funcionando con una contraseña literal real.
+
+**Otras comprobaciones**:
+
+- Entorno resuelto de `api`: 9 claves, sin `TEST_DATABASE_URL` (solo nombres).
+- `docker compose config --quiet` funciona sin `TURNOS_DB_TEST_PASSWORD` (`${…:-}` no rompe otros comandos).
+- Las guardias de base de pruebas (`database.py`, `migraciones.py` y los `conftest` de integración y aislamiento) no cambiaron.
+- `docker-compose.yml`, `test.ps1`, `Pasos.ps1` y `autoprueba.ps1` en ASCII; la salida de la autoprueba no contiene `://`; 0 contenedores temporales residuales.
+- El caso aislado "Funciona sin clave en .env" ejecutó migraciones e integración contra su propia `db-test` con la URL efímera pasada por nombre y el código de solo lectura.
+- `README.md` documenta el código de solo lectura y la URL de pruebas efímera.
+
+Pendiente de 16.19: regresión completa con el runner. Pendiente de 16.21: montaje y entorno efectivos del servicio en ejecución, recarga real, `admin alembic current`.
+
+### 16.19 Regresión completa con el código de solo lectura y la URL de pruebas efímera (2026-11-15)
+
+**Precondiciones** (solo lectura):
+
+- `api` (`46017f8655b1`) y `db` (`6844b5d91884`) de desarrollo con los mismos contenedores.
+- `db` sano, Alembic `0004`, catálogo idéntico a A3 y huellas iguales al grupo 14.
+- Sin contenedores `db-test`.
+- Guardias de base de pruebas sin cambios (2 usos de `validar_url_de_pruebas` en cada `conftest`).
+- Respaldo A1 intacto.
+- `TURNOS_DB_TEST_PASSWORD` y `TEST_DATABASE_URL` no definidas en el shell.
+
+**Comando** (una sola ejecución, en segundo plano): `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1`. **Código 0**, "Todas las suites pasaron."
+
+| Paso | Resultado |
+|---|---|
+| Verificación previa DD-34 | sin variables de administración en el proceso |
+| 0. autoprueba | **35** `[OK]`, 0 `[FALLA]` |
+| 1. imágenes | OK |
+| 2. unitarias (código de solo lectura) | **785 passed** (incluida `test_montaje_codigo`: EROFS en `/app`) |
+| 3. `db-test` | levantada con la contraseña efímera de su superusuario (sin ella no inicializa) |
+| 4. migraciones de pruebas | `0001 -> 0002 -> 0003 -> 0004` sobre `db-test`, con `-e TEST_DATABASE_URL` |
+| 5. integración | **509 passed** |
+| 6. aislamiento (`turnos_app`, `turnos_login`) | **234 passed** |
+| 7. `tsc --noEmit` | OK |
+| 8. Vitest | **2 passed** (1 archivo) |
+
+**Sin filtraciones**:
+
+- La salida no contiene `TEST_DATABASE_URL=` ni `TURNOS_DB_TEST_PASSWORD=`.
+- Las 36 líneas con `://` son identificadores de pruebas o enlaces de documentación.
+- Las URLs hacia `db-test` que aparecen son parámetros ficticios de pruebas versionadas (`app` y un valor de `test_migraciones.py`); ninguna tiene el formato de la contraseña efímera.
+
+**Limpieza y estado final**:
+
+- 0 contenedores `db-test`, `*-run-*` o de autoprueba.
+- El runner corre en su propio proceso de PowerShell y retira o restaura las variables en `finally` (autoprueba). El shell que lo lanzó no tiene `TURNOS_DB_TEST_PASSWORD` ni `TEST_DATABASE_URL`.
+- Sin archivos residuales en `backend/`.
+- `api` y `db` de desarrollo con los mismos contenedores; catálogo idéntico a A3 (`0004`); filas y huellas sin cambios; logs de `db` sin líneas desde el inicio.
+
+**Sin regresiones** respecto de 16.9 (784/509/234/2): +1 unitaria (`test_montaje_codigo`).
+
+**Matriz**: 226 escenarios. Los 7 nuevos tienen cobertura automatizada, salvo dos que dependen de A7:
+
+- base-de-datos-local #29: montaje efectivo del servicio en ejecución.
+- base-de-datos-local #30: recarga real, con comprobación focalizada en un contenedor efímero.
+
+El escenario #19, ampliado con la ausencia de `TEST_DATABASE_URL`, queda pendiente de 16.21 para el servicio en ejecución.
+
+**Actualización tras 16.21 (2026-11-16)**: base-de-datos-local #19 (ampliado), #29 y #30 quedaron verificados en desarrollo (`verify.md`, secciones "16.20" y "16.21"). Los 226 escenarios tienen cobertura automatizada o verificación registrada. La única excepción documentada es base-de-datos-local #22, `docker compose up -d` sin perfiles, que no se ejecutó porque recrearía servicios.

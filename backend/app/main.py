@@ -1,3 +1,5 @@
+import os
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,8 +19,31 @@ from app.core.database import (
 from app.core.contexto_bd import crear_fabrica_de_sesiones, registrar_reset_del_pool
 
 
+class CredencialAdministrativaEnLaApi(RuntimeError):
+    """La aplicacion web recibio credenciales de administracion (DD-34); mensaje fijo, sin valores."""
+
+
+# Variables que el proceso de la aplicacion web nunca debe tener (DD-34, RT3-01). Solo se usan los
+# NOMBRES: los valores no se leen ni se muestran. Los comandos administrativos no crean la app web.
+VARIABLES_DE_ADMINISTRACION = ("DATABASE_MIGRATION_URL", "POSTGRES_PASSWORD", "PGPASSWORD")
+
+
+def rechazar_credenciales_de_administracion(settings: Settings) -> None:
+    """Falla si la configuracion o el entorno del proceso traen credenciales de administracion."""
+    presentes = [nombre for nombre in VARIABLES_DE_ADMINISTRACION if nombre in os.environ]
+    if settings.database_migration_url is not None and "DATABASE_MIGRATION_URL" not in presentes:
+        presentes.insert(0, "DATABASE_MIGRATION_URL")
+    if presentes:
+        raise CredencialAdministrativaEnLaApi(
+            "la aplicacion web no debe recibir credenciales de administracion; "
+            "variables presentes: " + ", ".join(presentes)
+        )
+
+
 def crear_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or cargar_configuracion()
+    # Antes de crear motores o abrir conexiones (DD-34).
+    rechazar_credenciales_de_administracion(settings)
     # Documentacion solo con APP_ENV=local, denegada por defecto (DD-18); sin /docs/oauth2-redirect.
     en_local = settings.app_env == "local"
     app = FastAPI(

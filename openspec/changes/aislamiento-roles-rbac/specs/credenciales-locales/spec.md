@@ -57,3 +57,15 @@ El comando DEBE (MUST) escribir la credencial nueva solo si la credencial almace
 - **DADO** el usuario de A con un hash de `t=2` informado por la revisión
 - **CUANDO** el administrador ejecuta el comando con `--reemplazar`, una contraseña nueva confirmada y `REEMPLAZAR`
 - **ENTONCES** la credencial empieza con `$argon2id$v=19$m=65536,t=3,p=4$`, las sesiones previas quedan revocadas y una nueva revisión ya no lista esa cuenta
+
+### Requirement: Comando de credenciales mediante el servicio administrativo
+El comando DEBE (MUST) documentarse y ejecutarse con `docker compose run --rm -it --no-deps admin python -m app.credenciales`, el único servicio que recibe `DATABASE_MIGRATION_URL`. Ejecutado con el servicio `api`, que no la recibe, DEBE (MUST) terminar con código distinto de cero y el mensaje que la menciona, sin abrir conexiones.
+
+#### Scenario: Comando documentado con admin
+- **CUANDO** se inspeccionan `README.md` y la ayuda del módulo `app.credenciales`
+- **ENTONCES** el comando se indica con el servicio `admin` y no con `api`
+
+#### Scenario: Ejecutado con el entorno de la API
+- **DADO** `APP_ENV=local` y el entorno de la API, sin `DATABASE_MIGRATION_URL`
+- **CUANDO** se ejecuta el comando
+- **ENTONCES** termina con código distinto de cero y un mensaje que menciona `DATABASE_MIGRATION_URL`, sin abrir conexiones

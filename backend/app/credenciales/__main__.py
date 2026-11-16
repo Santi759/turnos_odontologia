@@ -5,7 +5,10 @@ consultorio y su email. Es el unico medio de obtener credenciales en C-03.
 
 Uso (solo desarrollo local; requiere una terminal interactiva):
 
-    docker compose run --rm -it api python -m app.credenciales [--reemplazar | --revisar-hashes]
+    docker compose run --rm -it --no-deps admin python -m app.credenciales [--reemplazar | --revisar-hashes]
+
+Servicio `admin` (DD-34): el unico que recibe `DATABASE_MIGRATION_URL`; con `api` el comando falla sin
+conectar.
 
 Con `--revisar-hashes` (excluyente con `--reemplazar`, DD-32) no pide datos: en una transaccion de solo
 lectura clasifica la credencial de todos los usuarios (vigente, parametros anteriores, formato no

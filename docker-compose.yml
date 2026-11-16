@@ -19,7 +19,9 @@ services:
     profiles: ["test"]
     environment:
       - POSTGRES_USER=app
-      - POSTGRES_PASSWORD=app
+      # RT3-06: contrasena EFIMERA del superusuario, generada por scripts/test.ps1 en cada ejecucion;
+      # sin ella PostgreSQL no inicializa y db-test no arranca. Nunca un literal en el repositorio.
+      - POSTGRES_PASSWORD=${TURNOS_DB_TEST_PASSWORD:-}
       - POSTGRES_DB=turnos_test
       # Contrasenas efimeras de los roles turnos_app y turnos_login (DD-14, DD-21): se declaran
       # por NOMBRE, sin valor; las genera scripts/test.ps1 y solo viven en el entorno del proceso.
@@ -41,13 +43,29 @@ services:
 
   api:
     build: ./backend
-    env_file: .env
+    # Imagen comun del backend, compartida con el servicio admin (se construye una sola vez).
+    image: turnos_odontologia-api
+    # DD-34 (RT3-01): SIN env_file. El proceso permanente de la API recibe solo estas variables,
+    # interpoladas desde .env; nunca DATABASE_MIGRATION_URL, POSTGRES_*, PGPASSWORD ni TEST_DATABASE_URL
+    # (RT3-06: la URL de pruebas la arma el runner y la pasa solo a contenedores efimeros).
+    # Una variable del shell con otro nombre no llega al contenedor.
     environment:
+      DATABASE_URL: ${DATABASE_URL:?definir DATABASE_URL en .env}
+      DATABASE_LOGIN_URL: ${DATABASE_LOGIN_URL:?definir DATABASE_LOGIN_URL en .env}
+      AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:?definir AUTH_SECRET_KEY en .env}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?definir CORS_ALLOWED_ORIGINS en .env}
+      APP_ENV: ${APP_ENV:?definir APP_ENV en .env}
+      # Opcionales: vacias toman el valor por defecto de Settings (env_ignore_empty).
+      AUTH_SESSION_MINUTES: ${AUTH_SESSION_MINUTES:-}
+      AUTH_SESSION_MAX_HOURS: ${AUTH_SESSION_MAX_HOURS:-}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-}
       WATCHFILES_FORCE_POLLING: "true"
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
-      - ./backend:/app
+      # DD-34 (RT3-05): codigo de SOLO LECTURA; un compromiso de la API no puede modificar el codigo
+      # que despues ejecuta admin. La recarga solo lee; los temporales van a /tmp.
+      - ./backend:/app:ro
       # Solo la plantilla de variables, de solo lectura y fuera de /app, para las pruebas
       # unitarias de la plantilla. Nunca se monta .env ni otro archivo con secretos.
       - ./.env.example:/repo/.env.example:ro
@@ -57,6 +75,29 @@ services:
     # --no-proxy-headers: la IP del limite de intentos es la de la conexion directa (DD-19);
     # uvicorn no debe reescribirla desde X-Forwarded-For.
     command: uvicorn --factory app.main:crear_app --host 0.0.0.0 --port 8000 --reload --no-proxy-headers
+
+  # DD-34 (RT3-01): administracion efimera (Alembic de desarrollo, seed, credenciales, roles y
+  # mantenimiento). Unico servicio con la credencial de administracion. Uso exclusivo:
+  #   docker compose run --rm --no-deps admin <comando>      (-it si el comando pide datos)
+  # Sin puertos y sin reinicio; ningun servicio depende de el. Si se lo selecciona con `up`, su
+  # comando por defecto termina con error: nunca queda en ejecucion. La app web se niega a crearse
+  # con este entorno (guardia de crear_app).
+  admin:
+    build: ./backend
+    image: turnos_odontologia-api
+    profiles: ["admin"]
+    env_file: .env
+    volumes:
+      # DD-34 (RT3-05): solo lectura; las migraciones nuevas se escriben en el host.
+      - ./backend:/app:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    command:
+      - python
+      - -c
+      - "import sys; sys.exit('admin: servicio solo para comandos administrativos; usar: docker compose run --rm --no-deps admin <comando>')"
 
   frontend:
     build: ./frontend

@@ -399,8 +399,12 @@ Los puertos se publican solo en `127.0.0.1`. La API y el frontend se recargan so
 La API **nunca** migra al arrancar. Para aplicar las migraciones a la base de desarrollo:
 
 ```powershell
-docker compose run --rm api alembic upgrade head
+docker compose run --rm --no-deps admin alembic upgrade head
 ```
+
+> **Servicio `admin` (C-04, DD-34).** Las migraciones de desarrollo, el seed y los comandos locales de credenciales, roles y mantenimiento se ejecutan con `docker compose run --rm --no-deps admin <comando>` (agregar `-it` si el comando pide datos). `admin` es el único servicio que recibe la credencial de administración (`DATABASE_MIGRATION_URL`); `api` recibe solo una lista explícita de variables y su aplicación se niega a arrancar si detecta credenciales de administración. Hasta C-04 estos comandos se ejecutaban con `api`; ahora, con `api`, fallan sin conectar con un mensaje que menciona `DATABASE_MIGRATION_URL`. `admin` no se levanta con `docker compose up` (perfil `admin`) y, si se lo selecciona, termina de inmediato con un error que indica usar `docker compose run`.
+>
+> **Código de solo lectura (DD-34).** `api` y `admin` montan `./backend` en `/app` de solo lectura: ningún proceso de los contenedores puede modificar el código. La recarga automática sigue funcionando porque detecta los cambios hechos en el host; las pruebas escriben sus temporales en `/tmp`. Las migraciones nuevas se escriben en el host (editor), no con `alembic revision` dentro de un contenedor.
 
 La única migración de C-01 habilita la extensión `btree_gist` (infraestructura); no crea tablas de dominio.
 
@@ -413,6 +417,7 @@ La única migración de C-01 habilita la extensión `btree_gist` (infraestructur
 Si PowerShell no permite ejecutar scripts: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1`. Requiere Docker Desktop en ejecución y el archivo `.env`. Ejecuta, en orden y deteniéndose en el primer fallo: autoprueba del runner, construcción de imágenes, pruebas unitarias del backend (incluye las 19 de superposición), migraciones sobre la base de pruebas, pruebas de integración contra PostgreSQL real, verificación de tipos y pruebas del frontend (Vitest). Termina con código 0 solo si todo pasa.
 
 - **Base de pruebas separada:** las pruebas de integración y las migraciones del comando único usan el servicio `db-test` (misma imagen de PostgreSQL, datos en memoria, sin volumen ni puertos publicados, perfil `test`) con `TEST_DATABASE_URL`. Nunca tocan la base de desarrollo; una guardia se niega a ejecutar si la URL de pruebas coincide con la de desarrollo. `scripts/test.ps1` elimina `db-test` al terminar, incluso si hay un fallo.
+- **URL de pruebas efímera (DD-34):** `scripts/test.ps1` genera en cada ejecución la contraseña del superusuario de `db-test` y arma `TEST_DATABASE_URL` en su propio proceso (host `db-test`, base `turnos_test`). Solo la pasa por nombre (`-e TEST_DATABASE_URL`) a los contenedores efímeros de migraciones de pruebas, integración y aislamiento, y la retira al terminar. El servicio `api` permanente no la recibe y la `TEST_DATABASE_URL` del `.env` ya no se usa. Para correr pruebas de integración fuera del runner hay que definir esas variables en el proceso y pasarlas con `-e`; lo habitual es usar el runner.
 - **`--no-deps`:** los comandos de prueba usan `docker compose run --rm --no-deps ...` para no arrancar la base de desarrollo. Sin `--no-deps`, `docker compose run api ...` arranca `db` porque `api` depende de ella.
 
 ### Estructura de C-01
@@ -443,7 +448,7 @@ C-02 agrega las tablas `consultorio` y `usuario` (migración `0002`), repositori
 La API **nunca** migra ni carga datos al arrancar. Para crear las tablas en la base de desarrollo, con el servicio `db` en ejecución:
 
 ```powershell
-docker compose run --rm api alembic upgrade head
+docker compose run --rm --no-deps admin alembic upgrade head
 ```
 
 Aplica la migración `0002` (tablas `consultorio` y `usuario`, vacías: la migración no inserta filas). No existe un comando de reversión para desarrollo; la reversión solo se prueba contra la base de pruebas efímera.
@@ -453,13 +458,13 @@ Aplica la migración `0002` (tablas `consultorio` y `usuario`, vacías: la migra
 Requiere haber aplicado antes las migraciones:
 
 ```powershell
-docker compose run --rm api python -m app.seed
+docker compose run --rm --no-deps admin python -m app.seed
 ```
 
 - Crea "Consultorio Demo A" y "Consultorio Demo B" y, en cada uno, un usuario `administrador`, uno `secretaria` y uno `odontologo`, con emails `@example.test` (dominio reservado) y nombres que contienen `Demo`. Todos los datos son ficticios.
 - Los usuarios quedan **sin credencial** (`credencial` nula): no pueden autenticarse. C-03 definirá cómo se les asignan credenciales de demostración.
 - Es **idempotente y no destructivo**: usa identificadores fijos e `INSERT ... ON CONFLICT DO NOTHING`; ejecutarlo de nuevo no duplica filas y nunca actualiza ni borra datos existentes (una fila ya presente se omite).
-- Se niega a ejecutarse, sin abrir ninguna conexión, si `APP_ENV` no es `local`, y solo usa `DATABASE_URL`.
+- Se niega a ejecutarse, sin abrir ninguna conexión, si `APP_ENV` no es `local`. Desde C-04 usa solo la credencial de administración `DATABASE_MIGRATION_URL` (servicio `admin`), nunca `DATABASE_URL`.
 - La salida informa únicamente cantidades. La primera ejecución sobre una base vacía informa 2 consultorios y 6 usuarios insertados; la siguiente, 0 insertados y 8 omitidos.
 
 ### Consultar los datos (solo lectura)

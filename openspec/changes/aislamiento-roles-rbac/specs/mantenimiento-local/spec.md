@@ -24,3 +24,17 @@ El comando de mantenimiento DEBE (MUST) negarse a ejecutar, sin abrir ninguna co
 - **CUANDO** se abre la sesión de base por defecto del comando
 - **ENTONCES** el motor apunta a `host-admin.invalid`
 - **Y** sin `DATABASE_MIGRATION_URL` el comando falla sin conectar con un mensaje que la menciona
+
+## ADDED Requirements
+
+### Requirement: Comando de mantenimiento mediante el servicio administrativo
+El comando DEBE (MUST) documentarse y ejecutarse con `docker compose run --rm --no-deps admin python -m app.mantenimiento`, el único servicio que recibe `DATABASE_MIGRATION_URL`. Ejecutado con el servicio `api`, que no la recibe, DEBE (MUST) terminar con código distinto de cero y el mensaje que la menciona, sin abrir conexiones.
+
+#### Scenario: Comando documentado con admin
+- **CUANDO** se inspeccionan `README.md` y la ayuda del módulo `app.mantenimiento`
+- **ENTONCES** el comando se indica con el servicio `admin` y no con `api`
+
+#### Scenario: Ejecutado con el entorno de la API
+- **DADO** `APP_ENV=local` y el entorno de la API, sin `DATABASE_MIGRATION_URL`
+- **CUANDO** se ejecuta el comando
+- **ENTONCES** termina con código distinto de cero y un mensaje que menciona `DATABASE_MIGRATION_URL`, sin abrir conexiones

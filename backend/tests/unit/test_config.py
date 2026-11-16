@@ -410,9 +410,23 @@ def test_cada_regla_de_la_clave_responde_su_propio_mensaje_fijo(monkeypatch):
     }
     assert len(todos) == 7
     for clave, esperado in _reglas_de_clave():
-        mensaje = _rechazo_de_clave(monkeypatch, clave)
+        if clave == "":
+            # DD-34 (`env_ignore_empty`): vacia en el ENTORNO cuenta como no definida y la rechaza la
+            # regla de obligatoria (`test_una_obligatoria_vacia_hace_fallar_la_carga`); la regla de
+            # clave vacia sigue vigente para el valor recibido directamente.
+            mensaje = _rechazo_directo_de_clave(clave)
+        else:
+            mensaje = _rechazo_de_clave(monkeypatch, clave)
         assert esperado in mensaje
         assert [otro for otro in todos - {esperado} if otro in mensaje] == []
+
+
+def _rechazo_directo_de_clave(clave):
+    with pytest.raises(ValidationError) as excinfo:
+        modulo_config.Settings(**_entorno_valido(AUTH_SECRET_KEY=clave))
+    mensaje = str(excinfo.value)
+    assert "AUTH_SECRET_KEY" in mensaje
+    return mensaje
 
 
 def test_el_mensaje_de_plantilla_es_fijo_y_no_contiene_el_valor(monkeypatch):
@@ -521,3 +535,44 @@ def test_los_nombres_de_rol_distinguen_mayusculas(monkeypatch):
     )
 
     assert configuracion.database_login_url is not None
+
+
+# --- Variables vacias como no definidas (DD-34: `api` interpola opcionales con `${VAR:-}`) --------
+
+
+def test_opcionales_vacias_toman_su_valor_por_defecto(monkeypatch):
+    entorno = _entorno_valido(
+        AUTH_SESSION_MINUTES="",
+        AUTH_SESSION_MAX_HOURS="",
+        AUTH_COOKIE_SECURE="",
+        TEST_DATABASE_URL="",
+    )
+    for nombre, valor in entorno.items():
+        monkeypatch.setenv(nombre, valor)
+
+    configuracion = cargar_configuracion()
+
+    assert configuracion.auth_session_minutes == 30
+    assert configuracion.auth_session_max_hours == 12
+    assert configuracion.auth_cookie_secure is True
+    assert configuracion.test_database_url is None
+
+
+@pytest.mark.parametrize(
+    "variable", ["DATABASE_URL", "CORS_ALLOWED_ORIGINS", "APP_ENV", "AUTH_SECRET_KEY"]
+)
+def test_una_obligatoria_vacia_hace_fallar_la_carga(monkeypatch, variable):
+    mensaje = _cargar_esperando_error(monkeypatch, **_entorno_valido(**{variable: ""}))
+
+    assert variable in mensaje
+
+
+def test_las_urls_de_rol_vacias_no_se_cargan(monkeypatch):
+    entorno = _entorno_valido(DATABASE_LOGIN_URL="", DATABASE_MIGRATION_URL="")
+    for nombre, valor in entorno.items():
+        monkeypatch.setenv(nombre, valor)
+
+    configuracion = cargar_configuracion()
+
+    assert configuracion.database_login_url is None
+    assert configuracion.database_migration_url is None

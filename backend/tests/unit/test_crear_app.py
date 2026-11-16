@@ -111,22 +111,174 @@ def test_el_motor_de_login_apunta_a_database_login_url_y_el_de_la_api_a_database
     assert app.state.engine_login is not app.state.engine
 
 
-def test_ningun_motor_de_la_app_apunta_a_database_migration_url(fabrica_settings):
-    settings = fabrica_settings(
-        database_url="postgresql+psycopg://turnos_app:x@host-api.invalid:5432/turnos",
-        database_login_url="postgresql+psycopg://turnos_login:y@host-login.invalid:5432/turnos",
-    ).model_copy(
+# --- Guardia de credenciales de administracion (DD-34, RT3-01) ------------------------------------
+# Reemplaza a `test_ningun_motor_de_la_app_apunta_a_database_migration_url`: la app ya no se construye
+# con la credencial de administracion; su presencia hace fallar la creacion.
+
+CLAVE_ADMIN_FICTICIA = "clave-admin-ficticia"
+VALOR_FICTICIO_DEL_ENTORNO = "valor-ficticio-de-la-guardia"
+VARIABLES_DE_ADMINISTRACION = ["DATABASE_MIGRATION_URL", "POSTGRES_PASSWORD", "PGPASSWORD"]
+
+
+@pytest.fixture
+def motores_espiados(monkeypatch):
+    """Registra cualquier intento de crear motores: la guardia debe fallar antes."""
+    import app.main as modulo
+
+    llamadas: list[str] = []
+
+    def espia(nombre):
+        def fabrica(*_args, **_kwargs):
+            llamadas.append(nombre)
+            raise AssertionError(f"se creo el motor {nombre} antes de la guardia")
+
+        return fabrica
+
+    monkeypatch.setattr(modulo, "crear_engine", espia("crear_engine"))
+    monkeypatch.setattr(modulo, "crear_engine_login", espia("crear_engine_login"))
+    return llamadas
+
+
+def _sin_variables_de_administracion(monkeypatch) -> None:
+    for variable in VARIABLES_DE_ADMINISTRACION:
+        monkeypatch.delenv(variable, raising=False)
+
+
+def test_rechaza_la_configuracion_con_database_migration_url(
+    fabrica_settings, monkeypatch, motores_espiados
+):
+    from app.main import CredencialAdministrativaEnLaApi
+
+    _sin_variables_de_administracion(monkeypatch)
+    settings = fabrica_settings().model_copy(
         update={
             "database_migration_url": SecretStr(
-                "postgresql+psycopg://app:z@host-admin.invalid:5432/turnos"
+                f"postgresql+psycopg://app:{CLAVE_ADMIN_FICTICIA}@host-admin.invalid:5432/turnos"
             )
         }
     )
 
+    with pytest.raises(CredencialAdministrativaEnLaApi) as error:
+        crear_app(settings)
+
+    assert "DATABASE_MIGRATION_URL" in str(error.value)
+    assert CLAVE_ADMIN_FICTICIA not in str(error.value)
+    assert "host-admin.invalid" not in str(error.value)
+    assert motores_espiados == []
+
+
+@pytest.mark.parametrize("variable", VARIABLES_DE_ADMINISTRACION)
+def test_rechaza_una_variable_de_administracion_en_el_entorno_del_proceso(
+    variable, fabrica_settings, monkeypatch, motores_espiados
+):
+    from app.main import CredencialAdministrativaEnLaApi
+
+    _sin_variables_de_administracion(monkeypatch)
+    # La configuracion se carga antes: la variable aparece solo en el entorno del proceso.
+    settings = fabrica_settings()
+    monkeypatch.setenv(variable, VALOR_FICTICIO_DEL_ENTORNO)
+
+    with pytest.raises(CredencialAdministrativaEnLaApi) as error:
+        crear_app(settings)
+
+    mensaje = str(error.value)
+    assert variable in mensaje
+    assert VALOR_FICTICIO_DEL_ENTORNO not in mensaje
+    otras = [nombre for nombre in VARIABLES_DE_ADMINISTRACION if nombre != variable]
+    assert all(nombre not in mensaje for nombre in otras)
+    assert motores_espiados == []
+
+
+def test_nombra_todas_las_variables_de_administracion_presentes(
+    fabrica_settings, monkeypatch, motores_espiados
+):
+    from app.main import CredencialAdministrativaEnLaApi
+
+    _sin_variables_de_administracion(monkeypatch)
+    settings = fabrica_settings()
+    for variable in VARIABLES_DE_ADMINISTRACION:
+        monkeypatch.setenv(variable, VALOR_FICTICIO_DEL_ENTORNO)
+
+    with pytest.raises(CredencialAdministrativaEnLaApi) as error:
+        crear_app(settings)
+
+    mensaje = str(error.value)
+    assert all(variable in mensaje for variable in VARIABLES_DE_ADMINISTRACION)
+    assert VALOR_FICTICIO_DEL_ENTORNO not in mensaje
+    assert motores_espiados == []
+
+
+def test_con_un_entorno_sin_credenciales_de_administracion_la_app_se_crea(
+    fabrica_settings, monkeypatch
+):
+    _sin_variables_de_administracion(monkeypatch)
+    settings = fabrica_settings(
+        database_url="postgresql+psycopg://turnos_app:x@host-api.invalid:5432/turnos",
+        database_login_url="postgresql+psycopg://turnos_login:y@host-login.invalid:5432/turnos",
+    )
+
     app = crear_app(settings)
 
-    hosts = {app.state.engine.url.host, app.state.engine_login.url.host}
-    assert "host-admin.invalid" not in hosts
+    assert settings.database_migration_url is None
+    assert {app.state.engine.url.host, app.state.engine_login.url.host} == {
+        "host-api.invalid",
+        "host-login.invalid",
+    }
+
+
+def test_la_app_web_no_arranca_con_el_entorno_administrativo(monkeypatch, motores_espiados):
+    """Entorno como el del servicio `admin` (DD-34): `crear_app()` sin argumentos, como `uvicorn --factory`."""
+    from app.main import CredencialAdministrativaEnLaApi
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://turnos_app:x@host-api.invalid:5432/turnos")
+    monkeypatch.setenv(
+        "DATABASE_LOGIN_URL", "postgresql+psycopg://turnos_login:y@host-login.invalid:5432/turnos"
+    )
+    monkeypatch.setenv(
+        "DATABASE_MIGRATION_URL",
+        f"postgresql+psycopg://app:{CLAVE_ADMIN_FICTICIA}@host-admin.invalid:5432/turnos",
+    )
+    monkeypatch.setenv("POSTGRES_PASSWORD", VALOR_FICTICIO_DEL_ENTORNO)
+    monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
+    monkeypatch.setenv("APP_ENV", "local")
+
+    with pytest.raises(CredencialAdministrativaEnLaApi) as error:
+        crear_app()
+
+    mensaje = str(error.value)
+    assert "DATABASE_MIGRATION_URL" in mensaje and "POSTGRES_PASSWORD" in mensaje
+    assert CLAVE_ADMIN_FICTICIA not in mensaje and VALOR_FICTICIO_DEL_ENTORNO not in mensaje
+    assert motores_espiados == []
+
+
+MODULOS_ADMINISTRATIVOS = [
+    "app/seed/__main__.py",
+    "app/seed/aplicar.py",
+    "app/credenciales/__main__.py",
+    "app/roles_postgres/__main__.py",
+    "app/mantenimiento/__main__.py",
+    "app/mantenimiento/limpieza.py",
+    "alembic/env.py",
+]
+
+
+@pytest.mark.parametrize("ruta", MODULOS_ADMINISTRATIVOS)
+def test_los_comandos_administrativos_no_crean_la_app_web(ruta):
+    """La guardia es de la app web: Alembic y los comandos locales no la usan (DD-34)."""
+    import ast
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parents[2]
+    arbol = ast.parse((raiz / ruta).read_text(encoding="utf-8"))
+    importados = set()
+    for nodo in ast.walk(arbol):
+        if isinstance(nodo, ast.ImportFrom) and nodo.module:
+            importados.add(nodo.module)
+        elif isinstance(nodo, ast.Import):
+            importados.update(alias.name for alias in nodo.names)
+    nombres = {nodo.id for nodo in ast.walk(arbol) if isinstance(nodo, ast.Name)}
+    assert "app.main" not in importados
+    assert "crear_app" not in nombres
 
 
 def test_la_fabrica_de_login_usa_el_motor_de_login(fabrica_settings):

@@ -4,7 +4,10 @@ Borra, por lotes, las sesiones vencidas o revocadas y los intentos de login de m
 
 Uso (solo desarrollo local):
 
-    docker compose run --rm api python -m app.mantenimiento limpiar [--max-lotes N]
+    docker compose run --rm --no-deps admin python -m app.mantenimiento limpiar [--max-lotes N]
+
+Servicio `admin` (DD-34): el unico que recibe `DATABASE_MIGRATION_URL`; con `api` el comando falla sin
+conectar.
 
 - `--max-lotes N`: entero entre 1 y 1000 (por defecto 100). Cada lote borra hasta 1000 filas en su
   propia transaccion; por ejecucion se borran como maximo `1000 x N` filas por tabla.

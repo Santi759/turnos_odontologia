@@ -6,7 +6,10 @@ los dos roles duenios de las funciones de acceso (`ROL_ACCESO_PREVIO` y `ROL_ACC
 
 Uso (solo desarrollo local; requiere una terminal interactiva y la autorizacion del autor):
 
-    docker compose run --rm -it api python -m app.roles_postgres crear [--rotar-contrasena ROL]
+    docker compose run --rm -it --no-deps admin python -m app.roles_postgres crear [--rotar-contrasena ROL]
+
+Servicio `admin` (DD-34): el unico que recibe `DATABASE_MIGRATION_URL`; con `api` el comando falla sin
+conectar.
 
 `ROL` es `turnos_app` o `turnos_login`. Reglas:
 - Solo corre con `APP_ENV=local` y solo sobre `DATABASE_MIGRATION_URL`; con otro entorno, sin esa URL,
