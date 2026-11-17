@@ -54,7 +54,7 @@ La fuente de verdad del dominio vive en `knowledge-base/` (aprobada por el autor
 
 ## Skills Disponibles
 
-Fuente de verdad: [.atl/skill-registry.md](.atl/skill-registry.md). En `find-skill` (2026-10-13) el autor decidió **no instalar skills de dominio** por ahora (5 pospuestas, 1 descartada; detalle en `.active-orchestrator-state.json` → `skills`).
+Fuente de verdad: [.atl/skill-registry.md](.atl/skill-registry.md). En `find-skill` (2026-10-13) el autor decidió **no instalar skills de dominio** por ahora (5 pospuestas, 1 descartada; detalle en `.active-orchestrator-state.json` → `skills`). Skill propia del proyecto: `verificar-aislamiento-consultorios`, creada con `skill-creator` el 2026-11-17 y versionada en `.claude/skills/verificar-aislamiento-consultorios/`.
 
 | Agente (perfil técnico) | Rol | Skills que carga |
 |--------|-----|------------------|
@@ -64,6 +64,7 @@ Fuente de verdad: [.atl/skill-registry.md](.atl/skill-registry.md). En `find-ski
 | **Orquestación** | Fundación Active Stack, KB, roadmap, reglas | `active-orchestrator`, `kb-creator`, `roadmap-generator`, `agent-instruction` (declarada como `agents-md-generator`) |
 | **Investigación** | Discovery y fuentes de mercado | `discovery-research`, `web-scraper` |
 | **Mantenimiento de skills** | Buscar o crear skills | `find-skill` (declarada como `find-skills`), `skill-creator` |
+| **Verificación de aislamiento** | Revisión de solo lectura del aislamiento entre consultorios: RLS, roles y privilegios de PostgreSQL, credenciales de la API y evidencia de pruebas (controles V-01 a V-10) | `verificar-aislamiento-consultorios` (skill propia, `.claude/skills/verificar-aislamiento-consultorios/`) |
 
 Los perfiles "Backend Core / Backend Aux / Frontend" son responsabilidades técnicas, no personas: hay un solo desarrollador y la ejecución es secuencial. Comandos de flujo OpenSpec disponibles: `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive`, `/opsx:sync`, `/opsx:update` (no hay `/opsx:verify`; ver Flujo de Trabajo).
 
@@ -144,6 +145,7 @@ El plan de implementación completo está en [CHANGES.md](CHANGES.md) (aprobado 
 4. /opsx:propose <nombre>                          → proposal + design + specs + tasks; resolver decisiones abiertas
 5. /opsx:apply <nombre>                            → implementar las tasks con TDD estricto y las reglas duras
 6. Verify (sin comando propio)                     → openspec validate <nombre> --strict + pytest + evidencia en el Change (O2)
+   Si el Change toca endpoints privados, consultorio_id, migraciones o permisos → skill verificar-aislamiento-consultorios (solo lectura)
 7. /opsx:archive <nombre> + marcar [x] en CHANGES  → solo si Verify pasó; el recorte académico NO marca C-15
 8. Commit                                          → solo con autorización del autor (G1)
 ```

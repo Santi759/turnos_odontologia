@@ -34,3 +34,6 @@ temp/
 # Registro de skills: solo se versiona skill-registry.md (entregable de Metodología I)
 .atl/*
 !.atl/skill-registry.md
+
+# Workspace temporal de evaluacion de la skill propia (skill-creator); no se versiona
+.claude/skills/verificar-aislamiento-consultorios-workspace/

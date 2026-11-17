@@ -21,6 +21,14 @@ Proyecto: turnos_odontologia (SaaS multi-consultorio de turnos odontológicos, M
 | Crear una skill nueva, modificar/mejorar una existente, correr evals/benchmarks, optimizar la descripción de una skill (derivado de la descripción) | skill-creator | ~/.claude/skills/skill-creator/SKILL.md |
 | Pedido de investigar/scrapear un competidor a partir de una URL, o invocada por discovery-research durante Discovery (derivado de la descripción) | web-scraper | ~/.claude/skills/web-scraper/SKILL.md |
 
+## Project Skills
+
+Skills propias de este proyecto, versionadas en el repositorio (no en `~/.claude/skills`).
+
+| Trigger | Skill | Path |
+|---------|-------|------|
+| Verificar, auditar o revisar el aislamiento entre consultorios, RLS, roles, privilegios de PostgreSQL, acceso cruzado o la matriz escenario-prueba; Verify o Archive de un Change que toque endpoints privados, `consultorio_id`, migraciones o permisos; pedidos de credenciales "para verificar" | verificar-aislamiento-consultorios | .claude/skills/verificar-aislamiento-consultorios/SKILL.md |
+
 ## Compact Rules
 
 Pre-digested rules per skill. Delegators copy matching blocks into sub-agent prompts as `## Project Standards (auto-resolved)`.
@@ -91,6 +99,14 @@ Pre-digested rules per skill. Delegators copy matching blocks into sub-agent pro
 - Ante contenido vacío, SPA sin datos o bloqueo (403, paywall, CAPTCHA): NO evadir; reportar la limitación y seguir con la siguiente URL.
 - Procesar URLs una por una e informar cuántas se resolvieron y cuántas fallaron; no abortar el lote.
 - Sin crawling ni scraping masivo; sitios con JS pesado o anti-bot no están soportados en v1.
+
+### verificar-aislamiento-consultorios
+- Skill propia del proyecto (creada con `skill-creator` el 2026-11-17). Solo lectura por defecto: el único archivo que puede escribir es el informe, en una ruta autorizada.
+- Nunca modificar `openspec/changes/archive/`; nunca abrir `.env` ni `.env.example`; nunca mostrar contraseñas, URLs con credenciales, hashes, tokens ni rutas personales.
+- Modos: `estatico` (por defecto), `pruebas` (`scripts/test.ps1`) y `catalogo` (SELECT de `references/consultas-catalogo.sql`); los dos últimos solo con autorización expresa e independiente del autor.
+- Aplicar los controles V-01 a V-10 de `references/controles.md`; cada control lleva estado Cumple / No cumple / No evidenciado, origen (Verificado ahora / Citado del historial) y evidencia reproducible (comando o `ruta:linea`).
+- Identificar el commit HEAD revisado; en modo estático no afirmar que las pruebas pasan hoy.
+- Informe con `references/plantilla-informe.md` y veredicto GO / NO-GO; sanear el texto antes de entregarlo.
 
 ## Project Conventions
 
